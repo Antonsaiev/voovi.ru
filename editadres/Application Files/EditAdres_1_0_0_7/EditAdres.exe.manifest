@@ -1,0 +1,65 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<asmv1:assembly xsi:schemaLocation="urn:schemas-microsoft-com:asm.v1 assembly.adaptive.xsd" manifestVersion="1.0" xmlns:asmv1="urn:schemas-microsoft-com:asm.v1" xmlns="urn:schemas-microsoft-com:asm.v2" xmlns:asmv2="urn:schemas-microsoft-com:asm.v2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:co.v1="urn:schemas-microsoft-com:clickonce.v1" xmlns:asmv3="urn:schemas-microsoft-com:asm.v3" xmlns:dsig="http://www.w3.org/2000/09/xmldsig#" xmlns:co.v2="urn:schemas-microsoft-com:clickonce.v2">
+  <asmv1:assemblyIdentity name="EditAdres.exe" version="1.0.0.7" publicKeyToken="496e0baa7695354d" language="neutral" processorArchitecture="msil" type="win32" />
+  <application />
+  <entryPoint>
+    <assemblyIdentity name="EditAdres" version="1.0.0.0" language="neutral" processorArchitecture="msil" />
+    <commandLine file="EditAdres.exe" parameters="" />
+  </entryPoint>
+  <trustInfo>
+    <security>
+      <applicationRequestMinimum>
+        <PermissionSet Unrestricted="true" ID="Custom" SameSite="site" />
+        <defaultAssemblyRequest permissionSetReference="Custom" />
+      </applicationRequestMinimum>
+      <requestedPrivileges xmlns="urn:schemas-microsoft-com:asm.v3">
+        <!--
+          Параметры манифеста UAC
+          При необходимости изменить уровень контроля учетных записей Windows замените узел 
+          requestedExecutionLevel одним из следующих значений.
+
+        <requestedExecutionLevel  level="asInvoker" uiAccess="false" />
+        <requestedExecutionLevel  level="requireAdministrator" uiAccess="false" />
+        <requestedExecutionLevel  level="highestAvailable" uiAccess="false" />
+
+         Если вы хотите использовать виртуализацию файлов и реестра для обратной 
+         совместимости, удалите узел requestedExecutionLevel.
+    -->
+        <requestedExecutionLevel level="asInvoker" uiAccess="false" />
+      </requestedPrivileges>
+    </security>
+  </trustInfo>
+  <dependency>
+    <dependentOS>
+      <osVersionInfo>
+        <os majorVersion="5" minorVersion="1" buildNumber="2600" servicePackMajor="0" />
+      </osVersionInfo>
+    </dependentOS>
+  </dependency>
+  <dependency>
+    <dependentAssembly dependencyType="preRequisite" allowDelayedBinding="true">
+      <assemblyIdentity name="Microsoft.Windows.CommonLanguageRuntime" version="4.0.30319.0" />
+    </dependentAssembly>
+  </dependency>
+  <dependency>
+    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="EditAdres.exe" size="15872">
+      <assemblyIdentity name="EditAdres" version="1.0.0.0" language="neutral" processorArchitecture="msil" />
+      <hash>
+        <dsig:Transforms>
+          <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+        </dsig:Transforms>
+        <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+        <dsig:DigestValue>DDzjdqFa3SfVjxRCJ1NSTQocpbPB34j8j1/jMVDFtDc=</dsig:DigestValue>
+      </hash>
+    </dependentAssembly>
+  </dependency>
+  <file name="EditAdres.exe.config" size="189">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>6N7MliNbVJSIAIPrecIshMbZ7zEoKLr5SQvud4LDUOw=</dsig:DigestValue>
+    </hash>
+  </file>
+<publisherIdentity name="CN=DESKTOP-0NDFVC3\Jaz Martin" issuerKeyHash="0e8853d83bcde274484502533c1c58b7e7d740ce" /><Signature Id="StrongNameSignature" xmlns="http://www.w3.org/2000/09/xmldsig#"><SignedInfo><CanonicalizationMethod Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#" /><SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha256" /><Reference URI=""><Transforms><Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature" /><Transform Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#" /></Transforms><DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" /><DigestValue>VHlQT6CZl8kBH1QiPkKKNX3b7ts5VN91Fm49eezfXDw=</DigestValue></Reference></SignedInfo><SignatureValue>dtax4N8Cjmn98caYGzVB1dcTlE9eCALjKeqc/CfGdRZrYlNso0C8efCIGkYW9ck4wxESxu5BMjgeXin9iRlyG5MuFOQTpCEKtIR6zZ9DGxalVFv8FlrhRIVNUHElu2ppMc0E91ipLMEv8CXf2gI0nDP5cHoYezWNt+T4yKAmtMI=</SignatureValue><KeyInfo Id="StrongNameKeyInfo"><KeyValue><RSAKeyValue><Modulus>lrDSShrFZiE8dJYvbs7eXKUaO4F+GaU1/04EoWjDW8B1jdHzU9zhCFN8r3pW5axzLMwlLoyN/WRYPLXyojAZ5lOW7aNx8inCidZ94VmdOL7/h7riIzEroMO94iUFvNmYILy38f9qHPpfrraX0/Zw5dKQI1nthWIWznPxOhOQ2Lk=</Modulus><Exponent>AQAB</Exponent></RSAKeyValue></KeyValue><msrel:RelData xmlns:msrel="http://schemas.microsoft.com/windows/rel/2005/reldata"><r:license xmlns:r="urn:mpeg:mpeg21:2003:01-REL-R-NS" xmlns:as="http://schemas.microsoft.com/windows/pki/2005/Authenticode"><r:grant><as:ManifestInformation Hash="3c5cdfec793d6e1675df5439dbeedb7d358a423e22541f01c99799a04f507954" Description="" Url=""><as:assemblyIdentity name="EditAdres.exe" version="1.0.0.7" publicKeyToken="496e0baa7695354d" language="neutral" processorArchitecture="msil" type="win32" /></as:ManifestInformation><as:SignedBy /><as:AuthenticodePublisher><as:X509SubjectName>CN=DESKTOP-0NDFVC3\Jaz Martin</as:X509SubjectName></as:AuthenticodePublisher></r:grant><r:issuer><Signature Id="AuthenticodeSignature" xmlns="http://www.w3.org/2000/09/xmldsig#"><SignedInfo><CanonicalizationMethod Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#" /><SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha256" /><Reference URI=""><Transforms><Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature" /><Transform Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#" /></Transforms><DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" /><DigestValue>P6R1j33k/j34FWBPM67G7bZcIOJFY+Z1Ej/DY8T8wQA=</DigestValue></Reference></SignedInfo><SignatureValue>AYniPR8kEmpjoQOjj79TEpRCeYUezu4UErZ2blpvEqvRGcX19s3MCsobBv/XMEu9lPjZPOA90a5ugwyaO9ECqmCvd+SroIi4Hd5Mkje9fRwQrbTahBI1J3wcbVD4zQo2CTOuX3UdRjZzKPvm/w9eM0euOuCzdLu1Ix0AFRLZhHM=</SignatureValue><KeyInfo><KeyValue><RSAKeyValue><Modulus>lrDSShrFZiE8dJYvbs7eXKUaO4F+GaU1/04EoWjDW8B1jdHzU9zhCFN8r3pW5axzLMwlLoyN/WRYPLXyojAZ5lOW7aNx8inCidZ94VmdOL7/h7riIzEroMO94iUFvNmYILy38f9qHPpfrraX0/Zw5dKQI1nthWIWznPxOhOQ2Lk=</Modulus><Exponent>AQAB</Exponent></RSAKeyValue></KeyValue><X509Data><X509Certificate>MIICATCCAWqgAwIBAgIQLonRj6ER2ZFBCMMH3mfoUzANBgkqhkiG9w0BAQsFADA/MT0wOwYDVQQDHjQARABFAFMASwBUAE8AUAAtADAATgBEAEYAVgBDADMAXABKAGEAegAgAE0AYQByAHQAaQBuMB4XDTE4MDIxNDA5Mzk0NFoXDTE5MDIxNDE1Mzk0NFowPzE9MDsGA1UEAx40AEQARQBTAEsAVABPAFAALQAwAE4ARABGAFYAQwAzAFwASgBhAHoAIABNAGEAcgB0AGkAbjCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEAlrDSShrFZiE8dJYvbs7eXKUaO4F+GaU1/04EoWjDW8B1jdHzU9zhCFN8r3pW5axzLMwlLoyN/WRYPLXyojAZ5lOW7aNx8inCidZ94VmdOL7/h7riIzEroMO94iUFvNmYILy38f9qHPpfrraX0/Zw5dKQI1nthWIWznPxOhOQ2LkCAwEAATANBgkqhkiG9w0BAQsFAAOBgQB+Wj+OuR9TMUBytNvu6gEutT3o/RHQyBCt1CqTtM9l4V3EZ1kiwnTFgo/CO97PoFn7Q1xD4KlVfVzmWW8kIhvlCpO2jRxcE2ooqRm4xXMWQFVv23JRg8I2SzJzM6WrTz6JMod4EBuJ7jxHVHz86YP2ATo3m+I4Qn5FjEGdfyuGHg==</X509Certificate></X509Data></KeyInfo></Signature></r:issuer></r:license></msrel:RelData></KeyInfo></Signature></asmv1:assembly>

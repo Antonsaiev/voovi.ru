@@ -1,0 +1,14 @@
+doc/
+voicecatalog/
+
+# Загруженные Excel-файлы импорта. PHP-код import_mail должен быть в Git.
+import_mail/*.xls
+import_mail/*.xlsx
+import_mail/**/*.xls
+import_mail/**/*.xlsx
+
+# Локальные/временные
+.idea/
+log/
+*.sql
+.DS_Store

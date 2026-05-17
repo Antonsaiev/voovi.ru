@@ -1,0 +1,77 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<asmv1:assembly xsi:schemaLocation="urn:schemas-microsoft-com:asm.v1 assembly.adaptive.xsd" manifestVersion="1.0" xmlns:asmv1="urn:schemas-microsoft-com:asm.v1" xmlns="urn:schemas-microsoft-com:asm.v2" xmlns:asmv2="urn:schemas-microsoft-com:asm.v2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:co.v1="urn:schemas-microsoft-com:clickonce.v1" xmlns:asmv3="urn:schemas-microsoft-com:asm.v3" xmlns:dsig="http://www.w3.org/2000/09/xmldsig#" xmlns:co.v2="urn:schemas-microsoft-com:clickonce.v2">
+  <asmv1:assemblyIdentity name="CRM.exe" version="1.0.0.10" publicKeyToken="d83b31bd993a6592" language="neutral" processorArchitecture="msil" type="win32" />
+  <application />
+  <entryPoint>
+    <assemblyIdentity name="CRM" version="1.0.0.0" language="neutral" processorArchitecture="msil" />
+    <commandLine file="CRM.exe" parameters="" />
+  </entryPoint>
+  <trustInfo>
+    <security>
+      <applicationRequestMinimum>
+        <PermissionSet Unrestricted="true" ID="Custom" SameSite="site" />
+        <defaultAssemblyRequest permissionSetReference="Custom" />
+      </applicationRequestMinimum>
+      <requestedPrivileges xmlns="urn:schemas-microsoft-com:asm.v3">
+        <!--
+          Параметры манифеста UAC
+          При необходимости изменить уровень контроля учетных записей Windows замените узел 
+          requestedExecutionLevel одним из следующих значений.
+
+        <requestedExecutionLevel  level="asInvoker" uiAccess="false" />
+        <requestedExecutionLevel  level="requireAdministrator" uiAccess="false" />
+        <requestedExecutionLevel  level="highestAvailable" uiAccess="false" />
+
+         Если вы хотите использовать виртуализацию файлов и реестра для обратной 
+         совместимости, удалите узел requestedExecutionLevel.
+    -->
+        <requestedExecutionLevel level="asInvoker" uiAccess="false" />
+      </requestedPrivileges>
+    </security>
+  </trustInfo>
+  <dependency>
+    <dependentOS>
+      <osVersionInfo>
+        <os majorVersion="5" minorVersion="1" buildNumber="2600" servicePackMajor="0" />
+      </osVersionInfo>
+    </dependentOS>
+  </dependency>
+  <dependency>
+    <dependentAssembly dependencyType="preRequisite" allowDelayedBinding="true">
+      <assemblyIdentity name="Microsoft.Windows.CommonLanguageRuntime" version="4.0.30319.0" />
+    </dependentAssembly>
+  </dependency>
+  <dependency>
+    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="CRM.exe" size="28048">
+      <assemblyIdentity name="CRM" version="1.0.0.0" language="neutral" processorArchitecture="msil" />
+      <hash>
+        <dsig:Transforms>
+          <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+        </dsig:Transforms>
+        <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+        <dsig:DigestValue>g+rFZ6cf1geZ7dRLoLLAWzLu/7Opk00DZKrMJKuP5iY=</dsig:DigestValue>
+      </hash>
+    </dependentAssembly>
+  </dependency>
+  <dependency>
+    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="MySql.Data.dll" size="457216">
+      <assemblyIdentity name="MySql.Data" version="6.9.6.0" publicKeyToken="C5687FC88969C44D" language="neutral" processorArchitecture="msil" />
+      <hash>
+        <dsig:Transforms>
+          <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+        </dsig:Transforms>
+        <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+        <dsig:DigestValue>vp/0k3J7s9ugl4aq8lI/oYVJVNPbUyQ7qJjLrWRUSa0=</dsig:DigestValue>
+      </hash>
+    </dependentAssembly>
+  </dependency>
+  <file name="CRM.exe.config" size="189">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>rl5/qDc7Jz+tB+BIbOv9iMGPlRe6YJwrjmU09dnlPcs=</dsig:DigestValue>
+    </hash>
+  </file>
+<publisherIdentity name="CN=F\igfxJM" issuerKeyHash="c9d6c8b03390f6c2c8260580d9cf45cf7645068d" /><Signature Id="StrongNameSignature" xmlns="http://www.w3.org/2000/09/xmldsig#"><SignedInfo><CanonicalizationMethod Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#" /><SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha256" /><Reference URI=""><Transforms><Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature" /><Transform Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#" /></Transforms><DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" /><DigestValue>jVi1bX/PrDb9S6QHanrN224nusMKs/m5DuNobMMU2dc=</DigestValue></Reference></SignedInfo><SignatureValue>UkijI8blH1odwIYjU/vM52KbojaQg1E+ZhgMk0n1OhnsHdgz34Lr9wjDFafPO587o57vd2btL5N19iPIFVscEjmpVyG4mlUpVbujT2WW0LvspsIas0l7xpxUJERpqHOftd7n4/993k9uLHKwUOwwL2H8RHSrY/OAZnhNtgr4PXk=</SignatureValue><KeyInfo Id="StrongNameKeyInfo"><KeyValue><RSAKeyValue><Modulus>zvnmdA6Rs0MlhGWoUqdCxaERUI+IXChKhc8//LoNEYa1HtdnNAiKRjScAvlNGwbroCNw3TUu24lTji0ppiId9cZO1Z24nyKLH/nAbfB/FUjK1vcrw+Zu03uhfpPainZdCoyEENxFl+yf1pkvRSkTnjH2Mx60Z/OuIcr41ZW4J/E=</Modulus><Exponent>AQAB</Exponent></RSAKeyValue></KeyValue><msrel:RelData xmlns:msrel="http://schemas.microsoft.com/windows/rel/2005/reldata"><r:license xmlns:r="urn:mpeg:mpeg21:2003:01-REL-R-NS" xmlns:as="http://schemas.microsoft.com/windows/pki/2005/Authenticode"><r:grant><as:ManifestInformation Hash="d7d914c36c68e30eb9f9b30ac3ba276edbcd7a6a07a44bfd36accf7f6db5588d" Description="" Url=""><as:assemblyIdentity name="CRM.exe" version="1.0.0.10" publicKeyToken="d83b31bd993a6592" language="neutral" processorArchitecture="msil" type="win32" /></as:ManifestInformation><as:SignedBy /><as:AuthenticodePublisher><as:X509SubjectName>CN=F\igfxJM</as:X509SubjectName></as:AuthenticodePublisher></r:grant><r:issuer><Signature Id="AuthenticodeSignature" xmlns="http://www.w3.org/2000/09/xmldsig#"><SignedInfo><CanonicalizationMethod Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#" /><SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha256" /><Reference URI=""><Transforms><Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature" /><Transform Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#" /></Transforms><DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" /><DigestValue>Y4l/A4+el326kiMF/DEHDhVhBHgQkuBeQxVN2sZ86vY=</DigestValue></Reference></SignedInfo><SignatureValue>Xl5PkW0bpd5reTn6e9bIMSYQO9a8u397kHVIa8UuoIxkZWE0N2uYEUJxnkRntoCOoI5EKwpZv1x+w4qJVmdbK3Y+hnXeuy7xpWYUjPhqwfaQ96Tx+/BdHy0yXSj7yAkgX2YR4ZMdYxs1gI/h8xPDK+2uEzbiU3snvpj0ZsIiHKE=</SignatureValue><KeyInfo><KeyValue><RSAKeyValue><Modulus>zvnmdA6Rs0MlhGWoUqdCxaERUI+IXChKhc8//LoNEYa1HtdnNAiKRjScAvlNGwbroCNw3TUu24lTji0ppiId9cZO1Z24nyKLH/nAbfB/FUjK1vcrw+Zu03uhfpPainZdCoyEENxFl+yf1pkvRSkTnjH2Mx60Z/OuIcr41ZW4J/E=</Modulus><Exponent>AQAB</Exponent></RSAKeyValue></KeyValue><X509Data><X509Certificate>MIIBuTCCASKgAwIBAgIQW803eW50pq5Gyh0fo2cbWDANBgkqhkiG9w0BAQsFADAbMRkwFwYDVQQDHhAARgBcAGkAZwBmAHgASgBNMB4XDTE4MDUzMDEzMTE0OFoXDTE5MDUzMDE5MTE0OFowGzEZMBcGA1UEAx4QAEYAXABpAGcAZgB4AEoATTCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEAzvnmdA6Rs0MlhGWoUqdCxaERUI+IXChKhc8//LoNEYa1HtdnNAiKRjScAvlNGwbroCNw3TUu24lTji0ppiId9cZO1Z24nyKLH/nAbfB/FUjK1vcrw+Zu03uhfpPainZdCoyEENxFl+yf1pkvRSkTnjH2Mx60Z/OuIcr41ZW4J/ECAwEAATANBgkqhkiG9w0BAQsFAAOBgQCz5NG7LBqjpsd4TSgaESWNAhT3LF4H17vDHzvPNKzYo0A3lefN0zgEiq9z1aNPmyrRxbRC2MZ2yKKVu/b9WJaHk4Ou6/DJ6lkgsPI1ZPFccf6oiSkuGFsMc5GjLtxB4iT+99XOvFpk4rJUjpAZxwu8fWKdbcd1RWx+t5hyYTv+bw==</X509Certificate></X509Data></KeyInfo></Signature></r:issuer></r:license></msrel:RelData></KeyInfo></Signature></asmv1:assembly>

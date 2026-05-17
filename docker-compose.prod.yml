@@ -1,0 +1,32 @@
+services:
+  app:
+    build: .
+    platform: linux/amd64
+    restart: unless-stopped
+    env_file:
+      - .env.prod
+    ports:
+      - "127.0.0.1:8080:80"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - voovi_prod_doc:/var/www/html/doc
+      - voovi_prod_log:/var/www/html/log
+      - voovi_prod_upload:/var/www/html/upload
+      - voovi_prod_files:/var/www/html/files
+      - voovi_prod_voicecatalog:/var/www/html/voicecatalog
+      - voovi_prod_img:/var/www/html/img
+      - voovi_prod_vipiska:/var/www/html/vipiska
+      - voovi_prod_scheta:/var/www/html/scheta
+      - voovi_prod_mail_database:/var/www/html/mail/database
+
+volumes:
+  voovi_prod_doc:
+  voovi_prod_log:
+  voovi_prod_upload:
+  voovi_prod_files:
+  voovi_prod_voicecatalog:
+  voovi_prod_img:
+  voovi_prod_vipiska:
+  voovi_prod_scheta:
+  voovi_prod_mail_database:

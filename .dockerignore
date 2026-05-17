@@ -1,0 +1,35 @@
+# Git
+.git
+.gitignore
+
+# Логи и временные файлы
+log/
+*.log
+AAAlog-post.txt
+*.sql
+.env*
+
+# Документы (большой объём, при необходимости монтировать volume)
+doc/
+
+# Конфиг с паролями — в контейнере используется docker/conf.php
+conf.php
+
+# IDE и системное
+.idea
+.vscode
+*.swp
+*.swo
+.DS_Store
+
+# Docker (чтобы не копировать в образ рекурсивно)
+Dockerfile
+docker-compose*.yml
+.dockerignore
+
+# Прочее (опционально уменьшает образ)
+node_modules
+*.zip
+*.xls
+*.xlsx
+testexcel.zip

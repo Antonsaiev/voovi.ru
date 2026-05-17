@@ -1,0 +1,358 @@
+<?php
+# подключаем конфиг
+include 'conf.php';  
+
+# проверка авторизации
+if (isset($_COOKIE['id']) and isset($_COOKIE['hash'])) 
+{    
+    $userdata = mysql_fetch_assoc(mysql_query("SELECT * FROM users WHERE users_id = '".intval($_COOKIE['id'])."' LIMIT 1"));
+
+    if(($userdata['users_hash'] !== $_COOKIE['hash']) or ($userdata['users_id'] !== $_COOKIE['id'])) 
+    { 
+        setcookie('id', '', time() - 60*24*30*12, '/'); 
+        setcookie('hash', '', time() - 60*24*30*12, '/');
+    setcookie('errors', '1', time() + 60*24*30*12, '/'); 
+    header('Location: index.php'); exit();
+    } 
+} 
+else 
+{ 
+  setcookie('errors', '2', time() + 60*24*30*12, '/');
+  header('Location: index.php'); exit();
+}
+?>
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+	<meta http-equiv="content-type" content="text/html" charset="utf-8" />
+	<meta http-equiv="Content-Style-Type" content="text/css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+	<style>
+	.iframestyledivaaa {
+		background: #fff;
+		float:right;
+		border: 0px solid #333;
+		box-shadow: 0px 0px 30px #333;
+	}
+	</style>
+</head>
+<body>
+<?php
+# шапка
+include 'header.php';  
+?>
+<div class="container" style="margin-top: 60px;">
+<div class="row">
+
+<div class="col-md-12">
+
+<div class="bs-example">
+   
+<h3 style="border-bottom: 1px #333 solid;">Все клиенты</h3>
+
+
+<form action="" method="GET" name="form">
+ИНН: <input type="text" name="inn"  value="<?php echo $_GET['inn']; ?>"  />
+<input type="submit" value="Поиск"><br><br>
+</form>
+
+
+<table class="table tablehover">
+
+<?php
+
+$search_slovo = $_GET['naim'];
+$search_slovo1 = $_GET['inn'];
+$search_slovo2 = $_GET['kpp'];
+$search_slovo4 = $_GET['ogrn'];
+$search_slovo3 = $_GET['email'];
+
+
+
+if ((isset($search_slovo1))) {
+	echo '
+	<thead>
+        <tr>
+		<th style="width: 30px;"></th>
+		<th>Название</th>
+		  <th>ИНН</th>
+          <th>КПП</th>
+		  <th>ОГРН</th>
+          <th style="width: 1px;"><span class="glyphicon glyphicon-time"></span></th>
+		  <th style="width: 1px;"><span class="glyphicon glyphicon-user"></span></th>';
+	
+		  
+        echo ' </tr>
+    </thead>';
+$search_name= mysql_query("SELECT * FROM `ogrn` WHERE CONCAT(naim,' ',inn) LIKE '%$search_slovo1%' AND `naim` LIKE '%$search_slovo%'  AND `kpp` LIKE '%$search_slovo2%' AND `ogrn` LIKE '%$search_slovo4%' AND `email` LIKE '%$search_slovo3%' LIMIT 40");
+if (mysql_num_rows($search_name) != 0) {
+while ($row = mysql_fetch_assoc($search_name)) {
+
+
+
+					
+						
+echo '<tr  id="open'.$row['id'].'"  style="font-size: 12px;"><td>';
+								echo $saas++;
+								echo '</td>';
+								echo '<td>';
+								echo $row['naim'];
+								echo '
+								
+<script>
+$("#open'.$row['id'].'").live("dblclick", function() {
+	
+	
+
+	var div = document.getElementById("kommenta'.$row['id'].'");
+    var iframe = document.createElement("iframe");
+    var a = document.createElement("a");
+    div.appendChild(iframe);
+	div.appendChild(a);
+	iframe.name = "MyFrame'.$row['id'].'";
+	iframe.src = "/aaadate.php?ogrn='.$row['ogrn'].'&kli='.$row['id'].'&inn='.$row['inn'].'&kpp='.$row['kpp'].'";
+	iframe.width = document.documentElement.clientWidth - document.documentElement.clientWidth / 10;
+	iframe.height = document.documentElement.clientHeight+20;
+	iframe.className = "iframestyledivaaa";
+	document.getElementById("kommenta'.$row['id'].'").className = "contai";
+	
+	
+});
+
+
+
+$(document).ready(function(){
+    $("#kommenti'.$row['id'].'").click(function(){
+        $("#kommenta'.$row['id'].'").empty();
+		document.getElementById("kommenta'.$row['id'].'").className = "";
+		
+    }); 
+});
+</script>
+<div id="kommenti'.$row['id'].'">
+<div id="kommenta'.$row['id'].'"></div>
+</div>
+</td>';
+								echo '<td style="width: 100px;">';
+								echo $row['inn'];
+								echo '</td>';
+								echo '<td style="width: 100px;">';
+								echo $row['kpp'];
+								echo '</td>';
+								echo '<td style="width: 100px;">';
+								echo $row['ogrn'];
+								echo '</td>';
+								echo '<td>';
+								echo '<a title="Новое напоминание" href="./napomni.php?id=' .$row['id']. '"><span class="glyphicon glyphicon-time"></span></a>';
+								echo '</td>';
+								echo '<td>';
+								echo '<a title="Карточка клиента" href="./kartklient.php?id=' .$row['id']. '"><span class="glyphicon glyphicon-user"></span></a>';
+								echo '</td>';
+								echo '</tr>';
+						
+				
+				
+
+
+
+
+
+
+
+
+
+
+
+
+}
+} else {
+echo "
+Ничего не найдено<br>
+<div class='alert alert-danger'>Проверьте наличие пробела в ИНН</div>";
+if(isset($_GET['inn'])) {
+	echo "<a href='/newogrn.php?id=186&inn=".$_GET['inn']."&kpp='>Создать организацию по ИНН: ".$_GET['inn']."</a>";
+}
+}
+} 
+?>
+</table>
+
+
+
+
+
+
+<br><br>
+
+
+
+
+<?
+
+
+						$num = 50; 
+						$page = $_GET['page'];
+						$result00 = mysql_query("SELECT COUNT(*) FROM ogrn");
+						$temp = mysql_fetch_array($result00);
+						$posts = $temp[0];
+						$total = (($posts - 1) / $num) + 1;
+						$total =  intval($total);
+						$page = intval($page);
+						if(empty($page) or $page < 0) $page = 1;
+						if($page > $total) $page = $total;
+						$start = $page * $num - $num;	
+
+// Проверяем нужны ли стрелки назад
+if ($page != 1) $pervpage = '<a href=?page=1>Первая</a> | <a href=?page='. ($page - 1) .'>Предыдущая</a> | ';
+// Проверяем нужны ли стрелки вперед
+if ($page != $total) $nextpage = ' | <a href=?page='. ($page + 1) .'>Следующая</a> | <a href=?page=' .$total. '>Последняя</a>';
+
+// Находим две ближайшие станицы с обоих краев, если они есть
+if($page - 5 > 0) $page5left = ' <a href=?page='. ($page - 5) .'>'. ($page - 5) .'</a> | ';
+if($page - 4 > 0) $page4left = ' <a href=?page='. ($page - 4) .'>'. ($page - 4) .'</a> | ';
+if($page - 3 > 0) $page3left = ' <a href=?page='. ($page - 3) .'>'. ($page - 3) .'</a> | ';
+if($page - 2 > 0) $page2left = ' <a href=?page='. ($page - 2) .'>'. ($page - 2) .'</a> | ';
+if($page - 1 > 0) $page1left = '<a href=?page='. ($page - 1) .'>'. ($page - 1) .'</a> | ';
+
+if($page + 5 <= $total) $page5right = ' | <a href=?page='. ($page + 5) .'>'. ($page + 5) .'</a>';
+if($page + 4 <= $total) $page4right = ' | <a href=?page='. ($page + 4) .'>'. ($page + 4) .'</a>';
+if($page + 3 <= $total) $page3right = ' | <a href=?page='. ($page + 3) .'>'. ($page + 3) .'</a>';
+if($page + 2 <= $total) $page2right = ' | <a href=?page='. ($page + 2) .'>'. ($page + 2) .'</a>';
+if($page + 1 <= $total) $page1right = ' | <a href=?page='. ($page + 1) .'>'. ($page + 1) .'</a>';
+
+// Вывод меню если страниц больше одной
+
+if ($total > 1)
+{
+Error_Reporting(E_ALL & ~E_NOTICE);
+echo "<div class=\"pstrnav\">";
+echo $pervpage.$page5left.$page4left.$page3left.$page2left.$page1left.'<b>'.$page.'</b>'.$page1right.$page2right.$page3right.$page4right.$page5right.$nextpage;
+echo "</div>";
+}
+
+
+
+
+
+
+	echo '<table class="table tablehover">
+	<thead>
+        <tr>
+		<th style="width: 30px;"></th>
+		<th>Название</th>
+		  <th>ИНН</th>
+          <th>КПП</th>
+		  <th>ОГРН</th>
+          <th style="width: 1px;"><span class="glyphicon glyphicon-time"></span></th>
+		  <th style="width: 1px;"><span class="glyphicon glyphicon-user"></span></th>';
+	
+		  
+        echo ' </tr>
+    </thead>';
+					
+					
+					$saas = 1;		
+					
+						$query = mysql_query("SELECT * from ogrn ORDER BY id ASC LIMIT $start, $num");	
+							while($row = mysql_fetch_array($query)) {
+								echo '<tr  id="open'.$row['id'].'"  style="font-size: 12px;"><td>';
+								echo $saas++;
+								echo '</td>';
+								echo '<td>';
+								echo $row['naim'];
+								echo '
+								
+<script>
+$("#open'.$row['id'].'").live("dblclick", function() {
+	
+	
+
+	var div = document.getElementById("kommenta'.$row['id'].'");
+    var iframe = document.createElement("iframe");
+    var a = document.createElement("a");
+    div.appendChild(iframe);
+	div.appendChild(a);
+	iframe.name = "MyFrame'.$row['id'].'";
+	iframe.src = "/aaadate.php?ogrn='.$row['ogrn'].'&kli='.$row['id'].'&inn='.$row['inn'].'&kpp='.$row['kpp'].'";
+	iframe.width = document.documentElement.clientWidth - document.documentElement.clientWidth / 10;
+	iframe.height = document.documentElement.clientHeight+20;
+	iframe.className = "iframestyledivaaa";
+	document.getElementById("kommenta'.$row['id'].'").className = "contai";
+	
+	
+});
+
+
+
+$(document).ready(function(){
+    $("#kommenti'.$row['id'].'").click(function(){
+        $("#kommenta'.$row['id'].'").empty();
+		document.getElementById("kommenta'.$row['id'].'").className = "";
+		
+    }); 
+});
+</script>
+<div id="kommenti'.$row['id'].'">
+<div id="kommenta'.$row['id'].'"></div>
+</div>
+</td>';
+								echo '<td style="width: 100px;">';
+								echo $row['inn'];
+								echo '</td>';
+								echo '<td style="width: 100px;">';
+								echo $row['kpp'];
+								echo '</td>';
+								echo '<td style="width: 100px;">';
+								echo $row['ogrn'];
+								echo '</td>';
+								echo '<td>';
+								echo '<a title="Новое напоминание" href="./napomni.php?id=' .$row['id']. '"><span class="glyphicon glyphicon-time"></span></a>';
+								echo '</td>';
+								echo '<td>';
+								echo '<a title="Карточка клиента" href="./kartklient.php?id=' .$row['id']. '"><span class="glyphicon glyphicon-user"></span></a>';
+								echo '</td>';
+								echo '</tr>';
+						} 
+					
+				echo '</table>';
+				
+				
+
+
+if ($total > 1)
+{
+Error_Reporting(E_ALL & ~E_NOTICE);
+echo "<div class=\"pstrnav\">";
+echo $pervpage.$page5left.$page4left.$page3left.$page2left.$page1left.'<b>'.$page.'</b>'.$page1right.$page2right.$page3right.$page4right.$page5right.$nextpage;
+echo "</div>";
+}
+
+
+
+?>
+<br>
+</div>
+</div>
+
+
+</div><?php
+# левая колонка сайта
+include 'footer.php';  
+?><br>
+<br>
+</div>
+
+
+
+
+
+
+
+			
+			
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+</body>
+</html>

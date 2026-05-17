@@ -1,0 +1,11 @@
+# Для Docker: редирект на HTTPS отключён (локально нет сертификата на 443)
+RewriteEngine On
+RedirectMatch 404 /\.git
+RedirectMatch 404 /\.idea
+RedirectMatch 404 /\.vscode
+
+<FilesMatch "^(\.env.*|\.dockerignore|\.gitignore|Dockerfile|docker-compose.*\.ya?ml|dev\.sh|.*\.sql)$">
+    Require all denied
+</FilesMatch>
+
+RewriteRule ^map/?$			    maps.php

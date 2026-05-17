@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html itemscope="" itemtype="http://schema.org/WebPage" lang="ru">
+<head>
+	<title></title>
+	<meta http-equiv="content-type" content="text/html" charset="utf-8" />
+	<meta http-equiv="Content-Style-Type" content="text/css" />
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="css/bootstrap.min.css" rel="stylesheet">
+<link href="https://use.fontawesome.com/releases/v5.0.13/css/all.css" rel="stylesheet">
+	<script type="text/javascript" src="https://code.jquery.com/jquery-1.8.3.min.js"></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js"></script>
+</head>
+  <body>
+<div id class="navbarl navbar-inversel navbar-fixed-top" role="navigation">
+</div>
+  <script>
+  $(document).ready(function(){
+$('#best').load( "conf2.php");
+});/*end  ready*/
+</script>
+<div class="container" style="margin-top: 150px;">
+<div class="row">
+<div class="by amt">
+<div class="text-right"><i class="far fa-file-excel"></i></div>
+  <table class="table tablehover rowclick">
+<thead>
+<th>№</th>
+<th>Вид</th>
+<th>Пол</th>
+<th>Артикул</th>
+<th>Размер</th>
+<th>Цвет</th>
+<th>Количество</th>
+<th>GTIN</th>
+<th>Код КМ</th>
+<th>Действия</th>
+</thead>
+<tbody id="best">
+</tbody>
+	</table>
+</div>
+</div>
+</div>
+    </body>
+</html>

@@ -1,0 +1,12 @@
+{
+    "version": "0.0.3",
+    "release_date": "2026-02-24",
+    "download_url": "https://voovi.ru/files/agentkkt/AgentKKT.exe",
+    "sha256": "",
+    "changelog": [
+        "Исправлена ошибка соединения",
+        "Добавлена новая функция"
+    ],
+    "required": false,
+    "min_version": "0.0.1"
+}

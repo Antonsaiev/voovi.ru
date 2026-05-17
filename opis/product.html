@@ -1,0 +1,152 @@
+
+<html itemscope="" itemtype="http://schema.org/WebPage" lang="ru">
+<head>
+	<title></title>
+	<meta http-equiv="content-type" content="text/html" charset="utf-8" />
+	<meta http-equiv="Content-Style-Type" content="text/css" />
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="/opis/css/bootstrap.min.css" rel="stylesheet">
+<link href="/opis/css/toolkit.css" rel="stylesheet">
+<link href="https://use.fontawesome.com/releases/v5.0.13/css/all.css" rel="stylesheet">
+	<script type="text/javascript" src="https://code.jquery.com/jquery-1.8.3.min.js"></script>
+	<script src="https://code.jquery.com/jquery-1.9.1.js"></script>
+	<script src="/opis/js/script.js"></script>
+</head>
+  <body>
+<div id class="navbarl navbar-inversel navbar-fixed-top" role="navigation">
+</div>
+  <script>
+      $(document).ready(function()
+	  {
+          $('#best').load( "/opis/conf2.php"); // 1000 это 1 секунда
+
+	  })/* ;end  ready*/
+</script>
+<div class="container" style="margin-top: 150px;">
+<div class="row">
+<div class="by amt">
+<div class="row text-right">
+<span id="ar" onClick="ar(this);">Архив</span>
+	<input type="file" id="files" class="hidden"/>
+	<input type="submit" value="Загрузить" id="save"class="hidden"/>
+	<label for="files" class="far fa-file-excel" class="submit button"></label>
+</div>
+	<div class="table-responsive text-nowrap">
+  <table class="table tablehover table-striped w-auto" >
+<thead >
+<th class="text-center">№</th>
+<th class="text-center col-md-3">Вид</th>
+<th class="text-center">Пол</th>
+<th class="text-center">Артикул</th>
+<th class="text-center col-md-1">Размер</th>
+<th class="text-center">Бренд</th>
+<th class="text-center">Материал верха</th>
+<th class="text-center">Материал подкладки</th>
+<th class="text-center">Материал низа</th>
+<th class="text-center">Цвет</th>
+<th class="text-center">ТНВЭД</th>
+<th class="text-center">Страна</th>
+<th class="text-center">Количество</th>
+<th class="text-center">GTIN</th>
+<th class="text-center">Код КМ</th>
+<th class="text-center">Действия</th>
+</thead>
+<tbody id="best">
+
+</tbody>
+	  <thead>
+	  <tr>
+		  <th></th>
+		  <th></th>
+		  <th></th>
+		  <th></th>
+		  <th></th>
+		  <th></th>
+		  <th></th>
+		  <th></th>
+		  <th></th>
+		  <th></th>
+		  <th></th>
+		  <th></th>
+		  <th></th>
+		  <th></th>
+		  <th></th>
+		  <td><div class="row text-center"><i id="add" class="fas fa-plus" onClick="f(this);"></i></div></td>
+	  </tr>
+	  </thead>
+	</table>
+	</div>
+</div>
+</div>
+</div>
+<form>
+<label id="dobin" onClick="din(this);">Добавить КМ</label>
+<div id ="dobinp" class="dobkm"></div>
+</form>
+
+<!--!-->
+<script>
+
+/*
+$(document).ready(function(){        
+  
+})
+
+
+
+ 
+
+var timerId;
+
+  qr.onfocus = function() {
+
+    var lastValue = qr.value;
+    timerId = setInterval(function() {
+      if (qr.value != lastValue) {
+      }
+    }, 20);
+  };
+
+   
+   var vid=document.getElementById("vid").value;
+   var  pol=document.getElementById("pol").value;
+   var  art=document.getElementById("art").value;
+   var  razm=document.getElementById("razm").value;
+   var  count=document.getElementById("count").value;
+   var  brend=document.getElementById("brend").value;
+   var  mat_verh=document.getElementById("mat_verh").value;
+   var  mat_pod=document.getElementById("mat_pod").value;
+   var  mat_niz=document.getElementById("mat_niz").value;
+   var  tnved=document.getElementById("tnved").value;
+   var  inn=document.getElementById("inn").value;
+   var  contry=document.getElementById("contry").value;
+   				$(document).ready(function(){
+    $.ajax({
+     url: '/opis/dob.php',
+        type: "POST",
+      data: 
+		{
+		id_vid:vid,
+		id_pol:pol,
+		id_art:art,
+		id_razm:razm,
+		id_count:count,
+		id_brend:brend,
+		id_mat_verh:mat_verh,
+		id_mat_pod:mat_pod,
+		id_mat_niz:mat_niz,
+		id_tnved:tnved,
+		id_inn:inn,
+		id_contry:contry
+		},
+       success: function(response){
+    $('.modal-shadow').hide();
+    $('.modal-window').hide();
+			}
+    });
+})
+*/
+
+</script>
+    </body>
+</html>
