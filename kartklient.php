@@ -3,6 +3,27 @@
 include 'conf.php';
 include 'invoice_action.php';
 
+if (!function_exists('kartklient_h')) {
+    function kartklient_h($value) {
+        return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
+    }
+}
+if (!function_exists('kartklient_mark_class')) {
+    function kartklient_mark_class($value) {
+        $value = trim((string)$value);
+        if ($value == 'VIP') {
+            return 'is-vip';
+        }
+        if ($value == 'Друг') {
+            return 'is-friend';
+        }
+        if ($value == 'SOS') {
+            return 'is-sos';
+        }
+        return 'is-mark';
+    }
+}
+
 		$q = "SELECT * FROM ogrn WHERE id =$_GET[id]";
 		$result = mysql_query($q);
 		$person = mysql_fetch_array($result);
@@ -153,7 +174,7 @@ $type_company = array(
 <link rel="shortcut icon" href="/favicon.ico">
 
 </head>
-<body>
+<body class="kartklient-page">
 <?php
 # шапка
 include 'header.php';
@@ -162,9 +183,9 @@ include 'header.php';
 <div id="allmadal" class="allca"></div>
 <div id="allc" class="allc">
 </div>
-<div class="container" style="margin-top: 60px;">
+<div class="container kartklient-container">
 <div class="row">
-    <div class="col-md-12">
+    <div class="col-md-12 kartklient-layout">
 <?php
 if(isset($_POST['nksubmit'])){
 $q2 = "SELECT * FROM klient WHERE id=(SELECT MAX(id) FROM klient)";
@@ -178,7 +199,33 @@ mysql_query($ogrnlico) or die(mysql_error($links));
 }
 ?>
 
-<div class="col-md-2">
+<section class="kartklient-hero <?php echo $person['bl'] == 0 ? '' : 'is-blocked'; ?>">
+    <div class="kartklient-hero-main">
+        <div class="kartklient-eyebrow kartklient-hero-meta">
+            <span>ИНН <?php echo kartklient_h($person['inn']); ?></span>
+            <?php if (!empty($person['kpp'])): ?>
+                <span>КПП <?php echo kartklient_h($person['kpp']); ?></span>
+            <?php endif; ?>
+            <?php if (!empty($person['ogrn'])): ?>
+                <span>ОГРН <?php echo kartklient_h($person['ogrn']); ?></span>
+            <?php endif; ?>
+        </div>
+        <h1><?php echo kartklient_h($person['naim']); ?></h1>
+    </div>
+    <div class="kartklient-hero-side">
+        <?php if ($person['mark']): ?>
+            <span class="kartklient-badge kartklient-mark-badge <?php echo kartklient_mark_class($person['mark']); ?>"><?php echo kartklient_h($person['mark']); ?></span>
+        <?php endif; ?>
+        <span id="kartklientBlacklistBadge" class="kartklient-badge is-danger <?php echo $person['bl'] == 0 ? 'is-hidden' : ''; ?>">
+            Черный список
+        </span>
+        <a class="btn kartklient-edit-link" href="/kartklientred.php?id=<?php echo (int)$person['id']; ?>&inn=<?php echo urlencode($person['inn']); ?>">
+            <span class="glyphicon glyphicon-cog" aria-hidden="true"></span> Редактировать
+        </a>
+    </div>
+</section>
+
+<div class="col-md-2 kartklient-actions">
 
 
 <div style="margin-bottom: 6px; padding: 0; " class="btn-group col-md-12 ">
@@ -232,14 +279,8 @@ mysql_query($ogrnlico) or die(mysql_error($links));
       </div>!-->
 
 
-<button style="margin-bottom: 6px;" type="button" class="btn btn-primary col-md-12" data-toggle="modal" data-target=".bs-example-modal-lg">
+<button style="margin-bottom: 6px;" type="button" class="btn btn-primary col-md-12" data-toggle="modal" data-target="#kartklientContactModal">
 <span class="icon-user4"></span> Новый контакт</button>
-
-
-
-
-<a href="/napominogrn.php?id=<?php echo $_GET['id']; ?>"><button style="margin-bottom: 6px;" type="button" class="btn btn-info col-md-12" >
-<span class="glyphicon glyphicon-calendar" aria-hidden="true"></span> Новая задача</button></a>
 
 	<a href="/svyaz.php?id=<?php echo $_GET['id']; ?>&svyaz=<?php 	echo $person['rand'];?>">
 		<button style="margin-bottom: 6px;" type="button" class="btn btn-serii col-md-12" >
@@ -258,7 +299,7 @@ mysql_query($ogrnlico) or die(mysql_error($links));
 	 ?></button>
 
 <!-- Modal -->
-<div class="modal fade" id="myModalBL" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+<div class="modal fade kartklient-confirm-modal" id="myModalBL" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
   <div class="modal-dialog" role="document">
     <div class="modal-content">
       <div class="modal-header">
@@ -277,9 +318,6 @@ mysql_query($ogrnlico) or die(mysql_error($links));
     </div>
   </div>
 </div>
-    <label id="ipsvuz" style="margin-bottom: 6px;display: none"  class="btn btn-serii col-md-12" >
-        <span class="glyphicon glyphicon-random" aria-hidden="true"></span> привязать звонок
-    </label>
 	<script>
 		$('#bl').click(function () {
 			$.ajax({
@@ -287,18 +325,26 @@ mysql_query($ogrnlico) or die(mysql_error($links));
 				url: "pusya.php",
 				data: "tip=bl&ogrn=<?php echo $_GET['id']; ?>",
 				success: function(msg){
+					var hero = document.querySelector(".kartklient-hero");
+					var blacklistBadge = document.getElementById("kartklientBlacklistBadge");
 					if(msg == '0'){
-						document.getElementById("blheader1").className = 'headerh3';
-						document.getElementById("blheader2").className = 'headerh3';
-						document.getElementById("blheader3").className = 'headerh3';
-						document.getElementById("blheader4").className = 'headerh3';
+						if (hero) {
+							hero.className = hero.className.replace(/\bis-blocked\b/g, "").replace(/\s+/g, " ").replace(/^\s|\s$/g, "");
+						}
+						if (blacklistBadge) {
+							blacklistBadge.className = "kartklient-badge is-danger is-hidden";
+							blacklistBadge.innerHTML = "Черный список";
+						}
 						document.getElementById("valuebl").innerHTML = '<span class="glyphicon glyphicon-fire" aria-hidden="true"></span> Добавить в черный список';
 						document.getElementById("myModalLabelBL").innerHTML = 'Вы уверены что хотите добавить организацию в черный список';
 					}else{
-						document.getElementById("blheader1").className = 'headerbl';
-						document.getElementById("blheader2").className = 'headerbl';
-						document.getElementById("blheader3").className = 'headerbl';
-						document.getElementById("blheader4").className = 'headerbl';
+						if (hero && hero.className.indexOf("is-blocked") === -1) {
+							hero.className += " is-blocked";
+						}
+						if (blacklistBadge) {
+							blacklistBadge.className = "kartklient-badge is-danger";
+							blacklistBadge.innerHTML = "Черный список";
+						}
 						document.getElementById("valuebl").innerHTML = '<span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span> Убрать из черного списока';
 						document.getElementById("myModalLabelBL").innerHTML = 'Вы уверены что хотите убрать организацию из черного списока';
 					}
@@ -307,15 +353,12 @@ mysql_query($ogrnlico) or die(mysql_error($links));
 		});
 	</script>
 
-<div class="modal fade bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg" style="
-    width: 600px;
-    margin: 30px auto;
-">
-    <div class="modal-content">
-<form action="" method="post">
-<div class="col-md-12">
-<div style="background: #ddd; padding: 6px; padding-top: 0;margin-top: 10px;border-radius: 5px;"><strong><h4 style="border-bottom: 1px #FFF solid; font-weight: bold;background: #5D75A8;padding: 4px 6px;border-radius: 3px;border-bottom-left-radius: 0;border-bottom-right-radius: 0;color: #fff;margin: 0px -5px 6px -5px;padding-bottom: 4px;"><span class="icon-user4"></span> Контактное лицо</h4></strong><div class="input-group">
+<div id="kartklientContactModal" class="modal fade kartklient-contact-modal" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg kartklient-contact-dialog">
+    <div class="modal-content kartklient-contact-content">
+<form action="" method="post" class="kartklient-contact-form">
+<div class="col-md-12 kartklient-contact-body">
+<div class="kartklient-contact-panel"><strong><h4><span class="icon-user4"></span> Контактное лицо <button type="button" class="close kartklient-contact-close" data-dismiss="modal" aria-label="Закрыть"><span aria-hidden="true">&times;</span></button></h4></strong><div class="input-group">
 <span class="input-group-addon">ФИО:</span>
 <input class="form-control" name="fio" type="text" id="fio" value="" style="box-sizing: border-box; border-color: rgb(204, 204, 204); border-bottom-right-radius: 4px; border-top-right-radius: 4px; padding-left: 7px;">
 </div>
@@ -352,33 +395,44 @@ font-weight: normal;
 </div>
 </div>
 
-<input type="submit" name="nksubmit" value="Зарегестрировать" class="btn btn-primary" role="button" style="
-    margin-left: 5px;
-    margin-top: -5px;
-    padding-top: 10px;
-    border: none;
-    border-bottom-left-radius: 5px;
-    border-bottom-right-radius: 5px;
-">
+<input type="submit" name="nksubmit" value="Зарегистрировать" class="btn btn-primary kartklient-contact-submit" role="button">
 
 </form>
     </div>
   </div>
 </div>
+<script>
+    $(function () {
+        var contactModal = $('#kartklientContactModal');
+        var blacklistModal = $('#myModalBL');
+        var rowContactModals = $('.kartklient-row-contact-modal');
+        var topModals = contactModal.add(blacklistModal).add(rowContactModals);
+        topModals.each(function () {
+            $(this).appendTo(document.body);
+        });
+        topModals.on('show.bs.modal', function () {
+            $('#modal-shadowkube, #allmadal, #allc, #allmadalc, #allct').hide();
+        });
+        topModals.on('shown.bs.modal', function () {
+            $('.modal-backdrop').last().css('z-index', 30040);
+            $(this).css('z-index', 30050);
+        });
+        $('.kartklient-collapse-heading').on('keydown', function (event) {
+            if (event.which === 13 || event.which === 32) {
+                event.preventDefault();
+                $(this).trigger('click');
+            }
+        });
+    });
+</script>
 
 </div>
 
-	 <div class="col-md-10">
-	 <div class="col-md-6">
-	 <div class="col-md-12">
-	 <h3 class="<?php
-	 if($person['bl'] == 0){
-		 echo 'headerh3';
-	 }else{
-		 echo 'headerbl';
-	 }
-	 ?>" id="blheader1">
-         Карточка организации
+	 <div class="col-md-10 kartklient-content">
+	 <div class="col-md-6 kartklient-info-column">
+	 <div class="col-md-12 kartklient-card kartklient-details-card">
+	 <h3 class="headerh3" id="blheader1">
+	         Реквизиты
          <?php
          if ($person['mark']) {
              if ($person['mark'] == "VIP") {
@@ -451,15 +505,15 @@ font-weight: normal;
 
 
         </div>
-			 <div class="col-md-12">
+				 <div class="col-md-12 kartklient-card kartklient-collapsible-card">
 
-			<h3 class="<?php
-	 if($person['bl'] == 0){
-		 echo 'headerh3';
-	 }else{
-		 echo 'headerbl';
-	 }
-	 ?>" id="blheader2">Банк</h3>
+			<h3 class="headerh3 kartklient-collapse-heading collapsed" id="blheader2" role="button" tabindex="0" data-toggle="collapse" data-target="#kartklientBankCollapse" aria-expanded="false" aria-controls="kartklientBankCollapse">
+				<span class="kartklient-collapse-toggle">
+					<span>Банк</span>
+					<span class="glyphicon glyphicon-chevron-down" aria-hidden="true"></span>
+				</span>
+			</h3>
+		<div id="kartklientBankCollapse" class="collapse kartklient-collapse-body">
 	 <table class="table">
 		<tr>
 		<th style="padding: 1px 5px; font-size: 14px;" class="col-md-3">БИК</th><th style="font-weight: 100; padding: 1px 5px; font-size: 14px;"><?php  echo $person['bik']; ?></th>
@@ -478,141 +532,79 @@ font-weight: normal;
 		</tr>
 		</table>
 		</div>
-				<div class="col-md-12">
-		<h3 class="<?php
-	 if($person['bl'] == 0){
-		 echo 'headerh3';
-	 }else{
-		 echo 'headerbl';
-	 }
-	 ?>" id="blheader3">Контакты</h3>
-		<table class="table">
+		</div>
+		<div class="col-md-12 kartklient-card">
+		<h3 class="headerh3" id="blheader3">Контакты</h3>
+		<div class="table-responsive kartklient-contacts-wrap">
+		<table class="table kartklient-contacts-table">
 		<thead>
 <tr>
 <th>ФИО</th>
 <th>Должность</th>
 <th>Телефон</th>
 <th>E-mail</th>
+<th class="kartklient-contact-action-cell"></th>
 </tr>
     </thead>
+		<tbody>
 		<?php
 				$a = 1;
+				$contactCount = 0;
 		$query2 = mysql_query("SELECT * from klient_ogrn WHERE idkli = '".$_GET['id']."' ORDER BY id DESC");
 		while($row2 = mysql_fetch_array($query2)) {
 		$query3 = mysql_query("SELECT * from klient WHERE id = '".$row2['klient']."' ORDER BY id DESC");
 		while($row3 = mysql_fetch_array($query3)) {
+				$contactCount++;
+				$contactModalId = 'kartklientContactEditModal'.(int)$row3['id'];
 
 		echo '<tr>';
-		echo '<td style="font-size: 14px;">';
-		echo '',$row3['fio'];
-		echo '</td>';
-		echo '<td style="font-size: 14px;">';
-		echo '',$row3['dol'];
-		echo '</td>';
-		echo '<td style="font-size: 14px;">';
-		$vowels = array("+", "(", ")", " ", "-");
-            $alltel []=str_replace($vowels, "", "$row3[tel]").$row3['id'];
-		echo '
-		<script>
-			$(document).ready(function(){
-				// Текст задается программно
-				var client = new ZeroClipboard($("#copy'.str_replace($vowels, "", "$row3[tel]").'"), {
-					moviePath: "js/copy/ZeroClipboard.swf",
-					debug: false
-				});
-				client.on("dataRequested", function(client, args) {
-					client.setText("'.str_replace($vowels, "", "$row3[tel]").'");
-				});
-			});
-		</script>
-<button id="copy'.str_replace($vowels, "", "$row3[tel]").'" style="
-    background: none;
-    border: none;
-	text-align: left;
-">'.$row3['tel'].'</button>
-		</td>';
-		echo '<td style="font-size: 14px;">';
-		echo '',$row3['email'];
-		echo '</td>';
-		echo '<td style="width:32px;">';
-		echo '<li role="presentation" id="callt'.str_replace($vowels, "", "$row3[tel]").''.$row3["id"].'" style="list-style: none;padding: 10px;" onclick="fn(this);"><span class="glyphicon glyphicon-earphone"></span></li>';
-		echo '</td>';
-		echo '<td style="width:32px;">';
-		echo '<li role="presentation" class="dropdown" style="padding: 10px;">
-        <a id="drop4" href="#" class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" role="button" aria-expanded="false">
-          <span class="glyphicon glyphicon-envelope"></span>
-        </a>
-        <ul id="menu1" class="dropdown-menu" role="menu" aria-labelledby="drop4" style="right: 0;left: inherit;">
-          <li role="presentation"><a role="menuitem" tabindex="-1" href="">Отправить СМС</a></li>
-          <li role="presentation"><a role="menuitem" tabindex="-1" href="">Отправить E-mail</a></li>
-          <li role="presentation" class="divider"></li>
-          <li role="presentation"><a role="menuitem" tabindex="-1" href=""><span style="color: red;" class="glyphicon glyphicon-stop" aria-hidden="true"></span> Не дошло</a></li>
-        </ul>
-      </li>';
-		echo '</td>';
-		echo '<td style="width:32px;">';
+		echo '<td>'.kartklient_h($row3['fio']).'</td>';
+		echo '<td>'.kartklient_h($row3['dol']).'</td>';
+		echo '<td><span class="kartklient-contact-phone">'.kartklient_h($row3['tel']).'</span></td>';
+		echo '<td>'.kartklient_h($row3['email']).'</td>';
+		echo '<td class="kartklient-contact-action-cell">';
 
-		echo '<button style="/* margin-bottom: 6px; */margin: 1px;background: none;color: #333;border: 0;" type="button" class="btn btn-info btn-xs" data-toggle="modal" data-target="#modal'.$row3['id'].'">
+		echo '<button title="Настройки контакта" type="button" class="btn btn-info btn-xs kartklient-contact-edit-button" data-toggle="modal" data-target="#'.$contactModalId.'">
 <span class="icon-wrench"></span></button>
 
-<div id="modal'.$row3['id'].'" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg" style="
-    width: 600px;
-    margin: 30px auto;
-">
-    <div class="modal-content">
-<form action="'.$_SERVER['REQUEST_URI'].'" method="post">
-<div class="col-md-12">
-<div style="background: #ddd; padding: 6px; padding-top: 0;margin-top: 10px;border-radius: 5px;"><strong><h4 style="border-bottom: 1px #FFF solid; font-weight: bold;background: #5D75A8;padding: 4px 6px;border-radius: 3px;border-bottom-left-radius: 0;border-bottom-right-radius: 0;color: #fff;margin: 0px -5px 6px -5px;padding-bottom: 4px;"><span class="icon-user4"></span> Контактное лицо</h4></strong><div class="input-group">
+<div id="'.$contactModalId.'" class="modal fade kartklient-contact-modal kartklient-row-contact-modal" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg kartklient-contact-dialog">
+    <div class="modal-content kartklient-contact-content">
+<form action="'.kartklient_h($_SERVER['REQUEST_URI']).'" method="post" class="kartklient-contact-form">
+<div class="col-md-12 kartklient-contact-body">
+<div class="kartklient-contact-panel"><strong><h4><span class="icon-user4"></span> Контактное лицо <button type="button" class="close kartklient-contact-close" data-dismiss="modal" aria-label="Закрыть"><span aria-hidden="true">&times;</span></button></h4></strong><div class="input-group">
 <span class="input-group-addon">ФИО:</span>
-<input class="form-control" name="fio" type="text" id="fio" value="'.$row3['fio'].'" style="box-sizing: border-box; border-color: rgb(204, 204, 204); border-bottom-right-radius: 4px; border-top-right-radius: 4px; padding-left: 7px;">
+<input class="form-control" name="fio" type="text" value="'.kartklient_h($row3['fio']).'">
 </div>
-<div style="margin-top: 6px;"></div><div class="input-group">
+<div class="input-group">
 <span class="input-group-addon">Должность:</span>
-<input id="dol" type="text" name="dol"class="form-control"  value="'.$row3['dol'].'" />
+<input type="text" name="dol" class="form-control" value="'.kartklient_h($row3['dol']).'" />
 </div>
-<div style="margin-top: 6px;"></div>
 <div class="input-group">
 <span class="input-group-addon">Телефон:</span>
-<input  class="form-control" type="tel" required pattern="[0-9_\-]{10}" placeholder="+7(___) ___ __ __" id="';
+<input class="form-control" type="tel" required pattern="[0-9_\-]{10}" placeholder="+7(___) ___ __ __" id="';
 $str00 = substr($row3['tel'], 2, 1);
 if($str00 == 9){
 echo 'user_phone';
 }else{
 echo 'guser_phone';
 }
-echo $a++ .'" name="tel"  value="'.$row3['tel'].'" />
+echo $a++ .'" name="tel" value="'.kartklient_h($row3['tel']).'" />
 </div>
-<div style="margin-top: 6px;"></div>
 <div class="input-group">
 <span class="input-group-addon">E-mail:</span>
-<input id="email" class="form-control" type="text"name="email"  value="'.$row3['email'].'" />
+<input class="form-control" type="text" name="email" value="'.kartklient_h($row3['email']).'" />
 </div>
-<div style="margin-top: 6px;"></div>
 <div class="input-group">
 <span class="input-group-addon">На оснований:</span>
-<input id="naosnovanii" class="form-control" type="text"name="naosnovanii"  value="'.$row3['naosnovanii'].'" />
+<input class="form-control" type="text" name="naosnovanii" value="'.kartklient_h($row3['naosnovanii']).'" />
 </div>
 </div>
 </div>
-
-<input type="submit" name="nksubmitw'.$row3['id'].'" value="Редактировать" class="btn btn-success" role="button" style="
-    margin-left: 5px;
-    margin-top: -5px;
-    padding-top: 10px;
-    border: none;
-    border-bottom-left-radius: 5px;
-    border-bottom-right-radius: 5px;
-">
-<input type="submit" name="nkdel'.$row3['id'].'" value="Удалить" class="btn btn-primary" role="button" style="
-    margin-left: 5px;
-    margin-top: -5px;
-    padding-top: 10px;
-    border: none;
-    border-bottom-left-radius: 5px;
-    border-bottom-right-radius: 5px;
-">
-
+<div class="kartklient-contact-modal-actions">
+<input type="submit" name="nksubmitw'.$row3['id'].'" value="Редактировать" class="btn btn-success kartklient-contact-submit" role="button">
+<input type="submit" name="nkdel'.$row3['id'].'" value="Удалить" class="btn btn-primary kartklient-contact-delete" role="button">
+</div>
 </form>
     </div>
   </div>
@@ -639,8 +631,13 @@ echo '<script type="text/javascript">
 
 		}
 		}
+		if ($contactCount == 0) {
+			echo '<tr><td colspan="5" class="kartklient-contact-empty">Контактов нет</td></tr>';
+		}
 		?>
+		</tbody>
 		</table>
+		</div>
 
       </div>
 
@@ -697,21 +694,16 @@ echo '<script type="text/javascript">
 
 	 <div class="col-md-6">
 
+		<div class="col-md-12 kartklient-card kartklient-products-card">
+	 <h3 class="headerh3 kartklient-section-title kartklient-collapse-heading collapsed" id="blheader4" role="button" tabindex="0" data-toggle="collapse" data-target="#kartklientProductsCollapse" aria-expanded="false" aria-controls="kartklientProductsCollapse">
+		 <span class="kartklient-collapse-toggle">
+			 <span>Карта продуктов</span>
+			 <span class="glyphicon glyphicon-chevron-down" aria-hidden="true"></span>
+		 </span>
+		 <a onclick="event.stopPropagation(); yesnonep();" id="yesnonep" class="btn btn-info btn-xs" style="font-size: 14px;float: right;margin-top: 0px;margin-left: 10px;">Показать все продукты <span class="glyphicon glyphicon-tags" aria-hidden="true"></span></a>
+	 </h3>
 
-
-        </div>
-
-	 <div class="col-md-6">
-
-		<div class="col-md-12">
-	 <h3 class="<?php
-	 if($person['bl'] == 0){
-		 echo 'headerh3';
-	 }else{
-		 echo 'headerbl';
-	 }
-	 ?>  " id="blheader4">Карта продуктов  <a onclick="yesnonep()" id="yesnonep" class="btn btn-info btn-xs" style="font-size: 14px;float: right;margin-top: 0px;margin-left: 10px;">Показать все продукты <span class="glyphicon glyphicon-tags" aria-hidden="true"></span></a></h3>
-
+<div id="kartklientProductsCollapse" class="collapse kartklient-collapse-body">
 <div id="contaicallp"></div>
 									<script type="text/javascript">
 
@@ -941,17 +933,18 @@ if($aqoigrn['redaktor'] > '0'){
 															}
 					?>
 				</table>
+</div>
 
 
 
-				 <h3 class="<?php
-	 if($person['bl'] == 0){
-		 echo 'headerh3';
-	 }else{
-		 echo 'headerbl';
-	 }
-	 ?>  " id="blheader4">Срок действия</h3>
+				 <h3 class="headerh3 kartklient-collapse-heading collapsed" id="blheader5" role="button" tabindex="0" data-toggle="collapse" data-target="#kartklientSrokCollapse" aria-expanded="false" aria-controls="kartklientSrokCollapse">
+					 <span class="kartklient-collapse-toggle">
+						 <span>Срок действия</span>
+						 <span class="glyphicon glyphicon-chevron-down" aria-hidden="true"></span>
+					 </span>
+				 </h3>
 
+<div id="kartklientSrokCollapse" class="collapse kartklient-collapse-body">
 
 		<table class="table">
 <thead>
@@ -962,7 +955,8 @@ if($aqoigrn['redaktor'] > '0'){
 </tr>
     </thead>
 <?php
-$query = mysql_query("SELECT * FROM call_center INNER JOIN schet ON call_center.ns=schet.ns WHERE call_center.idogrn = '".$_GET['id']."' AND call_center.ns != '' AND schet.dateotkaz = '0000-00-00' GROUP BY call_center.id ORDER BY call_center.date; ");
+$srokDateFrom = date('Ymd', strtotime('-3 years'));
+$query = mysql_query("SELECT * FROM call_center INNER JOIN schet ON call_center.ns=schet.ns WHERE call_center.idogrn = '".$_GET['id']."' AND call_center.ns != '' AND call_center.date >= '".$srokDateFrom."' AND schet.dateotkaz = '0000-00-00' GROUP BY call_center.id ORDER BY call_center.date; ");
 while($row = mysql_fetch_array($query)) {
 echo '<tr style="font-size: 14px;">';
 echo '<td style="font-size: 14px;">';
@@ -977,13 +971,11 @@ echo '<td style="font-size: 14px;">';
 echo substr($row['date'], 6, 2).'.'.substr($row['date'], 4, 2).'.'.substr($row['date'], 0, 4);
 echo '</td>';
 
-echo '<td style="width:1px; font-size: 14px;">';
-echo '<a href="pusya.php?"><span class="glyphicon glyphicon-trash" aria-hidden="true"></span></a>';
-echo '</td>';
 echo '</tr>';
 }
 ?>
 </table>
+</div>
 
 
 
@@ -1008,10 +1000,16 @@ echo '</tr>';
 
 
 
-<div class="col-md-12">
+<div class="col-md-12 kartklient-card kartklient-linked-card">
 
 <div class="bs-example">
-<h3 style="border-bottom: 1px #333 solid;">Cвязанные организации</h3>
+<h3 class="kartklient-section-title kartklient-collapse-heading collapsed" role="button" tabindex="0" data-toggle="collapse" data-target="#kartklientLinkedCollapse" aria-expanded="false" aria-controls="kartklientLinkedCollapse" style="border-bottom: 1px #333 solid;">
+	<span class="kartklient-collapse-toggle">
+		<span>Cвязанные организации</span>
+		<span class="glyphicon glyphicon-chevron-down" aria-hidden="true"></span>
+	</span>
+</h3>
+<div id="kartklientLinkedCollapse" class="collapse kartklient-collapse-body">
 <?
 
 						$num = 8;
@@ -1148,7 +1146,7 @@ echo $pervpagee.$pagee5left.$pagee4left.$pagee3left.$pagee2left.$pagee1left.'<b>
 echo "</div>";
 }
 ?>
-<br>
+</div>
 </div>
 </div>
 
@@ -1170,126 +1168,8 @@ echo "</div>";
 
 
 
-        <div class="col-md-12" style="margin-top: 30px;">
-
-<table class="table" style="border: 2px solid #8BC08B;">
-<thead>
-<tr>
-<th>Дата/Время</th>
-<th>Задача</th>
-<th>Описание</th>
-<th style="width: 1px;" ><span class="glyphicon glyphicon-share"></span></th>
-<th style="width: 1px;" ><span class="glyphicon glyphicon-eye-open"></span></th>
-<th style="width: 1px;" ><span class="glyphicon glyphicon-folder-open"></span></th>
-<th style="width: 1px;" ><span class="glyphicon glyphicon-ok-circle"></span></th>
-</tr>
-</thead>
-<?php
-if($_GET['id'] == ''){
-$idnapomin = 0;
-}else{
-$idnapomin = $_GET['id'];
-}
-$query = mysql_query("SELECT * from napomin WHERE `yes` = '0' AND `produrl` = '$idnapomin'");
-while($row = mysql_fetch_array($query)) {
-$dmg = $row['gr'].$row['mr'].$row['dr'];
-$dmg2 = date("Ymd");
-if ($dmg < $dmg2) {
-echo '<tr id="'.$dmg.'/'.$dmg2.'" title="Задача не выполненна в срок" class="alert alert-danger" style="border-left: 5px #D50000 solid;"><td>';
-} else {
- echo '<tr id="'.$dmg.'/'.$dmg2.'"><td>';
-}echo $row['dr'],".";
-echo $row['mr'],".";
-echo $row['gr'];
-echo ' ';
-echo $row['chr'],":";
-echo $row['mir'];
-echo '</td>';
-echo '<td>';
-if ($row['tipz'] == 'zv') {
-echo "Звонок: ",$row['tel'];
-} if ($row['tipz'] == 'vv') {
-echo "Выставить счет";
-} if ($row['tipz'] == 'ssd') {
-$aaqiq = "SELECT * FROM produkti WHERE id ='".$row['prod']."'";
-$aaqresiult = mysql_query($aaqiq);
-$aaqoigrn = mysql_fetch_array($aaqresiult);
-echo "Действия по продукту: ".$aaqoigrn['name'];
-} if ($row['tipz'] == 'vs') {
-echo "Выезд к клиенту: ";
-  if ($row['gor'] == '1') {
-echo "Пятигорск";
-} if ($row['gor'] == '2') {
-echo "Ставрополь";
-} if ($row['gor'] == '3') {
-echo "Ессентуки";
-} if ($row['gor'] == '4') {
-echo "Мин-Воды";
-} if ($row['gor'] == '5') {
-echo "Юца";
-} if ($row['gor'] == '6') {
-echo "Кисловодск";
-} if ($row['gor'] == '7') {
-echo "ст. Ессентукская";
-} if ($row['gor'] == '8') {
-echo "Иноземцево";
-} if ($row['gor'] == '9') {
-echo "Лермонтов";
-} if ($row['gor'] == '10') {
-echo "Георгиевск";
-} if ($row['gor'] == '11') {
-echo "Железноводск";
-} if ($row['gor'] == '12') {
-echo "Горячеводск";
-} if ($row['gor'] == '13') {
-echo "Суворовская";
-} if ($row['gor'] == '14') {
-echo "Черкеск";
-} if ($row['gor'] == '15') {
-echo "КБР";
-}
-echo " ",$row['mestvs'];
-} if ($row['tipz'] == 'vsv') {
-echo "Встреча в офисе";
-}
-echo '</td>';
-echo '<td>';
-	if(!empty($row['statusprod'])){
-		$saaqiq = "SELECT * FROM call_status WHERE id ='".$row['statusprod']."'";
-		$saaqresiult = mysql_query($saaqiq);
-		$saaqoigrn = mysql_fetch_array($saaqresiult);
-		echo '<b>Статус: </b>'.$saaqoigrn['name'].'<br />';
-	}
-echo '<b>Описание: </b>'.$row['opis'];
-	if(!empty($row['tel'])){
-		echo '<br /><b>Контактное лицо: </b>'.$row['tel'];
-	}
-echo '</td>';
-echo '<td>';
-echo '<a style="width: 1px;" title="Отложить" href="./otlojitnapomin.php?id=' .$row['id']. '"><span class="glyphicon glyphicon-share"></span></a>';
-echo '</td>';
-echo '<td>';
-echo '<a style="width: 1px;" title="Сделать общим" href="./eessobsh.php?id=' .$row['id']. '"><span class="glyphicon glyphicon-eye-open"></span></a>';
-echo '</td>';
-echo '<td>';
-if($row['produrl'] > 0){
-echo '<a style="width: 1px;" title="Открыть" href=".'.$row['tip'].$row['produrl'].'"><span class="glyphicon glyphicon-folder-open"></span></a>';
-}else{
-echo '<span class="glyphicon glyphicon-folder-close"></span>';
-}
-echo '</td>';
-echo '<td>';
-
-if ($dmg < $dmg2) {
-echo '<a style="color: #CE0101; width: 1px;" title="Исполнитель" href="./eess.php?id=' .$row['id']. '"><span class="glyphicon glyphicon-ok-circle"></span></a>';
-} else {
-echo '<a style="width: 1px;"  title="Исполнитель" href="./eess.php?id=' .$row['id']. '"><span class="glyphicon glyphicon-ok-circle"></span></a>';
-}
-
-echo '</td></tr>';}
-
-?>
-</table>
+<div class="col-md-12 kartklient-card kartklient-invoices-card">
+<h3 class="headerh3">Счета</h3>
 
 
 
@@ -1772,23 +1652,6 @@ include 'footer.php';
 	
 	
 <script>
-    //let str='PJSIP/';
-    //let str2='';
-    //    $.ajax({
-    //        url: "iptel.php",
-    //        cache: false,
-    //        data:"whocall=<?//echo $userdata['iptel'];?>//",
-    //        success: function(html){
-    //                let s= html.indexOf(str);
-    //                if(s!=-1) {
-    //                    document.getElementById('ipsvuz').style.display='block';
-    //                }
-    //                else
-    //                {
-    //                    document.getElementById('ipsvuz').style.display='none';
-    //                }
-    //        }
-    //    });allcallnumber
     $('#allcall').click(function () {
         document.getElementById("allmadal").style.display = 'block';
         document.getElementById("allc").style.display = 'block';
@@ -1806,23 +1669,10 @@ include 'footer.php';
         document.getElementById("allmadal").style.display = 'none';
         document.getElementById("allc").style.display = 'none';
     });
-    <?for($io=0;$io<count($alltel);$io++){?>
-    $('#callt<?echo $alltel[$io]?>').click(function () {
-
-
-        document.getElementById("allmadalc").style.display = 'block';
-        document.getElementById("allct").style.display = 'block';
-        $.ajax({
-        });
-
-    });
-
     $('#allmadalc').click(function () {
         document.getElementById("allmadalc").style.display = 'none';
         document.getElementById("allct").style.display = 'none';
-
     });
-    <?}?>
     let key = document.querySelectorAll('.key');
     let display = document.querySelector('.display');
     let clear = document.querySelector('.clear');

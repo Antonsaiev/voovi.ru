@@ -597,9 +597,9 @@ $tohaSearchValue = isset($_GET['inn']) ? trim($_GET['inn']) : '';
 $tohaSearchWhere = "";
 if(isset($_GET['groupi'])){
 if($_GET['groupi']==0){
-$groupi="";
+$groupi="1=1";
 }else{
-$groupi="schet.gr != '".mysql_real_escape_string($_GET['groupi'])."'";
+$groupi="schet.gr = '".mysql_real_escape_string($_GET['groupi'])."'";
 }}else{
 $groupi=$tohaSearchValue === "" ? "schet.inn != ''" : "1=1";
 }

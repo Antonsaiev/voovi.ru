@@ -55,7 +55,8 @@
 </div>
 <div id="status"></div>
 
-<table class="table tablehover rowclick" id="rowclick2" >
+<div class="toha-table-shell kartklient-schet-table-shell">
+<table class="table tablehover rowclick toha-schet-table kartklient-schet-table" id="rowclick2" >
 <thead>
 <tr>
 <th style="width: 1px;"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></th>
@@ -166,6 +167,7 @@ $otgr_number_start = $iz; // продолжаем нумерацию с этог
 <!-- сюда AJAX будет дописывать отгруженные -->
 </tbody>
 </table>
+</div>
 </form>
 
 </div>

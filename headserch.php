@@ -21,19 +21,7 @@ else
   header('Location: index.php'); exit();
 }
 ?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="ru" lang="ru">
-<head>
-	<title></title>
-	<meta http-equiv="content-type" content="text/html" charset="utf-8" />
-	<meta http-equiv="Content-Style-Type" content="text/css" />
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link href="css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body>
-
-<table class="table tablehover">
-
+<div class="header-search-results">
 <?php
 
 $search_slovo = $_GET['naim'];
@@ -228,24 +216,4 @@ if ((isset($search_slovo7))) {
     }
 }
 ?>
-
-</table>
-
-
-
-
-
-
-
-
-
-
-
-
-			
-			
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
-    <script src="js/bootstrap.min.js"></script>
-
-</body>
-</html>
+</div>

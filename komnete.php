@@ -89,6 +89,82 @@ if(!empty($schet['sos_opis'])){
     $ktop = mysql_fetch_array($ktor);
     $ktoi = $ktop['f_name'].' '.$ktop['l_name'];
 }
+if (!function_exists('komnete_h')) {
+    function komnete_h($value) {
+        return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
+    }
+}
+if (!function_exists('komnete_clean_number')) {
+    function komnete_clean_number($value) {
+        $number = (float)str_replace(',', '.', (string)$value);
+        if (abs($number - round($number)) < 0.01) {
+            return number_format($number, 0, '.', ' ');
+        }
+
+        return rtrim(rtrim(number_format($number, 2, '.', ' '), '0'), '.');
+    }
+}
+if (!function_exists('komnete_money')) {
+    function komnete_money($value) {
+        return komnete_clean_number($value).' руб.';
+    }
+}
+
+$komneteInvoiceItems = array();
+$komneteInvoiceTotal = 0;
+$komneteInvoiceQuantity = 0;
+$komneteInvoiceQuery = mysql_query("SELECT * FROM schet WHERE del = '0' AND rand = '".mysql_real_escape_string(isset($_GET['rand']) ? $_GET['rand'] : '')."' ORDER BY id ASC");
+if ($komneteInvoiceQuery) {
+    while($komneteInvoiceRow = mysql_fetch_array($komneteInvoiceQuery)) {
+        $komneteItemCode = isset($komneteInvoiceRow['prod']) ? $komneteInvoiceRow['prod'] : '';
+        $komneteItemName = '';
+        $komneteUnitPrice = 0;
+
+        if (intval($komneteItemCode) > 0) {
+            $komneteTariffQuery = mysql_query("SELECT * FROM tarif WHERE id = ".intval($komneteItemCode)." LIMIT 1");
+            $komneteTariff = $komneteTariffQuery ? mysql_fetch_array($komneteTariffQuery) : false;
+            if ($komneteTariff) {
+                $komneteItemName = isset($komneteTariff['name']) ? $komneteTariff['name'] : '';
+                $komneteUnitPrice = isset($komneteTariff['price']) ? (float)str_replace(',', '.', $komneteTariff['price']) : 0;
+            }
+        }
+
+        if ($komneteItemName === '' && !empty($komneteInvoiceRow['produkt'])) {
+            $komneteProductQuery = mysql_query("SELECT * FROM produkti WHERE id = ".intval($komneteInvoiceRow['produkt'])." LIMIT 1");
+            $komneteProduct = $komneteProductQuery ? mysql_fetch_array($komneteProductQuery) : false;
+            if ($komneteProduct) {
+                $komneteItemName = isset($komneteProduct['name']) ? $komneteProduct['name'] : '';
+            }
+        }
+
+        if ($komneteItemName === '') {
+            $komneteItemName = $komneteItemCode !== '' ? 'Позиция '.$komneteItemCode : 'Позиция без названия';
+        }
+
+        $komneteQuantity = isset($komneteInvoiceRow['kvo']) ? (float)str_replace(',', '.', $komneteInvoiceRow['kvo']) : 0;
+        $komneteDiscount = isset($komneteInvoiceRow['skidka']) ? (float)str_replace(',', '.', $komneteInvoiceRow['skidka']) : 0;
+        $komneteFallbackTotal = isset($komneteInvoiceRow['price']) ? (float)str_replace(',', '.', $komneteInvoiceRow['price']) : 0;
+        $komneteLineTotal = 0;
+
+        if ($komneteQuantity > 0 && $komneteUnitPrice > 0) {
+            $komneteDiscountedPrice = $komneteUnitPrice - (($komneteUnitPrice / 100) * $komneteDiscount);
+            $komneteLineTotal = round($komneteDiscountedPrice * $komneteQuantity, 2);
+        } elseif ($komneteFallbackTotal > 0) {
+            $komneteLineTotal = $komneteFallbackTotal;
+        }
+
+        $komneteInvoiceItems[] = array(
+            'code' => $komneteItemCode,
+            'name' => $komneteItemName,
+            'quantity' => $komneteQuantity,
+            'unit_price' => $komneteUnitPrice,
+            'discount' => $komneteDiscount,
+            'total' => $komneteLineTotal
+        );
+        $komneteInvoiceQuantity += $komneteQuantity;
+        $komneteInvoiceTotal += $komneteLineTotal;
+    }
+}
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="ru" lang="ru">
@@ -203,14 +279,97 @@ if(!empty($schet['sos_opis'])){
         font-size: 14px;
         white-space: nowrap;
     }
-    .komnete-meta-item b {
-        color: #526170;
-        font-size: 12px;
-        text-transform: uppercase;
-    }
-    .komnete-status-area {
-        display: flex;
-        flex: 0 1 440px;
+	    .komnete-meta-item b {
+	        color: #526170;
+	        font-size: 12px;
+	        text-transform: uppercase;
+	    }
+	    .komnete-invoice-meta-item {
+	        align-items: center;
+	    }
+	    .komnete-invoice-toggle {
+	        min-height: 28px;
+	        padding: 4px 9px;
+	        border: 1px solid #2f7fb8 !important;
+	        border-radius: 6px !important;
+	        background: #fff !important;
+	        color: #2f7fb8 !important;
+	        font-size: 12px;
+	        font-weight: 700;
+	        line-height: 1.2;
+	    }
+	    .komnete-invoice-toggle:hover,
+	    .komnete-invoice-toggle:focus {
+	        background: #eef6fb !important;
+	        color: #276b9c !important;
+	        outline: 0;
+	    }
+	    .komnete-invoice-details {
+	        clear: both;
+	        width: 100%;
+	        margin: -8px 0 14px !important;
+	        padding: 13px 16px;
+	        border: 1px solid #dfe6ec;
+	        border-radius: 8px;
+	        background: #fff;
+	        box-shadow: 0 8px 22px rgba(31, 45, 58, 0.06);
+	    }
+	    .komnete-invoice-details.is-collapsed {
+	        display: none;
+	    }
+	    .komnete-invoice-details-head {
+	        display: flex;
+	        align-items: center;
+	        justify-content: space-between;
+	        gap: 12px;
+	        margin-bottom: 10px;
+	        color: #26313d;
+	        font-size: 15px;
+	        font-weight: 800;
+	    }
+	    .komnete-invoice-total {
+	        color: #526170;
+	        font-size: 13px;
+	        font-weight: 700;
+	    }
+	    .komnete-invoice-table-wrap {
+	        width: 100%;
+	        overflow-x: auto;
+	    }
+	    .komnete-invoice-table {
+	        min-width: 720px;
+	    }
+	    .komnete-invoice-table .komnete-invoice-name {
+	        min-width: 260px;
+	        font-weight: 700;
+	    }
+	    .komnete-invoice-table .komnete-invoice-money,
+	    .komnete-invoice-table .komnete-invoice-qty {
+	        white-space: nowrap;
+	        text-align: right;
+	    }
+	    .komnete-invoice-empty {
+	        margin: 0;
+	        color: #6c7884;
+	        font-size: 13px;
+	    }
+	    .komnete-invoice-detail-row.is-collapsed {
+	        display: none;
+	    }
+	    .komnete-invoice-detail-cell {
+	        padding: 0 !important;
+	        background: #f8fafb !important;
+	    }
+	    .komnete-invoice-detail-cell .komnete-invoice-details {
+	        margin: 0 !important;
+	        border-right: 0;
+	        border-left: 0;
+	        border-radius: 0;
+	        box-shadow: none;
+	    }
+	    .komnete-status-area {
+	        display: flex;
+	        flex: 0 1 440px;
         flex-wrap: wrap;
         justify-content: flex-end;
         gap: 8px;
@@ -764,12 +923,45 @@ if(!empty($schet['sos_opis'])){
         color: #fff !important;
         box-shadow: none !important;
     }
-    .komnete-page > #vs {
-        overflow-x: auto;
-    }
-    .komnete-page > .col-md-6 {
-        padding-right: 0;
-        padding-left: 0;
+	    .komnete-page > #vs {
+	        overflow-x: auto;
+	    }
+	    .komnete-page > #zv {
+	        display: flex;
+	        flex-direction: column;
+	        gap: 18px;
+	    }
+	    .komnete-page > #zv > #vs,
+	    .komnete-page > #zv > .komnete-extra-column {
+	        float: none !important;
+	        clear: both;
+	        width: 100% !important;
+	        padding-right: 0 !important;
+	        padding-left: 0 !important;
+	    }
+	    .komnete-page > #zv > .komnete-current-comment,
+	    .komnete-page > #zv > .komnete-comments-history,
+	    .komnete-page > #zv > .komnete-extra-column {
+	        margin: 0 !important;
+	    }
+	    .komnete-page > #zv > .komnete-extra-column {
+	        margin-top: 8px !important;
+	    }
+	    .komnete-page > #zv > .komnete-extra-column > br {
+	        display: none;
+	    }
+	    .komnete-page > #zv > .komnete-extra-column > div#vladelec {
+	        margin-top: 0 !important;
+	    }
+	    .komnete-page > #zv > .komnete-extra-column > div#vladelec + div {
+	        margin-bottom: 18px !important;
+	    }
+	    .komnete-page > #zv > .komnete-extra-column > div#vladelec + div:last-child {
+	        margin-bottom: 0 !important;
+	    }
+	    .komnete-page > .col-md-6 {
+	        padding-right: 0;
+	        padding-left: 0;
     }
     .komnete-page > .col-md-6 .form-group {
         display: flex !important;
@@ -1252,14 +1444,14 @@ if(!empty($schet['sos_opis'])){
             width: 100% !important;
         }
     }
-    .komnete-modern .komnete-comments-history {
-        clear: both;
-        margin-top: 16px;
-        padding-top: 10px;
-    }
-    .komnete-modern .komnete-current-comment {
-        margin-bottom: 16px;
-    }
+	    .komnete-modern .komnete-comments-history {
+	        clear: both;
+	        margin-top: 0;
+	        padding-top: 0;
+	    }
+	    .komnete-modern .komnete-current-comment {
+	        margin-bottom: 0;
+	    }
     .komnete-modern .komnete-current-comment-header {
         display: flex;
         align-items: center;
@@ -1516,12 +1708,20 @@ if(!empty($schet['sos_opis'])){
             align-items: flex-start;
             flex-direction: column;
         }
-        .komnete-status-toggle {
-            width: 100%;
-        }
-        .komnete-modern .table {
-            display: block;
-            overflow-x: auto;
+	        .komnete-status-toggle {
+	            width: 100%;
+	        }
+	        .komnete-invoice-details {
+	            margin-top: 0 !important;
+	            padding: 11px;
+	        }
+	        .komnete-invoice-details-head {
+	            align-items: flex-start;
+	            flex-direction: column;
+	        }
+	        .komnete-modern .table {
+	            display: block;
+	            overflow-x: auto;
             white-space: nowrap;
         }
         .komnete-modern div[style*="float: left"] {

@@ -193,8 +193,10 @@ echo '</td>';
 echo '<td style="font-size: 14px;">';
 echo $row['god'],$row['kto'],$row['otdel'],$row['nomerdog'];
 echo '</td>';
+$invoiceDetailsId = 'komneteInvoiceDetails'.$row['rand'];
 echo '<td style="font-size: 14px;">';
 echo $row['god'],$row['kto'],$row['otdel'],$row['kolichschet'];
+echo ' <button type="button" class="komnete-invoice-toggle" data-target="#'.$invoiceDetailsId.'" aria-expanded="false" aria-controls="'.$invoiceDetailsId.'"><span class="komnete-invoice-toggle-text">Состав</span></button>';
 echo '</td>';
 echo '<td style="font-size: 14px;">';
 $rpod = "SELECT * FROM produkti WHERE id =".$row['produkt'];
@@ -356,6 +358,34 @@ echo '
 
 
 </td></tr>';
+$komneteSchetItems = isset($komneteInvoiceItems) && is_array($komneteInvoiceItems) ? $komneteInvoiceItems : array();
+$komneteSchetTotal = isset($komneteInvoiceTotal) ? $komneteInvoiceTotal : 0;
+echo '<tr id="'.$invoiceDetailsId.'" class="komnete-invoice-detail-row is-collapsed"><td colspan="12" class="komnete-invoice-detail-cell">';
+echo '<div class="komnete-invoice-details">';
+echo '<div class="komnete-invoice-details-head"><span>Состав счета</span><span class="komnete-invoice-total">Итого: '.komnete_money($komneteSchetTotal).'</span></div>';
+if (count($komneteSchetItems) > 0) {
+    echo '<div class="komnete-invoice-table-wrap"><table class="table komnete-invoice-table">';
+    echo '<thead><tr>';
+    echo '<th>Позиция</th>';
+    echo '<th class="komnete-invoice-qty">Кол-во</th>';
+    echo '<th class="komnete-invoice-money">Цена</th>';
+    echo '<th class="komnete-invoice-money">Скидка</th>';
+    echo '<th class="komnete-invoice-money">Сумма</th>';
+    echo '</tr></thead><tbody>';
+    foreach ($komneteSchetItems as $komneteSchetItem) {
+        echo '<tr>';
+        echo '<td class="komnete-invoice-name">'.komnete_h($komneteSchetItem['name']).'</td>';
+        echo '<td class="komnete-invoice-qty">'.($komneteSchetItem['quantity'] > 0 ? komnete_clean_number($komneteSchetItem['quantity']) : '—').'</td>';
+        echo '<td class="komnete-invoice-money">'.($komneteSchetItem['unit_price'] > 0 ? komnete_money($komneteSchetItem['unit_price']) : '—').'</td>';
+        echo '<td class="komnete-invoice-money">'.($komneteSchetItem['discount'] > 0 ? komnete_clean_number($komneteSchetItem['discount']).'%' : '—').'</td>';
+        echo '<td class="komnete-invoice-money">'.($komneteSchetItem['total'] > 0 ? komnete_money($komneteSchetItem['total']) : '—').'</td>';
+        echo '</tr>';
+    }
+    echo '</tbody></table></div>';
+} else {
+    echo '<p class="komnete-invoice-empty">В счете нет строк для отображения.</p>';
+}
+echo '</div></td></tr>';
 }}
 ?>
 </table>
@@ -385,11 +415,24 @@ $(document).ready(function () {
 			   }
 			});
         }
+	});
+});
+	 </script>
+	 <script>
+$(document).ready(function () {
+    $(".komnete-invoice-toggle").off("click.komneteInvoice").on("click.komneteInvoice", function () {
+        var details = $($(this).attr("data-target"));
+        var willOpen = details.hasClass("is-collapsed");
+        details.toggleClass("is-collapsed", !willOpen);
+        $(this)
+            .attr("aria-expanded", willOpen ? "true" : "false")
+            .find(".komnete-invoice-toggle-text")
+            .text(willOpen ? "Скрыть состав" : "Состав");
     });
 });
- </script>
+	 </script>
 
-<?php
+	<?php
 $query = mysql_query("SELECT DISTINCT nomerschet,otdel,filial,god,nomerdog,data,produkt,price,kto,rand,inn,name FROM schet WHERE del = '0' AND rand = '".$_GET['rand']."'");
 while($row = mysql_fetch_array($query)) {
 if(substr_count($userdata['dotdel'], $row['otdel']) == 1){
