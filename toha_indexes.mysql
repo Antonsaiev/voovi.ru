@@ -1,0 +1,41 @@
+-- Индексы для ускорения toha.php и построчного рендера inctoha.php.
+-- Скрипт безопасно запускать повторно в MariaDB 10.2+.
+
+CREATE INDEX IF NOT EXISTS idx_schet_rand
+    ON schet (rand(32));
+
+CREATE INDEX IF NOT EXISTS idx_schet_toha_status
+    ON schet (del, status(32), otk, cher, akt);
+
+CREATE INDEX IF NOT EXISTS idx_schet_toha_default
+    ON schet (del, otk, cher, akt);
+
+CREATE INDEX IF NOT EXISTS idx_schet_produkt
+    ON schet (produkt(32));
+
+CREATE INDEX IF NOT EXISTS idx_schet_ymd
+    ON schet (y, m, d);
+
+CREATE INDEX IF NOT EXISTS idx_schet_status_schet_id
+    ON schet_status (schet(32), id);
+
+CREATE INDEX IF NOT EXISTS idx_schetoldkomment_schet_id
+    ON schetoldkomment (schet(32), id);
+
+CREATE INDEX IF NOT EXISTS idx_schetizbran_kto_schet
+    ON schetizbran (kto(32), schet(32));
+
+CREATE INDEX IF NOT EXISTS idx_kvobop_schet
+    ON kvobop (schet(32));
+
+CREATE INDEX IF NOT EXISTS idx_proddoc_produkt_tip
+    ON proddoc (produkt(32), tip(32));
+
+CREATE INDEX IF NOT EXISTS idx_dokstamp_ogrn_schet
+    ON dokstamp (ogrn(32), schet(32));
+
+CREATE INDEX IF NOT EXISTS idx_users_access_user_uslugi
+    ON users_access (users(32), uslugi(32));
+
+CREATE INDEX IF NOT EXISTS idx_produkti_parent
+    ON produkti (parent(32));

@@ -7,6 +7,9 @@ import_mail/*.xlsx
 import_mail/**/*.xls
 import_mail/**/*.xlsx
 
+# Загруженные иконки продуктов
+img/product-icons/
+
 # Локальные/временные
 .idea/
 log/

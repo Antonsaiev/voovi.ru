@@ -82,6 +82,13 @@ $savoir = mysql_fetch_array($savresult);
 $rpissetkomment = "SELECT * FROM schetoldkomment WHERE schet ='".$_GET['rand']."' ORDER BY id DESC";
 $reissetkomment = mysql_query($rpissetkomment);
 $peissetkomment = mysql_fetch_array($reissetkomment);
+$ktoi = '';
+if(!empty($schet['sos_opis'])){
+    $ktol = "SELECT * FROM users WHERE users_id =".intval($schet['sos_opis']);
+    $ktor = mysql_query($ktol);
+    $ktop = mysql_fetch_array($ktor);
+    $ktoi = $ktop['f_name'].' '.$ktop['l_name'];
+}
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="ru" lang="ru">
@@ -93,7 +100,7 @@ $peissetkomment = mysql_fetch_array($reissetkomment);
     <!--<link rel="stylesheet" type="text/css" href="css/normalize.css" />
     <link rel="stylesheet" type="text/css" href="css/demo.css" />
     <link rel="stylesheet" type="text/css" href="css/component.css" /> -->
-    <link rel="stylesheet" href="editor.css"></head>
+    <link rel="stylesheet" href="editor.css">
 <script type="text/javascript" src="ckeditor/ckeditor.js"></script>
 <script type="text/javascript" src="AjexFileManager/ajex.js"></script>
 <!-- Иконки -->
@@ -101,8 +108,1434 @@ $peissetkomment = mysql_fetch_array($reissetkomment);
 <meta name="viewport" content="width=device-width">
 <link rel="stylesheet" href="style.css">
 <!-- Иконки -->
+<style>
+    html,
+    body {
+        max-width: 100%;
+        overflow-x: hidden;
+    }
+    body.komnete-modern {
+        margin: 0;
+        padding: 18px;
+        background: #f3f6f8;
+        color: #26313d;
+        font-family: "Helvetica Neue", Arial, sans-serif;
+    }
+    .komnete-modern *,
+    .komnete-modern *:before,
+    .komnete-modern *:after {
+        box-sizing: border-box;
+    }
+    .komnete-page {
+        width: 100%;
+        display: block;
+        margin: 0 auto 34px !important;
+        padding: 0 12px 28px !important;
+        background: #f3f6f8 !important;
+    }
+    .komnete-page:before,
+    .komnete-page:after {
+        content: " ";
+        display: table;
+    }
+    .komnete-page:after {
+        clear: both;
+    }
+    .komnete-topline,
+    .komnete-titlebar {
+        grid-column: 1 / -1;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+        height: auto !important;
+        min-height: 46px;
+        margin: 0 0 10px !important;
+        padding: 12px 16px !important;
+        overflow: visible !important;
+        border: 1px solid #dfe6ec !important;
+        border-radius: 8px;
+        background: #fff !important;
+        color: #26313d !important;
+        box-shadow: 0 8px 22px rgba(31, 45, 58, 0.06);
+        font-size: 16px !important;
+        line-height: 1.35;
+    }
+    .komnete-titlebar {
+        margin-bottom: 18px !important;
+    }
+    .komnete-topline {
+        justify-content: center;
+        text-align: center;
+        font-weight: 700;
+    }
+    .komnete-topline > div {
+        width: 100%;
+    }
+    .komnete-titlebar br {
+        display: none;
+    }
+    .komnete-topline > div,
+    .komnete-titlebar > div,
+    .komnete-titlebar > b {
+        float: none !important;
+        padding: 0 !important;
+    }
+    .komnete-titlebar {
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px 18px;
+    }
+    .komnete-invoice-meta {
+        display: flex;
+        flex: 1 1 560px;
+        flex-wrap: wrap;
+        align-items: flex-start;
+        gap: 10px 16px;
+        min-width: 0;
+    }
+    .komnete-meta-item {
+        display: inline-flex;
+        align-items: baseline;
+        gap: 5px;
+        min-width: 0;
+        color: #26313d;
+        font-size: 14px;
+        white-space: nowrap;
+    }
+    .komnete-meta-item b {
+        color: #526170;
+        font-size: 12px;
+        text-transform: uppercase;
+    }
+    .komnete-status-area {
+        display: flex;
+        flex: 0 1 440px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 8px;
+        min-width: 300px;
+    }
+    .komnete-status-field {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .komnete-status-label {
+        margin: 0;
+        color: #526170;
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+    .komnete-status-toggle {
+        min-height: 32px;
+        padding: 5px 12px;
+        border: 1px solid #2f7fb8 !important;
+        border-radius: 6px !important;
+        background: #fff !important;
+        color: #2f7fb8 !important;
+        font-size: 13px;
+        font-weight: 700;
+        line-height: 1.2;
+    }
+    .komnete-status-toggle:hover,
+    .komnete-status-toggle:focus {
+        background: #eef6fb !important;
+        color: #276b9c !important;
+        outline: 0;
+    }
+    .komnete-status-history {
+        flex: 0 0 100%;
+        margin-top: 2px;
+        padding: 12px;
+        border: 1px solid #dfe6ec;
+        border-radius: 8px;
+        background: #f8fafb;
+        color: #26313d;
+        font-size: 13px;
+        text-align: left;
+    }
+    .komnete-status-history.is-collapsed {
+        display: none;
+    }
+    .komnete-status-item {
+        padding-bottom: 8px;
+        margin-bottom: 8px;
+        border-bottom: 1px solid #edf1f4;
+    }
+    .komnete-status-item:last-child {
+        padding-bottom: 0;
+        margin-bottom: 0;
+        border-bottom: 0;
+    }
+    .komnete-status-meta {
+        display: block;
+        margin-bottom: 2px;
+        color: #526170;
+        font-size: 12px;
+        font-weight: 700;
+    }
+    .komnete-status-empty {
+        margin: 0;
+        color: #6c7884;
+    }
+    .komnete-titlebar a {
+        color: #2f7fb8;
+        font-weight: 700;
+    }
+    .komnete-titlebar b#konttakt {
+        float: none !important;
+        display: inline-flex;
+        align-items: center;
+        padding: 0 !important;
+        color: #526170;
+        font-size: 14px;
+        line-height: 1.35;
+    }
+    .komnete-titlebar select#status {
+        min-height: 32px;
+        padding: 4px 9px;
+        border: 1px solid #2f7fb8 !important;
+        border-radius: 6px;
+        background: #2f7fb8 !important;
+        color: #fff !important;
+        font-size: 13px;
+        font-weight: 700;
+    }
+    .komnete-page > .col-md-12,
+    .komnete-page > .col-md-9,
+    .komnete-page > .col-md-6,
+    .komnete-page > .col-md-3 {
+        float: left !important;
+        min-width: 0;
+        padding-right: 9px;
+        padding-left: 9px;
+    }
+    .komnete-page > .col-md-12 {
+        clear: both;
+        width: 100% !important;
+        padding-right: 0;
+        padding-left: 0;
+    }
+    .komnete-page > .col-md-3 {
+        width: 25% !important;
+    }
+    .komnete-page > .col-md-9 {
+        width: 75% !important;
+    }
+    .komnete-page > .col-md-6 {
+        width: 50% !important;
+    }
+    .komnete-page > .col-md-12 > .col-md-12:empty {
+        display: none;
+    }
+    .komnete-page > .col-md-12 > .col-md-12[style*="border: 2px solid"] {
+        display: none;
+    }
+    .komnete-page > .col-md-12[style*="overflow"] {
+        padding: 12px 14px 0 !important;
+        border: 1px solid #dfe6ec;
+        border-bottom: 0;
+        border-radius: 8px 8px 0 0;
+        background: #fff;
+        box-shadow: 0 8px 22px rgba(31, 45, 58, 0.05);
+    }
+    .komnete-page > .col-md-12[style*="margin-top: 10px"] {
+        margin-top: 0 !important;
+        margin-bottom: 0;
+        padding: 12px !important;
+        border: 1px solid #dfe6ec;
+        border-top: 0;
+        border-radius: 0 0 8px 8px;
+        background: #fff;
+        box-shadow: 0 8px 22px rgba(31, 45, 58, 0.05);
+        overflow-x: auto;
+    }
+    .komnete-modern .nav-tabs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin: 0;
+        border-bottom: 0;
+    }
+    .komnete-modern .nav-tabs > li {
+        float: none;
+        margin: 0;
+    }
+    .komnete-modern .nav-tabs > li > a {
+        min-height: 36px;
+        margin: 0;
+        padding: 8px 12px;
+        border: 1px solid transparent;
+        border-radius: 6px;
+        color: #526170;
+        font-size: 13px;
+        font-weight: 700;
+        line-height: 1.25;
+    }
+    .komnete-modern .nav-tabs > li.active > a,
+    .komnete-modern .nav-tabs > li.active > a:hover,
+    .komnete-modern .nav-tabs > li.active > a:focus {
+        border-color: #2f7fb8;
+        background: #2f7fb8;
+        color: #fff;
+    }
+    .komnete-modern .nav-tabs > li > a:hover,
+    .komnete-modern .nav-tabs > li > a:focus {
+        border-color: #dfe6ec;
+        background: #f3f7fa;
+        color: #26313d;
+    }
+    .komnete-page > .col-md-3 {
+        padding: 18px !important;
+        border: 1px solid #dfe6ec;
+        border-radius: 8px;
+        background: #fff;
+        box-shadow: 0 8px 22px rgba(31, 45, 58, 0.06);
+    }
+    .komnete-page > .col-md-3 > div[style*="rotate"] {
+        display: none;
+    }
+    .komnete-page > .col-md-3 p {
+        margin: 0 0 12px !important;
+        padding-bottom: 12px;
+        border-bottom: 1px solid #edf1f4;
+        color: #26313d;
+        font-size: 13px !important;
+        line-height: 1.45;
+    }
+    .komnete-page > .col-md-3 p:last-child {
+        margin-bottom: 0 !important;
+        padding-bottom: 0;
+        border-bottom: 0;
+    }
+    .komnete-docs-block {
+        display: grid;
+        gap: 10px;
+        max-width: 100%;
+        margin-top: 12px;
+    }
+    .komnete-doc-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(120px, auto);
+        align-items: center;
+        gap: 6px 10px;
+        max-width: 100%;
+        min-width: 0;
+    }
+    .komnete-doc-row-wide {
+        grid-template-columns: minmax(0, 1fr) minmax(120px, auto);
+    }
+    .komnete-doc-control {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+        max-width: 100%;
+        margin: 0;
+        color: inherit;
+        font-size: 13px;
+        font-weight: 700;
+        line-height: 1.35;
+    }
+    .komnete-doc-control-normal {
+        font-weight: normal;
+    }
+    .komnete-doc-label {
+        min-width: 0;
+        overflow-wrap: anywhere;
+    }
+    .komnete-doc-control select,
+    .komnete-doc-control input[type="date"] {
+        flex: 0 1 170px;
+        max-width: 100%;
+        min-height: 34px;
+        margin: 0 !important;
+        font-size: 13px !important;
+    }
+    .komnete-doc-control input[type="checkbox"] {
+        flex: 0 0 auto;
+        width: 16px;
+        height: 16px;
+        min-height: 0 !important;
+        margin: 0 !important;
+    }
+    .komnete-page > .col-md-3 .komnete-doc-state {
+        align-self: center;
+        min-width: 0;
+        max-width: 100%;
+        margin: 0 !important;
+        padding: 0 !important;
+        border-bottom: 0;
+        color: #26313d;
+        font-size: 13px !important;
+        line-height: 1.35;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+    }
+    .komnete-doc-akt {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+        max-width: 100%;
+        font-size: 13px;
+        line-height: 1.35;
+    }
+    .komnete-doc-akt-label,
+    .komnete-doc-akt-value {
+        min-width: 0;
+        overflow-wrap: anywhere;
+        font-weight: 700;
+    }
+    .komnete-page > .col-md-3 .htext-add,
+    .komnete-page > .col-md-3 input,
+    .komnete-page > .col-md-3 select {
+        min-height: 34px;
+        margin-top: 5px;
+        font-size: 13px !important;
+    }
+    .komnete-sidebar-contact {
+        margin-bottom: 16px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid #edf1f4;
+    }
+    .komnete-sidebar-contact-title {
+        padding: 10px 12px;
+        border: 1px solid #dfe6ec;
+        border-bottom: 0;
+        border-radius: 8px 8px 0 0;
+        background: #f8fafb;
+        color: #1f2d3a;
+        font-size: 15px;
+        font-weight: 700;
+        line-height: 1.25;
+    }
+    .komnete-sidebar-contact-body {
+        padding: 12px;
+        border: 1px solid #dfe6ec;
+        border-radius: 0 0 8px 8px;
+        background: #fff;
+    }
+    .komnete-contact-widget .form-group {
+        display: block;
+        margin: 0 0 10px;
+    }
+    .komnete-contact-widget .control-label {
+        display: block;
+        float: none;
+        width: 100%;
+        margin: 0 0 4px;
+        padding: 0;
+        color: #526170;
+        text-align: left;
+        font-size: 12px;
+    }
+    .komnete-contact-widget .col-sm-9 {
+        float: none;
+        width: 100%;
+        padding: 0;
+    }
+    .komnete-contact-widget .komnete-contact-view .komnete-contact-row {
+        display: flex;
+        flex-wrap: nowrap;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    .komnete-contact-widget .komnete-contact-view .control-label {
+        flex: 0 0 auto;
+        width: auto;
+        margin: 0;
+        padding-top: 6px;
+        white-space: nowrap;
+    }
+    .komnete-contact-widget .komnete-contact-view .col-sm-9 {
+        flex: 1 1 auto;
+        width: auto;
+        min-width: 0;
+    }
+    .komnete-contact-widget .komnete-contact-view .form-control-static {
+        min-height: 0;
+        padding: 6px 0;
+        line-height: 1.35;
+    }
+    .komnete-contact-widget .form-control,
+    .komnete-contact-widget .form-control-static {
+        min-height: 32px;
+        padding: 6px 8px;
+        font-size: 13px !important;
+    }
+    .komnete-contact-static {
+        margin: 0;
+        overflow-wrap: anywhere;
+    }
+    .komnete-contact-actions {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 8px;
+    }
+    .komnete-link-button {
+        padding: 0;
+        border: 0;
+        background: transparent;
+        color: #2f7fb8;
+        font-size: 13px;
+        font-weight: 700;
+    }
+    .komnete-contact-select {
+        margin-bottom: 8px;
+    }
+    .komnete-contact-empty {
+        margin: 8px 0;
+        color: #6c7884;
+        font-size: 13px;
+    }
+    .komnete-contact-muted {
+        color: #8a98a5;
+    }
+    .komnete-contact-radio {
+        display: inline-flex !important;
+        align-items: center;
+        gap: 7px;
+        margin: 3px 12px 3px 0;
+        font-size: 13px;
+        font-weight: normal;
+        line-height: 1.2;
+        white-space: nowrap;
+    }
+    .komnete-contact-radio input[type="radio"] {
+        position: static !important;
+        flex: 0 0 auto;
+        margin: 0 !important;
+        vertical-align: middle;
+    }
+    .komnete-contact-widget .komnete-contact-row-inline {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 6px 10px;
+    }
+    .komnete-contact-widget .komnete-contact-row-inline .control-label {
+        flex: 0 0 auto;
+        width: auto;
+        margin: 0;
+    }
+    .komnete-contact-widget .komnete-contact-row-inline .col-sm-9 {
+        display: flex;
+        flex: 1 1 auto;
+        flex-wrap: wrap;
+        align-items: center;
+        width: auto;
+        min-width: 0;
+    }
+    .komnete-phone-list {
+        display: grid;
+        gap: 6px;
+    }
+    .komnete-phone-view {
+        display: grid;
+        gap: 6px;
+        margin-bottom: 6px;
+    }
+    .komnete-phone-display {
+        min-height: 32px;
+        padding: 6px 8px;
+        border: 1px solid #edf1f4;
+        border-radius: 6px;
+        background: #f8fafb;
+        color: #26313d;
+        font-size: 13px;
+        line-height: 1.35;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+    }
+    .komnete-phone-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .komnete-phone-row .komnete-phone-input {
+        flex: 1 1 auto;
+        min-width: 0;
+        margin: 0;
+    }
+    .komnete-phone-remove {
+        flex: 0 0 32px;
+        width: 32px;
+        min-height: 32px;
+        padding: 0;
+        border: 1px solid #d5dde4 !important;
+        border-radius: 6px !important;
+        background: #fff !important;
+        color: #d9534f !important;
+        font-size: 18px;
+        font-weight: 700;
+        line-height: 1;
+    }
+    .komnete-phone-add {
+        width: 100%;
+        min-height: 32px;
+        margin-top: 6px;
+        border: 1px dashed #9bbbd2 !important;
+        border-radius: 6px !important;
+        background: #f8fafb !important;
+        color: #2f7fb8 !important;
+        font-size: 13px;
+        font-weight: 700;
+    }
+    .komnete-phone-edit {
+        width: 100%;
+        min-height: 32px;
+        margin-top: 6px;
+        border: 1px solid #2f7fb8 !important;
+        border-radius: 6px !important;
+        background: #fff !important;
+        color: #2f7fb8 !important;
+        font-size: 13px;
+        font-weight: 700;
+    }
+    .komnete-contact-edit {
+        min-height: 30px;
+        padding: 4px 10px;
+        border: 1px solid #2f7fb8 !important;
+        border-radius: 6px !important;
+        background: #fff !important;
+        color: #2f7fb8 !important;
+        font-size: 13px;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+    .komnete-contact-edit-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 8px;
+    }
+    .komnete-phone-edit-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 8px;
+    }
+    .komnete-phone-save,
+    .komnete-phone-cancel,
+    .komnete-contact-save,
+    .komnete-contact-cancel {
+        flex: 1 1 0;
+        min-height: 32px;
+        border-radius: 6px !important;
+        font-size: 13px;
+        font-weight: 700;
+    }
+    .komnete-phone-save,
+    .komnete-contact-save {
+        border: 1px solid #2f7fb8 !important;
+        background: #2f7fb8 !important;
+        color: #fff !important;
+    }
+    .komnete-phone-cancel,
+    .komnete-contact-cancel {
+        border: 1px solid #d5dde4 !important;
+        background: #fff !important;
+        color: #526170 !important;
+    }
+    .komnete-contact-create {
+        width: 100%;
+        margin-top: 8px;
+    }
+    .komnete-page > #zv,
+    .komnete-page > #vs {
+        padding: 18px !important;
+        border: 1px solid #dfe6ec;
+        border-radius: 8px;
+        background: #fff;
+        box-shadow: 0 8px 22px rgba(31, 45, 58, 0.06);
+    }
+    .komnete-page > #zv form {
+        margin: 0;
+    }
+    .komnete-page > #zv input[type="submit"] {
+        height: 42px;
+        margin: 12px 0 0 !important;
+        border: 0 !important;
+        background: #2f7fb8 !important;
+        background-image: none !important;
+        color: #fff !important;
+        box-shadow: none !important;
+    }
+    .komnete-page > #vs {
+        overflow-x: auto;
+    }
+    .komnete-page > .col-md-6 {
+        padding-right: 0;
+        padding-left: 0;
+    }
+    .komnete-page > .col-md-6 .form-group {
+        display: flex !important;
+        flex-wrap: wrap;
+        align-items: flex-start;
+        gap: 8px;
+        clear: both;
+        margin-right: 0;
+        margin-left: 0;
+        margin-bottom: 10px;
+    }
+    .komnete-page > .col-md-6 .form-group:before,
+    .komnete-page > .col-md-6 .form-group:after {
+        content: none !important;
+        display: none !important;
+    }
+    .komnete-page > .col-md-6 .form-group > .control-label {
+        float: none !important;
+        width: auto !important;
+        flex: 0 0 170px;
+        padding: 7px 0 0 !important;
+        text-align: left !important;
+    }
+    .komnete-page > .col-md-6 .form-group > .col-sm-9 {
+        float: none !important;
+        width: auto !important;
+        min-width: 0;
+        flex: 1 1 260px;
+        padding-right: 0;
+        padding-left: 0;
+    }
+    .komnete-page > .col-md-6 .form-control-static {
+        min-height: 0;
+        padding-top: 7px;
+        padding-bottom: 7px;
+        overflow-wrap: anywhere;
+    }
+    .komnete-page > .col-md-6 a[onclick="konttakt()"] {
+        position: static !important;
+        float: right;
+        display: inline-block;
+        margin: 0 0 10px !important;
+        color: #2f7fb8 !important;
+    }
+    .komnete-page > .col-md-6 #tele {
+        float: none !important;
+        display: inline-block;
+        max-width: 100%;
+        overflow-wrap: anywhere;
+    }
+    .komnete-page > .col-md-6 .hidee {
+        margin-top: 4px !important;
+    }
+    .komnete-modern #agent,
+    .komnete-modern #dobp,
+    .komnete-modern #dobpp {
+        float: none !important;
+        width: 100% !important;
+        height: auto !important;
+        min-height: 0 !important;
+    }
+    .komnete-modern #agent > .form-control,
+    .komnete-modern #dobp.form-control {
+        float: none !important;
+        width: 100% !important;
+        height: auto !important;
+        margin-bottom: 10px;
+        padding: 10px;
+    }
+    .komnete-modern #os,
+    .komnete-modern #dobusl,
+    .komnete-modern #shtsert,
+    .komnete-modern #dobpr,
+    .komnete-modern #dobppr,
+    .komnete-modern #dobuslpr,
+    .komnete-modern #shtsertpr {
+        float: none !important;
+        width: 100% !important;
+        height: auto !important;
+        min-height: 0 !important;
+        margin: 0 0 10px !important;
+        padding: 0 !important;
+    }
+    .komnete-modern #agent label,
+    .komnete-modern #dobp label,
+    .komnete-modern #dobpp label {
+        float: none !important;
+        width: 100% !important;
+        padding-top: 0 !important;
+        text-align: left !important;
+    }
+    .komnete-modern #agent select,
+    .komnete-modern #agent input,
+    .komnete-modern #dobp select,
+    .komnete-modern #dobp input,
+    .komnete-modern #dobpp select,
+    .komnete-modern #dobpp input {
+        float: none !important;
+        width: 100% !important;
+        max-width: 100%;
+        margin: 4px 0 0 !important;
+    }
+    .komnete-modern #agent > .komnete-op-row {
+        display: flex !important;
+        flex-wrap: nowrap;
+        align-items: flex-start;
+        gap: 10px 28px;
+        overflow: hidden;
+    }
+    .komnete-modern #agent > .komnete-op-row > .komnete-op-title {
+        display: inline-flex !important;
+        flex: 1 1 360px;
+        align-items: center;
+        gap: 8px;
+        width: auto !important;
+        min-width: 240px;
+        margin: 0 !important;
+        padding-top: 4px !important;
+    }
+    .komnete-modern #agent > .komnete-op-row > .komnete-op-title span {
+        display: inline-block;
+        min-width: 0;
+        max-width: 100%;
+        overflow-wrap: break-word;
+        word-break: normal;
+    }
+    .komnete-modern #agent > .komnete-op-row > .komnete-op-field,
+    .komnete-modern #dobp .komnete-dp-row > .komnete-dp-product,
+    .komnete-modern #dobp .komnete-dp-row > .komnete-dp-type,
+    .komnete-modern #dobp .komnete-dp-row > .komnete-dp-sht {
+        display: inline-flex !important;
+        align-items: center;
+        gap: 8px;
+        width: auto !important;
+        height: auto !important;
+        min-height: 36px;
+        float: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    .komnete-modern .komnete-is-hidden {
+        display: none !important;
+    }
+    .komnete-modern #agent .komnete-op-field label,
+    .komnete-modern #dobp .komnete-dp-row .komnete-dp-type label,
+    .komnete-modern #dobp .komnete-dp-row .komnete-dp-sht label {
+        width: auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        white-space: nowrap;
+    }
+    .komnete-modern #agent .komnete-op-field select,
+    .komnete-modern #agent .komnete-op-field input,
+    .komnete-modern #dobp .komnete-dp-row select,
+    .komnete-modern #dobp .komnete-dp-row input {
+        width: auto !important;
+        margin: 0 !important;
+        font-size: 13px !important;
+    }
+    .komnete-op-type select,
+    .komnete-dp-type select {
+        min-width: 150px;
+        max-width: 190px;
+    }
+    .komnete-modern #agent > .komnete-op-row > .komnete-op-type {
+        flex: 0 0 310px;
+        max-width: 310px;
+    }
+    .komnete-modern #agent > .komnete-op-row > .komnete-op-sht {
+        flex: 0 0 auto;
+        max-width: 150px;
+    }
+    .komnete-modern #agent .komnete-op-sht input,
+    .komnete-modern #dobp .komnete-dp-row .komnete-dp-sht input {
+        width: 54px !important;
+        min-width: 54px;
+        max-width: 54px;
+        flex: 0 0 54px;
+        text-align: center;
+    }
+    .komnete-modern #dobp.komnete-dp-list {
+        display: grid !important;
+        gap: 8px;
+        padding: 8px !important;
+    }
+    .komnete-modern #dobp .komnete-dp-row {
+        display: flex !important;
+        flex-wrap: nowrap;
+        align-items: flex-start;
+        gap: 8px 12px;
+        width: 100% !important;
+        min-height: 0 !important;
+        padding: 8px !important;
+        border: 1px solid #edf1f4;
+        border-radius: 6px;
+        background: #f8fafb;
+        overflow: hidden;
+    }
+    .komnete-modern #dobp .komnete-dp-row > .komnete-dp-product {
+        flex: 1 1 360px;
+        min-width: 250px;
+    }
+    .komnete-modern #dobp .komnete-dp-row > .komnete-dp-type {
+        flex: 0 0 245px;
+    }
+    .komnete-modern #dobp .komnete-dp-row > .komnete-dp-sht {
+        flex: 0 0 auto;
+        max-width: 150px;
+    }
+    .komnete-modern #dobp .komnete-dp-services {
+        flex: 1 1 100%;
+        width: 100% !important;
+        margin-top: 4px !important;
+        padding-top: 8px !important;
+        border-top: 1px solid #edf1f4;
+    }
+    .komnete-modern div#vladelec,
+    .komnete-modern div#konttakt {
+        margin-top: 0 !important;
+        padding: 12px 14px !important;
+        border: 1px solid #dfe6ec !important;
+        border-bottom: 0 !important;
+        border-radius: 8px 8px 0 0 !important;
+        background: #fff !important;
+        color: #1f2d3a !important;
+        font-size: 16px !important;
+        font-weight: 700;
+        line-height: 1.3;
+    }
+    .komnete-modern div#vladelec + div,
+    .komnete-modern div#vladelec + table,
+    .komnete-modern div#konttakt + div,
+    .komnete-modern div#konttakt + table {
+        margin-bottom: 18px !important;
+        padding: 14px !important;
+        border: 1px solid #dfe6ec !important;
+        border-radius: 0 0 8px 8px !important;
+        background: #fff !important;
+        box-shadow: 0 8px 22px rgba(31, 45, 58, 0.05);
+    }
+    .komnete-extra-panel {
+        display: grid;
+        gap: 14px;
+    }
+    .komnete-extra-row {
+        display: grid;
+        grid-template-columns: minmax(145px, auto) minmax(0, 1fr);
+        align-items: start;
+        gap: 8px 12px;
+        margin: 0;
+        padding-bottom: 12px;
+        border-bottom: 1px solid #edf1f4;
+    }
+    .komnete-extra-row:last-child {
+        padding-bottom: 0;
+        border-bottom: 0;
+    }
+    .komnete-extra-row .control-label {
+        float: none !important;
+        width: auto !important;
+        margin: 0;
+        padding: 7px 0 0 !important;
+        text-align: left !important;
+        color: #526170;
+        font-size: 13px;
+    }
+    .komnete-extra-field {
+        min-width: 0;
+    }
+    .komnete-extra-field .form-control {
+        width: 100%;
+        max-width: 100%;
+    }
+    .komnete-readonly-value {
+        min-height: 34px;
+        margin: 0;
+        padding: 7px 0;
+        color: #26313d;
+        font-size: 13px;
+        line-height: 1.35;
+        overflow-wrap: anywhere;
+    }
+    .komnete-extra-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 8px;
+    }
+    .komnete-extra-edit,
+    .komnete-extra-save,
+    .komnete-extra-cancel,
+    .komnete-add-dp-button {
+        min-height: 32px;
+        padding: 5px 10px;
+        border-radius: 6px !important;
+        font-size: 13px;
+        font-weight: 700;
+        line-height: 1.2;
+    }
+    .komnete-extra-edit,
+    .komnete-extra-cancel,
+    .komnete-add-dp-button {
+        border: 1px solid #d5dde4 !important;
+        background: #fff !important;
+        color: #2f7fb8 !important;
+    }
+    .komnete-extra-save {
+        border: 1px solid #2f7fb8 !important;
+        background: #2f7fb8 !important;
+        color: #fff !important;
+    }
+    .komnete-dp-add-control {
+        display: inline-flex !important;
+        align-items: center;
+        gap: 8px;
+        width: auto !important;
+        height: auto !important;
+        min-height: 36px;
+        margin: 0 0 8px !important;
+        float: none !important;
+    }
+    .komnete-dp-add-control select {
+        width: min(230px, 100%) !important;
+        margin: 0 !important;
+        font-size: 13px !important;
+    }
+    .komnete-modern #dobp .komnete-dp-add-control {
+        display: inline-flex !important;
+        width: auto !important;
+        height: auto !important;
+        margin: 0 !important;
+        float: none !important;
+    }
+    .komnete-modern #dobp .komnete-dp-add-control select {
+        flex: 0 1 230px;
+        width: min(230px, 100%) !important;
+        margin: 0 !important;
+        font-size: 13px !important;
+    }
+    @media (max-width: 700px) {
+        .komnete-modern #agent > .komnete-op-row,
+        .komnete-modern #dobp .komnete-dp-row {
+            flex-wrap: wrap;
+        }
+        .komnete-modern #agent > .komnete-op-row > .komnete-op-title,
+        .komnete-modern #agent > .komnete-op-row > .komnete-op-type,
+        .komnete-dp-product,
+        .komnete-dp-type {
+            flex: 1 1 100%;
+            max-width: none;
+        }
+    }
+    .komnete-modern .komnete-marking-panel {
+        min-height: 0;
+    }
+    .komnete-modern .komnete-marking-strip {
+        display: flex;
+        align-items: stretch;
+        clear: both;
+        width: 100% !important;
+        padding-right: 0 !important;
+        padding-left: 0 !important;
+        margin: 0 0 18px !important;
+    }
+    .komnete-modern .komnete-marking-strip div#konttakt {
+        display: flex;
+        flex: 0 0 270px;
+        align-items: center;
+        justify-content: center;
+        margin-top: 0 !important;
+        padding: 10px 14px !important;
+        border-right: 0 !important;
+        border-bottom: 1px solid #dfe6ec !important;
+        border-radius: 8px 0 0 8px !important;
+        white-space: nowrap;
+    }
+    .komnete-modern .komnete-marking-panel-wide {
+        display: flex;
+        flex: 1 1 auto;
+        flex-wrap: nowrap;
+        align-items: center;
+        gap: 18px;
+        min-width: 0;
+        min-height: 0;
+        margin-bottom: 0 !important;
+        padding: 10px 14px !important;
+        border-left: 0 !important;
+        border-radius: 0 8px 8px 0 !important;
+    }
+    .komnete-modern .komnete-marking-strip div#konttakt + .komnete-marking-panel-wide {
+        margin-bottom: 0 !important;
+        border-radius: 0 8px 8px 0 !important;
+    }
+    .komnete-modern .komnete-marking-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px 14px;
+        margin-bottom: 12px;
+    }
+    .komnete-modern .komnete-marking-panel-wide .komnete-marking-row {
+        flex: 1 1 0;
+        flex-wrap: nowrap;
+        margin-bottom: 0;
+        min-width: 0;
+    }
+    .komnete-modern .komnete-marking-row:last-child {
+        margin-bottom: 0;
+    }
+    .komnete-modern .komnete-marking-row label {
+        flex: 0 0 190px;
+        margin: 0;
+        color: #26313d;
+        font-size: 13px;
+    }
+    .komnete-modern .komnete-marking-row input {
+        width: 90px;
+        min-height: 34px;
+        font-size: 14px !important;
+    }
+    .komnete-modern .komnete-marking-panel-wide .komnete-marking-row input {
+        flex: 0 0 90px;
+    }
+    .komnete-modern .komnete-marking-row select {
+        flex: 1 1 220px;
+        min-height: 34px;
+        font-size: 14px !important;
+    }
+    .komnete-modern .komnete-marking-panel-wide .komnete-marking-row select {
+        min-width: 0;
+    }
+    @media (max-width: 1100px) {
+        .komnete-modern .komnete-marking-panel-wide {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 10px;
+        }
+        .komnete-modern .komnete-marking-panel-wide .komnete-marking-row {
+            flex: 0 1 auto;
+            width: 100%;
+        }
+        .komnete-modern .komnete-marking-row label {
+            flex: 0 1 190px;
+        }
+        .komnete-modern .komnete-marking-panel-wide .komnete-marking-row select {
+            flex: 1 1 260px;
+        }
+    }
+    @media (max-width: 700px) {
+        .komnete-modern .komnete-marking-strip {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        .komnete-modern .komnete-marking-strip div#konttakt {
+            flex: 0 0 auto;
+            width: 100%;
+            justify-content: flex-start;
+            border-right: 1px solid #dfe6ec !important;
+            border-bottom: 0 !important;
+            border-radius: 8px 8px 0 0 !important;
+            white-space: normal;
+        }
+        .komnete-modern .komnete-marking-panel-wide,
+        .komnete-modern .komnete-marking-strip div#konttakt + .komnete-marking-panel-wide {
+            width: 100%;
+            border-left: 1px solid #dfe6ec !important;
+            border-radius: 0 0 8px 8px !important;
+        }
+        .komnete-modern .komnete-marking-panel-wide .komnete-marking-row {
+            flex-wrap: wrap;
+        }
+    }
+    @media (max-width: 520px) {
+        .komnete-modern .komnete-marking-row {
+            gap: 7px;
+        }
+        .komnete-modern .komnete-marking-row label,
+        .komnete-modern .komnete-marking-row input,
+        .komnete-modern .komnete-marking-row select {
+            flex: 1 1 100% !important;
+            width: 100% !important;
+        }
+    }
+    .komnete-modern .komnete-comments-history {
+        clear: both;
+        margin-top: 16px;
+        padding-top: 10px;
+    }
+    .komnete-modern .komnete-current-comment {
+        margin-bottom: 16px;
+    }
+    .komnete-modern .komnete-current-comment-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 12px 14px;
+        border: 1px solid #dfe6ec;
+        border-bottom: 0;
+        border-radius: 8px 8px 0 0;
+        background: #fff;
+        color: #1f2d3a;
+        font-size: 16px;
+        font-weight: 700;
+        line-height: 1.3;
+    }
+    .komnete-modern .komnete-current-comment-body {
+        min-height: 76px;
+        padding: 14px;
+        border: 1px solid #dfe6ec;
+        border-radius: 0 0 8px 8px;
+        background: #f8fafb;
+        color: #26313d;
+        font-size: 14px;
+        line-height: 1.45;
+        overflow-wrap: anywhere;
+        box-shadow: 0 8px 22px rgba(31, 45, 58, 0.05);
+    }
+    .komnete-modern .komnete-current-comment-body p:last-child {
+        margin-bottom: 0;
+    }
+    .komnete-modern .komnete-comment-edit {
+        min-height: 30px;
+        padding: 5px 12px;
+        border: 1px solid #2f7fb8 !important;
+        border-radius: 6px !important;
+        background: #fff !important;
+        color: #2f7fb8 !important;
+        font-size: 13px;
+        font-weight: 700;
+        line-height: 1.2;
+    }
+    .komnete-modern .komnete-comment-edit:hover,
+    .komnete-modern .komnete-comment-edit:focus {
+        background: #eef6fb !important;
+        color: #276b9c !important;
+        outline: 0;
+    }
+    .komnete-modern .komnete-comment-form.is-collapsed {
+        display: none;
+    }
+    .komnete-modern .komnete-section-title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 12px 14px;
+        border: 1px solid #dfe6ec;
+        border-bottom: 0;
+        border-radius: 8px 8px 0 0;
+        background: #fff;
+        color: #1f2d3a;
+        font-size: 16px;
+        font-weight: 700;
+        line-height: 1.3;
+    }
+    .komnete-modern .komnete-comments-history.is-collapsed .komnete-section-title {
+        border-bottom: 1px solid #dfe6ec;
+        border-radius: 8px;
+        box-shadow: 0 8px 22px rgba(31, 45, 58, 0.05);
+    }
+    .komnete-modern .komnete-comments-history.is-collapsed .komnete-section-body {
+        display: none;
+    }
+    .komnete-modern .komnete-comments-toggle {
+        min-height: 30px;
+        padding: 5px 12px;
+        border: 1px solid #2f7fb8 !important;
+        border-radius: 6px !important;
+        background: #fff !important;
+        color: #2f7fb8 !important;
+        font-size: 13px;
+        font-weight: 700;
+        line-height: 1.2;
+    }
+    .komnete-modern .komnete-comments-toggle:hover,
+    .komnete-modern .komnete-comments-toggle:focus {
+        background: #eef6fb !important;
+        color: #276b9c !important;
+        outline: 0;
+    }
+    .komnete-modern .komnete-section-body {
+        padding: 14px;
+        border: 1px solid #dfe6ec;
+        border-radius: 0 0 8px 8px;
+        background: #fff;
+        color: #26313d;
+        font-size: 14px;
+        box-shadow: 0 8px 22px rgba(31, 45, 58, 0.05);
+    }
+    .komnete-modern .komnete-comment-item {
+        padding-bottom: 12px;
+        margin-bottom: 12px;
+        border-bottom: 1px solid #edf1f4;
+    }
+    .komnete-modern .komnete-comment-item:last-child {
+        padding-bottom: 0;
+        margin-bottom: 0;
+        border-bottom: 0;
+    }
+    .komnete-modern .komnete-comment-meta {
+        display: block;
+        margin-bottom: 4px;
+        color: #26313d;
+        font-weight: 700;
+    }
+    .komnete-modern .komnete-comment-text {
+        overflow-wrap: anywhere;
+        line-height: 1.4;
+    }
+    .komnete-modern .komnete-comment-empty {
+        margin: 0;
+        color: #6c7884;
+    }
+    .komnete-modern .table {
+        width: 100%;
+        margin-bottom: 0;
+        background: #fff;
+        color: #26313d;
+        font-size: 13px;
+    }
+    .komnete-modern .table > thead > tr > th {
+        border-bottom: 1px solid #dfe6ec;
+        background: #f8fafb;
+        color: #526170;
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+    .komnete-modern .table > tbody > tr > td,
+    .komnete-modern .table > thead > tr > th {
+        padding: 9px 10px;
+        vertical-align: middle;
+        border-top: 1px solid #edf1f4;
+    }
+    .komnete-modern input,
+    .komnete-modern select,
+    .komnete-modern textarea,
+    .komnete-modern .form-control,
+    .komnete-modern .htext-add,
+    .komnete-modern .vib {
+        max-width: 100%;
+        border: 1px solid #d5dde4 !important;
+        border-radius: 6px !important;
+        background: #fff !important;
+        color: #26313d;
+        box-shadow: none !important;
+    }
+    .komnete-modern input:focus,
+    .komnete-modern select:focus,
+    .komnete-modern textarea:focus,
+    .komnete-modern .form-control:focus {
+        border-color: #6aa7d6 !important;
+        box-shadow: 0 0 0 3px rgba(106, 167, 214, 0.16) !important;
+        outline: 0;
+    }
+    .komnete-modern .btn,
+    .komnete-modern .button,
+    .komnete-modern button,
+    .komnete-modern input[type="submit"] {
+        border-radius: 6px !important;
+        font-weight: 700;
+    }
+    .komnete-modern .btn-success,
+    .komnete-modern input.btn-success {
+        border-color: #2f7fb8 !important;
+        background: #2f7fb8 !important;
+        background-image: none !important;
+        color: #fff !important;
+        text-shadow: none !important;
+    }
+    .komnete-modern .btn-success:hover,
+    .komnete-modern input.btn-success:hover {
+        border-color: #276b9c !important;
+        background: #276b9c !important;
+        color: #fff !important;
+    }
+    .komnete-modern a {
+        color: #2f7fb8;
+        cursor: pointer;
+    }
+    .komnete-modern a:hover,
+    .komnete-modern a:focus {
+        color: #276b9c;
+    }
+    .komnete-modern .alert {
+        border-radius: 6px;
+    }
+    .komnete-modern .cke {
+        border: 1px solid #dfe6ec !important;
+        border-radius: 8px !important;
+        overflow: hidden;
+        box-shadow: none;
+    }
+    .komnete-modern .tab-content {
+        min-width: 760px;
+    }
+    .komnete-modern hr {
+        margin: 11px 0;
+        border-top-color: #edf1f4;
+    }
+    @media (max-width: 920px) {
+        body.komnete-modern {
+            padding: 10px;
+        }
+        .komnete-page {
+            display: block;
+            padding: 0 4px 20px !important;
+        }
+        .komnete-page > .col-md-12,
+        .komnete-page > .col-md-9,
+        .komnete-page > .col-md-6,
+        .komnete-page > .col-md-3 {
+            float: none !important;
+            width: 100% !important;
+            margin-bottom: 14px;
+            padding-right: 0;
+            padding-left: 0;
+        }
+        .komnete-page > .col-md-12[style*="margin-top: 10px"] {
+            margin-top: 0 !important;
+            border-top: 1px solid #dfe6ec;
+            border-radius: 8px;
+        }
+        .komnete-page > .col-md-12[style*="overflow"] {
+            margin-bottom: 12px;
+            border-bottom: 1px solid #dfe6ec;
+            border-radius: 8px;
+        }
+        .komnete-topline,
+        .komnete-titlebar {
+            display: block;
+            padding: 12px !important;
+        }
+        .komnete-titlebar select#status {
+            width: 100%;
+            margin-top: 8px;
+        }
+        .komnete-status-area {
+            justify-content: flex-start;
+            min-width: 0;
+        }
+        .komnete-status-field {
+            width: 100%;
+            align-items: flex-start;
+            flex-direction: column;
+        }
+        .komnete-status-toggle {
+            width: 100%;
+        }
+        .komnete-modern .table {
+            display: block;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+        .komnete-modern div[style*="float: left"] {
+            float: none !important;
+            width: 100% !important;
+        }
+        .komnete-page > .col-md-6 .form-group > .control-label,
+        .komnete-page > .col-md-6 .form-group > .col-sm-9 {
+            flex-basis: 100%;
+        }
+    }
+</style>
 </head>
-<body>
+<body class="komnete-modern">
 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
 <!------------------- Маска заполнения текстового поля --------------------------->
@@ -146,19 +1579,13 @@ $peissetkomment = mysql_fetch_array($reissetkomment);
     })( jQuery );
 </script>
 <!------------------- Маска заполнения текстового поля --------------------------->
-<div class="modal-shadowkube" id="modal-shadowkube"></div>
-<div class="kube" id="kube">
-    <img src="/img/image-preloader-252.gif">
-</div>
-<div class="row" style="
+<?php include_once 'voovi_spinner.php'; ?>
+<div class="row komnete-page" style="
     background: #f7f7f7;
 ">
 
-    <div style="margin-bottom: 3px;height: 35px;font-size: 19px;background: #26BB84;white-space: nowrap;overflow: hidden;color: #fff;">
-        <div style="
-    float: left;
-	    padding-top: 8px;
-"> <?php
+    <div class="komnete-topline" style="margin-bottom: 3px;height: 35px;font-size: 19px;background: #26BB84;white-space: nowrap;overflow: hidden;color: #fff;">
+        <div> <?php
             $string = $klient['naim'];
             //$string = strip_tags($string);
             //$string = substr($string, 0, 100);
@@ -170,34 +1597,33 @@ $peissetkomment = mysql_fetch_array($reissetkomment);
         </div>
     </div>
 
-    <div style="margin-bottom: 15px;height: 55px;font-size: 21px;background: #26BB84;padding: 8px;color: #fff;">
-
-        <div style="
-    float: left;
-	    padding-top: 8px;
-">Контур: <?php echo $schet['nomerschetks']; ?>  | Счет: <?php if($schet['oferta'] == 1){echo  '-ОФЕРТА';}
-            if($schet['nomerschet'] != 'В КС'){
-//                echo 'S_', $schet['god'],$schet['kto'],$schet['otdel'],$schet['kolichschet'];
-                echo 'S_', '<a href="' . VOOVI_DOC_URL . '/different/diadoc?ns=' . $schet['god'],$schet['kto'],$schet['otdel'],$schet['kolichschet'] . '"target="_blank">' . $schet['god'],$schet['kto'],$schet['otdel'],$schet['kolichschet'] . '</a><br>';
-                if($row['ns']=='0'){
-                    mysql_query("UPDATE schet SET ns='".$schet['god'].$schet['kto'].$schet['otdel'].$schet['kolichschet']."' WHERE rand =".$_GET['rand']);
+    <div class="komnete-titlebar" style="margin-bottom: 15px;height: 55px;font-size: 21px;background: #26BB84;padding: 8px;color: #fff;">
+        <div class="komnete-invoice-meta">
+            <span class="komnete-meta-item"><b>Контур</b><span><?php echo !empty($schet['nomerschetks']) ? $schet['nomerschetks'] : '—'; ?></span></span>
+            <span class="komnete-meta-item"><b>Счет</b><span><?php
+                if($schet['oferta'] == 1){
+                    echo '-ОФЕРТА ';
                 }
-            }else{
-                if(!empty($row['nomerschetks'])){
-                    //echo $row['nomerschetks'];
-                    $nomerschetks = array("№", " ", "С", "ч", "е", "т");
-                    echo 'K_',str_replace($nomerschetks, "", $schet['nomerschetks']);
+                if($schet['nomerschet'] != 'В КС'){
+                    $schetNs = $schet['god'].$schet['kto'].$schet['otdel'].$schet['kolichschet'];
+                    echo 'S_<a href="' . VOOVI_DOC_URL . '/different/diadoc?ns=' . $schetNs . '" target="_blank">' . $schetNs . '</a>';
+                    if($row['ns']=='0'){
+                        mysql_query("UPDATE schet SET ns='".$schetNs."' WHERE rand =".$_GET['rand']);
+                    }
                 }else{
-                    echo 'Забыли';
+                    if(!empty($schet['nomerschetks'])){
+                        $nomerschetks = array("№", " ", "С", "ч", "е", "т");
+                        echo 'K_',str_replace($nomerschetks, "", $schet['nomerschetks']);
+                    }else{
+                        echo 'Забыли';
+                    }
                 }
-            }
-            ?> | </div>
-        <!-- ---------------------------------------------------------- -->
-        <b id="konttakt" style="font-weight: 500;float: left;    padding-top: 8px;">&nbsp;ИНН: <?php echo $schet['inn']; ?> | </b>
-        <!-- ---------------------------------------------------------- -->
-<!--        <div onclick="statust()" style="">-->
-        <div style="">
-            <b id="konttakt" style="font-weight: 500;float: left;    padding-top: 8px;">&nbsp;Статус работы:
+            ?></span></span>
+            <span class="komnete-meta-item"><b>ИНН</b><span><?php echo $schet['inn']; ?></span></span>
+        </div>
+        <div class="komnete-status-area">
+            <div class="komnete-status-field">
+                <label class="komnete-status-label" for="status">Статус работы</label>
                 <?php
                 $result4 = "SELECT * from schet_status WHERE schet='$_GET[rand]' ORDER BY id DESC ";
                 $results = mysql_query($result4);
@@ -206,21 +1632,41 @@ $peissetkomment = mysql_fetch_array($reissetkomment);
                 $resultlis = mysql_query($lis);
                 $personlis = mysql_fetch_array($resultlis);
 
-
-
-                echo '<select id="status" name="status" onchange="staTus(this.value)" style="color: #FFFFFF;
-    background: #26BB84;
-    border: none;
-">';
-                echo '<option  value="0">'.$personlis['name'].'</option>';
+                $currentStatusName = !empty($personlis['name']) ? $personlis['name'] : 'Не задан';
+                echo '<select id="status" name="status" onchange="staTus(this.value)">';
+                echo '<option value="0">'.$currentStatusName.'</option>';
                 $query3 = mysql_query("SELECT * from status WHERE del = '0' AND uslugi = '$savoir1[parent]' ORDER BY id ASC");
                 while($row3 = mysql_fetch_array($query3)) {
-                    echo '<option  value="'.$row3['id'].'">';
+                    echo '<option value="'.$row3['id'].'">';
                     echo $row3['name'];
                     echo '</option>';
                 }
                 echo '</select>';
-                ?></b></div>
+                ?>
+                <button type="button" class="komnete-status-toggle" aria-expanded="false">Показать историю</button>
+            </div>
+            <div id="komnete-status-history" class="komnete-status-history is-collapsed">
+                <?php
+                $statusHistoryFound = false;
+                $wequery = mysql_query("SELECT * FROM schet_status WHERE schet ='".$_GET['rand']."' ORDER BY id DESC");
+                while($rowzw = mysql_fetch_array($wequery)) {
+                    $statusHistoryFound = true;
+                    $zktolgenerac = "SELECT * FROM users WHERE users_id =".$rowzw['kto'];
+                    $zktorgenerac = mysql_query($zktolgenerac);
+                    $zktopgenerac = mysql_fetch_array($zktorgenerac);
+                    $zkto = $zktopgenerac['f_name'];
+                    $status = $rowzw['status'];
+                    $lis = "SELECT * FROM status WHERE id ='".$status."' ";
+                    $resultlis = mysql_query($lis);
+                    $statusRow = mysql_fetch_array($resultlis);
+                    echo '<div class="komnete-status-item"><span class="komnete-status-meta">'.$rowzw['data'].' / '.mb_substr($zkto,0,1,'UTF-8').'. '.$zktopgenerac['l_name'].'</span>'.htmlspecialchars($statusRow['name'], ENT_QUOTES, 'UTF-8').'</div>';
+                }
+                if(!$statusHistoryFound){
+                    echo '<p class="komnete-status-empty">Истории изменений пока нет.</p>';
+                }
+                ?>
+            </div>
+        </div>
         <div id ="call_incomings"style="display: none;float: left;">
             <div id="allctscrool" style="padding-left: 40px;display: block;margin-left: 10px;background: white;height: 40px;margin-bottom: 1px;margin-top: 1px;width: 700px;" >
                 <div style="width: 40%;float:left;color: black;">
@@ -287,6 +1733,16 @@ $peissetkomment = mysql_fetch_array($reissetkomment);
                         }});
                 }
             }
+            $(function(){
+                $(".komnete-status-toggle").off("click.komneteStatus").on("click.komneteStatus", function(){
+                    var history = $("#komnete-status-history");
+                    var willOpen = history.hasClass("is-collapsed");
+                    history.toggleClass("is-collapsed", !willOpen);
+                    $(this)
+                        .attr("aria-expanded", willOpen ? "true" : "false")
+                        .text(willOpen ? "Скрыть историю" : "Показать историю");
+                });
+            });
         </script>
 
         <!-- ---------------------------------------------------------- -->
@@ -358,6 +1814,29 @@ $peissetkomment = mysql_fetch_array($reissetkomment);
 
     <?php include 'docpage.php'; ?>
 
+    <div class="col-md-12 komnete-marking-strip">
+        <div id="konttakt" style="
+            background: #1590d2;
+            padding: 2px 10px;
+            color: #fff;
+            font-size: 18px;
+            border: 1px solid #1590d2;
+        ">Только для маркировки</div>
+        <div class="komnete-marking-panel komnete-marking-panel-wide" style="padding: 5px;border: 1px solid #ccc;background: #fff; font-size: 14px;">
+            <div class="komnete-marking-row">
+                <label for="kol_opis"><b>Количество строк в описе:</b></label>
+                <input id="kol_opis" type="text" name="kol_opis" value="<?php echo htmlspecialchars($schet['kol_opis'], ENT_QUOTES, 'UTF-8'); ?>">
+            </div>
+            <div class="komnete-marking-row">
+                <label for="sos_opis<?php echo $_GET['rand']; ?>"><b>Кто составил опись:</b></label>
+                <select id="sos_opis<?php echo $_GET['rand']; ?>" class="htext-add">
+                    <option style="font-size: 14px;" value="<?php echo htmlspecialchars($schet['sos_opis'], ENT_QUOTES, 'UTF-8'); ?>" selected><?php echo htmlspecialchars($ktoi, ENT_QUOTES, 'UTF-8'); ?></option>
+                    <option style="font-size: 14px;" value="4113">Коневец Татьяна</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
     <div class="col-md-12">
         <div class="col-md-12" style="
     border: 2px solid #8BC08B;
@@ -366,6 +1845,12 @@ $peissetkomment = mysql_fetch_array($reissetkomment);
         </div>
     </div>
     <div class="col-md-3">
+        <div class="komnete-sidebar-contact">
+            <div class="komnete-sidebar-contact-title">Контактное лицо:</div>
+            <div class="komnete-sidebar-contact-body">
+                <?php include 'addkontakt.php'; ?>
+            </div>
+        </div>
         <div style="
   -moz-transform: rotate(45deg);/* Firefox */
   -o-transform: rotate(45deg);/* Opera */
@@ -378,22 +1863,6 @@ $peissetkomment = mysql_fetch_array($reissetkomment);
   right: 0;
   margin: 11px 0;
   "></div>
-        <select type="text" name="users" id="otherFieldOption" style="    font-size: 18px;
-    border: none;
-    background: #1590d2;
-    position: relative;
-    border-radius: 2px;
-	width: 100%;
-    color: #fff;
-    padding: 3px 7px 3px 3px;
-    margin: 0 0 15px;
-    display: inline-block;
-    cursor: pointer;
-    -webkit-appearance: initial;">
-            <option value="zv">Примечание к счету</option>
-            <option value="vs">Запланируйте действие</option>
-        </select>
-
         <?php
         echo '<td>';
         $result = mysql_query("SELECT count(*) FROM schetizbran WHERE kto = '".$userdata['users_id']."' AND schet =".$_GET['rand']);
@@ -418,22 +1887,26 @@ $peissetkomment = mysql_fetch_array($reissetkomment);
             ?>
         </p>
         <?php
-        $ktolgenerac = "SELECT * FROM agent WHERE id =".$schet['agent'];
-        $ktorgenerac = mysql_query($ktolgenerac);
-        $ktopgenerac = mysql_fetch_array($ktorgenerac);
-        $kto = $ktopgenerac['name'];
+        $currentAgentId = intval($schet['agent']);
+        $kto = '';
+        if($currentAgentId > 0){
+            $ktolgenerac = "SELECT * FROM agent WHERE id =".$currentAgentId;
+            $ktorgenerac = mysql_query($ktolgenerac);
+            $ktopgenerac = mysql_fetch_array($ktorgenerac);
+            $kto = isset($ktopgenerac['name']) ? $ktopgenerac['name'] : '';
+        }
         ?>
         <p style="font-size: 14px;"><b>Агент:</b>
             <select id="agentich" class=" htext-add">
-                <option  value="<?php echo $schet['agent'];?>" selected><? echo $kto;?></option>
+                <option value="" <?php if($currentAgentId === 0){ echo 'selected'; } ?>></option>
                 <?$r=mysql_query("SELECT * from agent ");
                 while($res = mysql_fetch_assoc($r)) :?>
-                    <option value="<?php echo $res['id'];?>"><?php echo htmlspecialchars($res['name']);?></option>
+                    <option value="<?php echo $res['id'];?>" <?php if(intval($res['id']) === $currentAgentId){ echo 'selected'; } ?>><?php echo htmlspecialchars($res['name']);?></option>
                 <?php endwhile; ?>
             </select>
 
             <script>
-                $('#agentich').click(function () {
+                $('#agentich').change(function () {
                     var agentich = document.getElementById("agentich").value;
                     $.ajax({
                         type: "GET",
@@ -562,82 +2035,72 @@ $peissetkomment = mysql_fetch_array($reissetkomment);
         if (in_array($savoir1['parent'], ['24'])) {
         // Этот код выполнится, если значение найдено в массиве
         $strDocsElements = '
-        <div style="display: flex; align-items: center; font-size: 14px;">
-            <label style="display: flex; align-items: center;">
-                <div id="textTN" style="display: flex; align-items: center;">
-                    ТН
-                   <select id="successTN" onchange="TNUpdateSelect()" style="vertical-align: middle; margin-left: 10px;">
+        <div class="komnete-docs-block">
+        <div class="komnete-doc-row">
+            <label id="textTN" class="komnete-doc-control">
+                <span class="komnete-doc-label">ТН</span>
+                   <select id="successTN" onchange="TNUpdateSelect()">
                         <option value="не подписана" selected>--Не подписана--</option>
                         <option value="в диадоке">В диадоке</option>
                         <option value="оригинал">Оригинал</option>
                     </select>
-                </div>
             </label>
-            <p id="textToChangeTN" style="margin-left: 10px; vertical-align: middle;"></p>
+            <p id="textToChangeTN" class="komnete-doc-state"></p>
         </div>
-        <div style="display: flex; align-items: flex-start;">
-            <label style="display: flex; flex-direction: column; align-items: flex-start;">
-                <div id="textTNDate" style="display: flex; align-items: center;">
-                    Дата ТН
+        <div class="komnete-doc-row">
+            <label id="textTNDate" class="komnete-doc-control">
+                    <span class="komnete-doc-label">Дата ТН</span>
                     <input type="date" id="dateTN" onchange="TNDateUpdateDate()" name="date"/>
-                </div>
             </label>
-            <p id="textToChangeTNDate" style="margin-left: 10px; vertical-align: middle;"></p>
+            <p id="textToChangeTNDate" class="komnete-doc-state"></p>
         </div>
-        <div style="display: flex; align-items: center;">
-            <label style="display: flex; align-items: center;">
-                <div id="textDogovor" style="display: flex; align-items: center;">
-                    Договор
-                   <select id="successTDogovor" onchange="DogovorUpdateSelect()" style="vertical-align: middle; margin-left: 10px;">
+        <div class="komnete-doc-row">
+            <label id="textDogovor" class="komnete-doc-control">
+                <span class="komnete-doc-label">Договор</span>
+                   <select id="successTDogovor" onchange="DogovorUpdateSelect()">
                         <option value="не подписан" selected>--Не подписан--</option>
                         <option value="в диадоке">В диадоке</option>
                         <option value="оригинал">Оригинал</option>
                     </select>
-                </div>
             </label>
-            <p id="textToChangeDogovor" style="margin-left: 10px; vertical-align: middle;"></p>
+            <p id="textToChangeDogovor" class="komnete-doc-state"></p>
+        </div>
         </div>
         ';
         } else {
         $strDocsElements = '
-        <div style="display: flex; align-items: center;">
-            <label style="display: flex; align-items: center;">
-                <div id="textDocs" style="display: flex; align-items: center;">
-                    Заявление в докси
-                    <input type="checkbox" id="successDocs" onchange="DocsUpdateText()" style="vertical-align: middle; margin-left: 29px;">
-                </div>
+        <div class="komnete-docs-block">
+        <div class="komnete-doc-row">
+            <label id="textDocs" class="komnete-doc-control">
+                    <span class="komnete-doc-label">Заявление в докси</span>
+                    <input type="checkbox" id="successDocs" onchange="DocsUpdateText()">
             </label>
-            <p id="textToChangeDocs" style="margin-left: 10px; vertical-align: middle;"></p>
+            <p id="textToChangeDocs" class="komnete-doc-state"></p>
         </div>
-        <div style="display: flex; align-items: flex-start;">
-            <label style="display: flex; flex-direction: column; align-items: flex-start;">
-                <div id="textContract" style="display: flex; align-items: center;">
-                    Договор
-                    <select id="successContract" onchange="ContractUpdateSelect()" style="vertical-align: middle; margin-left: 10px;">
+        <div class="komnete-doc-row">
+            <label id="textContract" class="komnete-doc-control">
+                    <span class="komnete-doc-label">Договор</span>
+                    <select id="successContract" onchange="ContractUpdateSelect()">
                         <option value="не нужен" selected>--Не нужен--</option>
                         <option value="в диадоке">В диадоке</option>
                         <option value="в докси">В докси</option>
                     </select>
-                </div>
             </label>
-            <p id="textToChangeContract" style="margin-left: 10px; vertical-align: middle;"></p>
+            <p id="textToChangeContract" class="komnete-doc-state"></p>
         </div>
-        <div id="container" style="display: flex; align-items: center; margin-top: 5px;">
+        <div id="container" class="komnete-doc-row komnete-doc-row-wide">
 
-            <label style="display: flex; align-items: center; margin-right: 20px; font-weight: normal;">
-                <input type="checkbox" id="needDiadok" onchange="ElectronicallySignedUpdateText()" 
-                       style="margin-right: 5px;">
-                Закрывающие в диадок
+            <label class="komnete-doc-control komnete-doc-control-normal">
+                <input type="checkbox" id="needDiadok" onchange="ElectronicallySignedUpdateText()">
+                <span class="komnete-doc-label">Закрывающие в диадок</span>
             </label>
         
-            <div id="textAkt" style="font-weight: bold;">
-                Статус акта:
+            <div class="komnete-doc-akt">
+                <span id="textAkt" class="komnete-doc-akt-label">Статус акта:</span>
+                <span id="newText" class="komnete-doc-akt-value">нет данных</span>
             </div>
         
-            <div id="newText" style="font-weight: bold; margin-left: 20px;">
-                нет данных
-            </div>
-        
+        </div>
         </div>
         ';
         }
@@ -948,14 +2411,6 @@ $peissetkomment = mysql_fetch_array($reissetkomment);
         </script>
 
 
-        <?php
-        $ktol = "SELECT * FROM users WHERE users_id =".$schet['sos_opis'];
-        $ktor = mysql_query($ktol);
-        $ktop = mysql_fetch_array($ktor);
-        $ktoi = $ktop['f_name'].' '.$ktop['l_name'];
-
-        ?>
-
         <!--<p id="datacart"><b>	Дата выезда:</b>
 <input id="datacar" type="date" class=" htext-add" value="<?php /*echo $schet['datacar'];*/?>" style="
     width: 110px;
@@ -997,7 +2452,23 @@ if($person47['oplachenks'] == 0 && $person47['oplachen'] == 0 && $person47['otl3
         </script>
     </div>
     <div class="col-md-9" id="zv">
-        <form method="post">
+        <?php
+        $currentCommentHtml = isset($peissetkomment['komment']) ? trim($peissetkomment['komment']) : '';
+        echo '<div class="komnete-current-comment">
+    <div class="komnete-current-comment-header">
+        <span>Комментарий:</span>
+        <button type="button" class="komnete-comment-edit" data-editor-id="editor'.htmlspecialchars($_GET['rand'], ENT_QUOTES, 'UTF-8').'">Редактировать</button>
+    </div>
+    <div class="komnete-current-comment-body">';
+        if($currentCommentHtml !== ''){
+            echo $currentCommentHtml;
+        } else {
+            echo '<p class="komnete-comment-empty">Комментария пока нет.</p>';
+        }
+        echo '</div>
+</div>';
+        ?>
+        <form class="komnete-comment-form is-collapsed" method="post">
             <?php
             echo '
 <textarea name="editor'.$_GET['rand'].'" id="editor'.$_GET['rand'].'" rows="4">';
@@ -1026,7 +2497,38 @@ if($person47['oplachenks'] == 0 && $person47['oplachen'] == 0 && $person47['otl3
     background-image: linear-gradient(top,#ebebeb,#cfd1cf);
     filter: progid:DXImageTransform.Microsoft.gradi
 ">
-</form>
+</form>';
+            echo '<div class="komnete-comments-history is-collapsed">
+    <div class="komnete-section-title">
+        <span>История комментариев:</span>
+        <button type="button" class="komnete-comments-toggle" aria-expanded="false">Показать</button>
+    </div>
+    <div class="komnete-section-body">';
+            $commentsFound = false;
+            $wequery = mysql_query("SELECT * FROM schetoldkomment WHERE schet ='".$_GET['rand']."' ORDER BY id DESC");
+            while($rowzw = mysql_fetch_array($wequery)) {
+                $commentsFound = true;
+                $zktolgenerac = "SELECT * FROM users WHERE users_id =".$rowzw['kto'];
+                $zktorgenerac = mysql_query($zktolgenerac);
+                $zktopgenerac = mysql_fetch_array($zktorgenerac);
+                $zkto = $zktopgenerac['f_name'];
+                echo '<div class="komnete-comment-item"><span class="komnete-comment-meta">'.$rowzw['data'].' / '.mb_substr($zkto,0,1,'UTF-8').'. '.$zktopgenerac['l_name'].'</span><div class="komnete-comment-text">'.$rowzw['komment'].'</div></div>';
+            }
+            if(!$commentsFound){
+                echo '<p class="komnete-comment-empty">Комментариев пока нет.</p>';
+            }
+            echo '</div>
+<script type="text/javascript">
+$(function(){
+    $(".komnete-comments-toggle").off("click.komneteComments").on("click.komneteComments", function(){
+        var comments = $(this).closest(".komnete-comments-history");
+        var willOpen = comments.hasClass("is-collapsed");
+        comments.toggleClass("is-collapsed", !willOpen);
+        $(this).attr("aria-expanded", willOpen ? "true" : "false").text(willOpen ? "Скрыть" : "Показать");
+    });
+});
+</script>
+</div>
 </div>';?>
             <div class="col-md-9" id="vs" style="display:none;min-height:100px;">
 
@@ -1149,7 +2651,7 @@ if($person47['oplachenks'] == 0 && $person47['oplachen'] == 0 && $person47['otl3
 
             </div>
 
-            <div class="col-md-6">
+            <div class="col-md-9 komnete-extra-column">
                 <?php
                 $qdsafsd = mysql_query("SELECT SUM(kvo) FROM schet WHERE del = '0' AND gen = '1' AND rand ='".$_GET['rand']."'  GROUP BY rand");
                 $pedfsbfdb = mysql_result($qdsafsd, 0);
@@ -1234,33 +2736,10 @@ if($person47['oplachenks'] == 0 && $person47['oplachen'] == 0 && $person47['otl3
                 }
                 ?>
 
-                <div id="vladelec" style="    background: #1590d2;
-    padding: 2px 10px;
-    color: #fff;
-    font-size: 18px;
-    border: 1px solid #1590d2;">Контактное лицо:</div>
-                <table class="table">
-                    <tr>
-                        <td>
-                            <?php
-                            echo '<div class="col-md-12">';
-                            include 'addkontakt.php';
-                            echo '</div>';
-                            ?>
-                            <!------------------------------------------------- ---------------------------------------------------->
-
-
-
-
-                        </td>
-                    </tr>
-                </table>
-
-
                 <!------------------------------------------------- ---------------------------------------------------->
                 <br />
                 <div id="vladelec" style="background: #1590d2;padding: 2px 10px;color: #fff;font-size: 18px;border: 1px solid #1590d2;">Дополнительная информация</div>
-                <div style="    background: #fff;
+                <div class="komnete-extra-panel" style="    background: #fff;
     padding: 5px;
     font-size: 18px;
     border: 1px solid #1590d2;">
@@ -1319,73 +2798,34 @@ if($person47['oplachenks'] == 0 && $person47['oplachen'] == 0 && $person47['otl3
                         </div>
                     </div>!-->
                     <!------------------------------------------------- ---------------------------------------------------->
-                    <div class="form-group" style="display: list-item;">
+                    <div class="form-group komnete-extra-row">
                         <label class="col-sm-3 control-label">Владелец сертификата:</label>
-                        <div class="col-sm-9" id="fio">
-                            <table class="table">
-                                <tr>
-                                    <td>
-                                        <?php
-
-                                        $lis = "SELECT * FROM klient WHERE id =".$schet['vladelec'];
-                                        $resultlis = mysql_query($lis);
-                                        $personlis = mysql_fetch_array($resultlis);
-                                        echo '<p id="vladelecinfo" style="
-    font-size: 13px;    padding: 5px;
-">';
-                                        echo $personlis['fio'];
-                                        if(!empty($schet['vladelec'])){echo ' / ';}
-                                        echo $personlis['tel'];
-                                        if(!empty($schet['vladelec'])){echo ' / ';}
-                                        echo $personlis['email'];
-                                        echo '</p>';
-
-                                        echo '<select id="vladele" name="vladele" class="form-control" onchange="vlaDelec(this.value)" style="display: none;">';
-                                        echo '<option  value="0"></option>';
-                                        $query2 = mysql_query("SELECT * from klient_ogrn WHERE idkli = '".$_GET['kli']."' ORDER BY id DESC");
-                                        while($row2 = mysql_fetch_array($query2)) {
-                                            $query3 = mysql_query("SELECT * from klient WHERE id = '".$row2['klient']."' ORDER BY id DESC");
-                                            while($row3 = mysql_fetch_array($query3)) {
-                                                echo '<option  value="'.$row3['id'].'">';
-                                                echo $row3['fio']," (",$row3['dol'],":",$row3['tel'],")";
-                                                echo '</option>';
-                                            }
-                                        }
-                                        echo '<option  value="0"></option>';
-                                        echo '</select>';
-                                        ?>
-                                    </td>
-                                    <td  class="sexodrom" style='width:90px;    padding: 5px;'>
-                                        <a onclick="vladelec()" style="float: right;">Изменить <span class="glyphicon glyphicon-pencil" aria-hidden="true"></span></a>
-                                    </td>
-                                </tr>
-                            </table>
-                            <script>
-                                function vladelec(){
-                                    document.getElementById("vladele").style.display="block";
+                        <div class="col-sm-9 komnete-extra-field">
+                            <?php
+                            $currentVladelec = intval($schet['vladelec']);
+                            echo '<select id="vladele" name="vladele" class="form-control" onchange="vlaDelec(this.value)">';
+                            echo '<option value="0"'.($currentVladelec === 0 ? ' selected' : '').'></option>';
+                            $query2 = mysql_query("SELECT * from klient_ogrn WHERE idkli = '".$_GET['kli']."' ORDER BY id DESC");
+                            while($row2 = mysql_fetch_array($query2)) {
+                                $query3 = mysql_query("SELECT * from klient WHERE id = '".$row2['klient']."' ORDER BY id DESC");
+                                while($row3 = mysql_fetch_array($query3)) {
+                                    $selected = intval($row3['id']) === $currentVladelec ? ' selected' : '';
+                                    echo '<option value="'.intval($row3['id']).'"'.$selected.'>';
+                                    echo htmlspecialchars($row3['fio'], ENT_QUOTES, 'UTF-8')," (",htmlspecialchars($row3['dol'], ENT_QUOTES, 'UTF-8'),":",htmlspecialchars($row3['tel'], ENT_QUOTES, 'UTF-8'),")";
+                                    echo '</option>';
                                 }
+                            }
+                            echo '</select>';
+                            ?>
+                            <script>
                                 function vlaDelec(str) {
-                                    if (str=="0") {
-                                        $.ajax({
-                                            type: "GET",
-                                            url: "pusya.php",
-                                            data: "vlad="+str+"&tip=vladelec&rand=<?php echo $_GET['rand']; ?>",
-                                            success: function(msg){
-                                                $("#vladelecinfo").html(msg);
-                                                document.getElementById("vladele").style.display="none";
-                                            }
-                                        });
-                                    } else {
-                                        $.ajax({
-                                            type: "GET",
-                                            url: "pusya.php",
-                                            data: "vlad="+str+"&tip=vladelec&rand=<?php echo $_GET['rand']; ?>",
-                                            success: function(msg){
-                                                $("#vladelecinfo").html(msg);
-                                                document.getElementById("vladele").style.display="none";
-                                            }
-                                        });
-                                    }
+                                    $.ajax({
+                                        type: "GET",
+                                        url: "pusya.php",
+                                        data: "vlad="+encodeURIComponent(str)+"&tip=vladelec&rand=<?php echo $_GET['rand']; ?>",
+                                        success: function(msg){
+                                        }
+                                    });
                                 }
                             </script>
                         </div>
@@ -1394,37 +2834,47 @@ if($person47['oplachenks'] == 0 && $person47['oplachen'] == 0 && $person47['otl3
                     <!------------------------------------------------- ---------------------------------------------------->
 
 
-                    <div class="form-group" style="display: list-item;">
-                        <label class="col-sm-3 control-label">Фактический адресс:</label>
-                        <div class="col-sm-9" id="fio">
-                            <table class="table">
-                                <tr>
-                                    <td>
-                                        <?php
-
-                                        echo '<p id="fadressinfo" style="font-size: 13px;">';
-                                        echo $schet['fadress'];
-                                        echo '</p>';
-                                        echo '<input id="fadres" class="form-control" type="text" name="fadres" onchange="faDress(this.value)" style="display: none;" value="'.$schet['fadress'].'">';
-                                        ?>
-                                    </td>
-                                    <td  class="sexodrom" style='width:90px;    padding: 5px;'>
-                                        <a onclick="fadress()" style="float: right;">Изменить <span class="glyphicon glyphicon-pencil" aria-hidden="true"></span></a>
-                                    </td>
-                                </tr>
-                            </table>
+                    <div class="form-group komnete-extra-row">
+                        <label class="col-sm-3 control-label">Фактический адрес:</label>
+                        <div class="col-sm-9 komnete-extra-field">
+                            <?php $hasFadress = trim($schet['fadress']) !== ''; ?>
+                            <div id="fadressView" style="<?php if(!$hasFadress){ echo 'display:none;'; } ?>">
+                                <p id="fadressinfo" class="komnete-readonly-value"><?php echo htmlspecialchars($schet['fadress'], ENT_QUOTES, 'UTF-8'); ?></p>
+                                <button type="button" class="komnete-extra-edit" onclick="fadressEdit()">Изменить</button>
+                            </div>
+                            <div id="fadressEditor" style="<?php if($hasFadress){ echo 'display:none;'; } ?>">
+                                <input id="fadres" class="form-control" type="text" name="fadres" value="<?php echo htmlspecialchars($schet['fadress'], ENT_QUOTES, 'UTF-8'); ?>">
+                                <div class="komnete-extra-actions">
+                                    <button type="button" class="komnete-extra-save" onclick="faDressSave()">Сохранить</button>
+                                    <button type="button" class="komnete-extra-cancel" onclick="fadressCancel()" style="<?php if(!$hasFadress){ echo 'display:none;'; } ?>">Отмена</button>
+                                </div>
+                            </div>
                             <script>
-                                function fadress(){
-                                    document.getElementById("fadres").style.display="block";
+                                var vooviFadressOriginal = <?php echo json_encode($schet['fadress']); ?>;
+                                function fadressEdit(){
+                                    document.getElementById("fadressView").style.display="none";
+                                    document.getElementById("fadressEditor").style.display="block";
+                                    document.getElementById("fadres").focus();
                                 }
-                                function faDress(str) {
+                                function fadressCancel(){
+                                    document.getElementById("fadres").value = vooviFadressOriginal;
+                                    document.getElementById("fadressEditor").style.display="none";
+                                    document.getElementById("fadressView").style.display=vooviFadressOriginal ? "block" : "none";
+                                }
+                                function faDressSave() {
+                                    var str = document.getElementById("fadres").value;
                                     $.ajax({
                                         type: "GET",
                                         url: "pusya.php",
-                                        data: "vlad="+str+"&tip=fadress&rand=<?php echo $_GET['rand']; ?>",
+                                        data: "vlad="+encodeURIComponent(str)+"&tip=fadress&rand=<?php echo $_GET['rand']; ?>",
                                         success: function(msg){
-                                            $("#fadressinfo").html(msg);
-                                            document.getElementById("fadres").style.display="none";
+                                            vooviFadressOriginal = msg;
+                                            $("#fadressinfo").text(msg);
+                                            if($.trim(msg).length){
+                                                document.getElementById("fadressEditor").style.display="none";
+                                                document.getElementById("fadressView").style.display="block";
+                                                $(".komnete-extra-cancel").show();
+                                            }
                                         }
                                     });
                                 }
@@ -1435,9 +2885,9 @@ if($person47['oplachenks'] == 0 && $person47['oplachen'] == 0 && $person47['otl3
                     <!------------------------------------------------- ---------------------------------------------------->
                     <?if(str_replace(" ","",$schet['nomerschetks'])!="" && $savoir['id']=="12"){?>
                         <form method="post">
-                            <div  class="av"id="agent" style="height: 140px;">
-                                <div class="form-control" style="height: auto;float: left;">
-                                    <label> ОП&nbsp;&nbsp;&nbsp;&nbsp;<span style="font-size: 10pt;
+                            <div  class="av komnete-op-card"id="agent" style="height: 140px;">
+                                <div class="form-control komnete-op-row" style="height: auto;float: left;">
+                                    <label class="komnete-op-title"> ОП&nbsp;&nbsp;&nbsp;&nbsp;<span style="font-size: 10pt;
     border: 1px solid #ddd; padding:5px;"><?php
                                             $q = "SELECT * FROM `produkti` WHERE id =$_GET[produkt]";
                                             $result = mysql_query($q);
@@ -1530,7 +2980,7 @@ if($person47['oplachenks'] == 0 && $person47['oplachen'] == 0 && $person47['otl3
                                             }
                                             echo $person['name'];
                                             ?></span></label>
-                                    <div style="
+                                    <div class="komnete-op-field komnete-op-type" style="
     width: 25%;
     height: 50px;
     float: left;
@@ -1558,7 +3008,7 @@ if($person47['oplachenks'] == 0 && $person47['oplachen'] == 0 && $person47['otl3
     height: auto;
     float: left;
 	display:none;
-"id="dobusl">
+"id="dobusl" class="komnete-op-services">
                                         <label style="
   width: 50%;
     text-align: left;
@@ -1594,7 +3044,7 @@ if($person47['oplachenks'] == 0 && $person47['oplachen'] == 0 && $person47['otl3
     padding-left: 10px;
 	display:none;
 
-" id="shtsert">
+" id="shtsert" class="komnete-op-field komnete-op-sht">
                                         <label style="
   
   width: 40%;
@@ -1615,21 +3065,18 @@ if($person47['oplachenks'] == 0 && $person47['oplachen'] == 0 && $person47['otl3
                                 if ( $resdober[0]==0 )
                                 {
                                     ?>
-                                    <div class="form-control" style="height: auto;float: left;"id="dobp">
+                                    <div class="form-control komnete-dp-list" style="height: auto;float: left;"id="dobp">
                                         <div  style="
     height: auto;
     float: left;
     width: 100%;
-"id="dobpp">
+"id="dobpp" class="komnete-dp-row">
                                             <div style="
     width: 25%;
     height: 50px;
 	float: left;
-"id="dobpr">
-                                                <label style="
-    width: 40%;
-    padding-top: 5px;
-">Добавить дп</label>
+"id="dobpr" class="komnete-dp-product komnete-dp-add-control">
+                                                <button type="button" class="komnete-add-dp-button" onclick="vooviAddDpRow(this)">+ дп</button>
                                                 <select style="
     width: 53%;
     margin-left: 10px;
@@ -1663,7 +3110,7 @@ if($person47['oplachenks'] == 0 && $person47['oplachen'] == 0 && $person47['otl3
     height: 50px;
     float: left;
 	display:none;
-"id="dobppr">
+"id="dobppr" class="komnete-dp-type">
                                                 <label style="
   
   width: 22%;
@@ -1687,7 +3134,7 @@ if($person47['oplachenks'] == 0 && $person47['oplachen'] == 0 && $person47['otl3
                                                 </select>
                                             </div>
                                             <div style="
- width: 35%; height: auto; float: left; display: none;"id="dobuslpr">
+ width: 35%; height: auto; float: left; display: none;"id="dobuslpr" class="komnete-dp-services">
                                                 <label style="
   width: 50%;
     text-align: left;
@@ -1723,7 +3170,7 @@ if($person47['oplachenks'] == 0 && $person47['oplachen'] == 0 && $person47['otl3
     padding-left: 10px;
 	display:none;
 
-" id="shtsertpr">
+" id="shtsertpr" class="komnete-dp-sht">
                                                 <label style="
   
   width: 40%;
@@ -1742,21 +3189,18 @@ if($person47['oplachenks'] == 0 && $person47['oplachen'] == 0 && $person47['otl3
                                     $rer=mysql_query("SELECT av.dob_prod,av.shtsert,dobprod.dobprodnaim from av inner join dobprod on av.dob_prod=dobprod.id and rand =$_GET[rand] and dob_prod!=0");
                                     while($reser = mysql_fetch_assoc($rer)) :
                                         ?>
-                                        <div class="form-control" style="height: auto;float: left;"id="dobp">
+                                        <div class="form-control komnete-dp-list" style="height: auto;float: left;"id="dobp">
                                             <div  style="
     height: auto;
     float: left;
     width: 100%;
-"id="dobpp">
+"id="dobpp" class="komnete-dp-row">
                                                 <div style="
     width: 25%;
     height: 50px;
 	float: left;
-"id="dobpr"class="<?echo $cost;?>">
-                                                    <label style="
-    width: 40%;
-    padding-top: 5px;
-">Добавить дп</label>
+"id="dobpr"class="<?echo $cost;?> komnete-dp-product komnete-dp-add-control">
+                                                    <button type="button" class="komnete-add-dp-button" onclick="vooviAddDpRow(this)">+ дп</button>
                                                     <select style="
     width: 53%;
     margin-left: 10px;
@@ -1790,7 +3234,7 @@ if($person47['oplachenks'] == 0 && $person47['oplachen'] == 0 && $person47['otl3
     height: 50px;
     float: left;
 	display:none;
-"id="dobppr">
+"id="dobppr" class="komnete-dp-type">
                                                     <label style="
   
   width: 22%;
@@ -1814,7 +3258,7 @@ if($person47['oplachenks'] == 0 && $person47['oplachen'] == 0 && $person47['otl3
                                                     </select>
                                                 </div>
                                                 <div style="
- width: 35%; height: auto; float: left; display: none;"id="dobuslpr">
+ width: 35%; height: auto; float: left; display: none;"id="dobuslpr" class="komnete-dp-services">
                                                     <label style="
   width: 50%;
     text-align: left;
@@ -1850,7 +3294,7 @@ if($person47['oplachenks'] == 0 && $person47['oplachen'] == 0 && $person47['otl3
     padding-left: 10px;
 	display:none;
 
-" id="shtsertpr">
+" id="shtsertpr" class="komnete-dp-sht">
                                                     <label style="
   
   width: 40%;
@@ -1870,291 +3314,64 @@ if($person47['oplachenks'] == 0 && $person47['oplachen'] == 0 && $person47['otl3
                         </form>
                     <?}?>
                 </div>
-
-                <?php
-                include 'rabotasdoc.php';
-                ?>
-                <form method="POST" action="/dob_doc.php" class="usl">
-                    <?php session_start();
-                    $_SESSION['a'] = $_GET['rand'];
-                    $_SESSION['s'] = $_GET['kli'];
-                    session_write_close();
-                    ?>
-                    <select class="vib vibor"  name="dob">
-                        <option selected> Выберите документ для добавления</option>
-                        <?php
-                        $r = mysql_query("SELECT * FROM doki "); while($res = mysql_fetch_assoc($r))  : ?>
-                            <option value="<?php echo $res['id']?>"><?php echo htmlspecialchars($res['name']);?></option>
-                        <?php endwhile; ?>
-                    </select>
-                    <button class="button">Добавить</button>
-                </form>
-                <form method="POST" action="/udl_doc.php" class="usl">
-                    <select class="vib vibor"  name="udl">
-                        <option selected> Выберите документ для удаления</option>
-                        <?php
-                        $r = mysql_query("SELECT * from doki inner join dokstamp on dokstamp.doki=doki.id and dokstamp.schet='".$_GET['rand']."' order by doki.id asc"); while($res = mysql_fetch_assoc($r))  : ?>
-                            <option value="<?php echo $res['id']?>"><?php echo htmlspecialchars($res['name']);?></option>
-                        <?php endwhile; ?>
-                    </select>
-                    <button class="button">Удалить</button>
-                </form>
-
             </div>
 
             <?php
             echo'
-
-<div class="col-md-6">
-	<div id="konttakt" style="
-        background: #1590d2;
-    padding: 2px 10px;
-    color: #fff;
-    font-size: 18px;
-    border: 1px solid #1590d2;
-">Выполнение:</div>
-	<div style="padding: 5px;border: 1px solid #ccc;    background: #fff; font-size: 14px;">
-	<table class="table">';
-            $iz = 1;
-            $querys = mysql_query("SELECT * FROM schet WHERE del = '0' AND `rand` = '$_GET[rand]'");
-            while($row = mysql_fetch_array($querys)) {
-                $rpod = "SELECT * FROM tarif WHERE `id` = ".$row['prod'];
-                $resultrpod = mysql_query($rpod);
-                $personrpod = mysql_fetch_array($resultrpod);
-                echo  '<tr style="font-size: 14px;" id="trschet'.$row['id'].'" ';
-                if($row['scheton'] == 1){
-                    echo 'class="alert alert-success"';
-                }
-                echo'>
-	<td style="font-size: 14px;"><input type="checkbox" id="scheton'.$row['id'].'" style="cursor:pointer; font-size: 14px;" value="1" ';
-                if($row['scheton'] == 1){
-                    echo 'checked';
-                }
-                echo'>
-<script language="javascript">
-$(function() {
-$("#scheton'.$row['id'].'").click(function(){
-if (document.getElementById("scheton'.$row['id'].'").checked == true){
-	$.ajax({
-			type: "GET",
-			url: "pusya.php",
-			data: "tip=scheton&id='.$row['id'].'&scheton=1",
-			success: function(msg){
-				document.getElementById("trschet'.$row['id'].'").className = "alert alert-success";
-			}
-		});
-}else {
-	$.ajax({
-			type: "GET",
-			url: "pusya.php",
-			data: "tip=scheton&id='.$row['id'].'&scheton=0",
-			success: function(msg){
-				document.getElementById("trschet'.$row['id'].'").className = "";
-			}
-		});
-}
-});
-});
-</script>
-	</td>
-	<td>'.$personrpod['name'].'</td>
-	<td>'.$personrpod['shtuk'].'</td>
-	<td><input type="text" value="'.$row['kvo'].'"></td>
-	<td>'.number_format($personrpod['price'], 2, '.', ' ').'</td>
-	<td>'.number_format($personrpod['price'] * $row['kvo'], 2, '.', ' ').'</td>
-</tr>   
-';
-            }
-
-            $pav = "SELECT * FROM schet WHERE del = '0' AND rand = $_GET[rand]";
-            $pavresult = mysql_query($pav);
-            $pavoir = mysql_fetch_array($pavresult);
-            if ($pavoir['goroddd'] > 0 && $pavoir['goroddd'] != 162534){
-                echo  "
- <tr>
-  <td>-</td>
-  <td>Выезд</td>
-  <td>км</td>
-  <td>";
-                if($pavoir['goroddd'] == 450){
-                    echo  "Пятигорск (".$pavoir['kvogorod'].")";
-                } else if($pavoir['goroddd'] == 750){
-                    echo  "КМВ (".$pavoir['kvogorod'].")";
-                } else if($pavoir['goroddd'] == 1500){
-                    echo  "Георгиевск (".$pavoir['kvogorod'].")";
-                }else{
-                    echo  $pavoir['goroddd'] / 23 ."(".$pavoir['kvogorod'].")";
-                }
-                echo "
-  </td>
-  <td>";
-                if($pavoir['goroddd'] == 450){
-                    echo  number_format(450, 2, '.', ' ');
-                } else if($pavoir['goroddd'] == 750){
-                    echo  number_format(750, 2, '.', ' ');
-                } else if($pavoir['goroddd'] == 1500){
-                    echo  number_format(1500, 2, '.', ' ');
-                }else{
-                    echo  number_format(23, 2, '.', ' ');
-                }
-                echo "
-  </td>
-  <td>";
-
-                $kvogorod = $pavoir['goroddd'] * $pavoir['kvogorod'];
-                echo  number_format($kvogorod, 2, '.', ' ');
-                echo "
-  </td>
- </tr>
-
- ";
-            }
-            echo'</table>
-
-</div>
-<p style="border-left: 1px #ddd solid;
-    border-right: 1px #ddd solid;
-    border-bottom: 1px #ddd solid;
-    padding-top: 5px;
-    padding-bottom: 5px;
-    font-size: 14px;">
-    <b style="
-    width: 100%;
-    float: left;
-    text-align: center;
-    font-size: 14px;
-">Только для маркировки</b>
-<b>Количество строк в описе:</b>
-<input id="kol_opis" type="text" style="width:50px; font-size: 14px;" name="kol_opis" value=' . $schet['kol_opis'].'>
-    <br><b>Кто составил опись:</b>
-    <select id="sos_opis'.$_GET['rand'].'" class=" htext-add">
-    <option style="font-size: 14px;"  value=' . $schet['sos_opis'].' selected>' . $ktoi . '</option>';
-            echo '<option style="font-size: 14px;" value="4113">Коневец Татьяна</option>';
-            echo '</select>
-
-</p>
-</div>
-
-
-<div class="col-md-6">
-	<div id="konttakt" style="
-        background: #1590d2;
-    padding: 2px 10px;
-    color: #fff;
-    font-size: 18px;
-    border: 1px solid #1590d2;
-">История выполнения:</div>
-	<div style="padding: 5px;border: 1px solid #ccc;    background: #fff; font-size: 14px;">';
-            $kolkom = 1;
-            $wequery = mysql_query("SELECT * FROM schet_status WHERE schet ='".$_GET['rand']."' ORDER BY id DESC");
-            while($rowzw = mysql_fetch_array($wequery)) {
-                $zktolgenerac = "SELECT * FROM users WHERE users_id =".$rowzw['kto'];
-                $zktorgenerac = mysql_query($zktolgenerac);
-                $zktopgenerac = mysql_fetch_array($zktorgenerac);
-                $zkto = $zktopgenerac['f_name'];
-                $status = $rowzw['status'];
-                $lis = "SELECT * FROM status WHERE id ='".$status."' ";
-                $resultlis = mysql_query($lis);
-                $personlis = mysql_fetch_array($resultlis);
-                echo '<b>'.$rowzw['data'].' / '.mb_substr($zkto,0,1,'UTF-8').'. '.$zktopgenerac['l_name'].'</b> '.$personlis['name'];
-                //-----------------------------------------------------
-                $resultkolkommm = mysql_query("SELECT count(*) from schetoldkomment WHERE  schet ='".$_GET['rand']."'");
-                $kolkommm = mysql_result($resultkolkommm, 0);
-                $kolkomm = $kolkom++;
-                if($kolkomm != $kolkommm){
-                    echo '<hr>';
-                }
-                //-----------------------------------------------------
-            }
-            echo'</div>';
-
-
-            echo'</div>	
-<div class="col-md-6">
-	<div id="konttakt" style="
-        background: #1590d2;
-    padding: 2px 10px;
-    color: #fff;
-    font-size: 18px;
-    border: 1px solid #1590d2;
-">Комментарии:</div>
-	<div style="padding: 5px;border: 1px solid #ccc;    background: #fff; font-size: 14px;">';
-            $kolkom = 1;
-            $wequery = mysql_query("SELECT * FROM schetoldkomment WHERE schet ='".$_GET['rand']."' ORDER BY id DESC");
-            while($rowzw = mysql_fetch_array($wequery)) {
-                $zktolgenerac = "SELECT * FROM users WHERE users_id =".$rowzw['kto'];
-                $zktorgenerac = mysql_query($zktolgenerac);
-                $zktopgenerac = mysql_fetch_array($zktorgenerac);
-                $zkto = $zktopgenerac['f_name'];
-                echo '<b>'.$rowzw['data'].' / '.mb_substr($zkto,0,1,'UTF-8').'. '.$zktopgenerac['l_name'].'</b> '.$rowzw['komment'];
-                //-----------------------------------------------------
-                $resultkolkommm = mysql_query("SELECT count(*) from schetoldkomment WHERE  schet ='".$_GET['rand']."'");
-                $kolkommm = mysql_result($resultkolkommm, 0);
-                $kolkomm = $kolkom++;
-                if($kolkomm != $kolkommm){
-                    echo '<hr>';
-                }
-                //-----------------------------------------------------
-            }
-            echo'</div>
-</div>
-<div class="col-md-6">
-	<div id="konttakt" style="
-        background: #1590d2;
-    padding: 2px 10px;
-    color: #fff;
-    font-size: 18px;
-    border: 1px solid #1590d2;
-">Звонки:</div>
-	<div style="padding: 5px;border: 1px solid #ccc;background: #fff;overflow-y: scroll;height: 300px;">';
-            $h=0;
-            echo'
-<table class="table">
-<thead>
-<tr>
-         <th style="font-size: 14px;">№</th>
-        <th style="font-size: 14px;">Кто звонил</th>
-        <th style="font-size: 14px;">Звонок</th>
-        <th style="font-size: 14px;">Дата звонка</th>
-</tr>
-</thead>
-<tbody>';
-            $wequeryz = mysql_query("SELECT telefonia.*,schet.ns,users.f_name,users.l_name,users.o_name FROM telefonia left join schet on telefonia.ns=schet.ns left join users on telefonia.idkto=users.users_id WHERE schet.rand ='".$_GET['rand']."'  group BY telefonia.id");
-            while($rowzw = mysql_fetch_array($wequeryz)) {
-                $h++;
-                echo'<tr style="font-size: 14px;">';
-                echo'<td style="font-size: 14px;">'.$h.'</td>';
-                echo'<td style="font-size: 14px;">'.$rowzw['f_name'].' '.mb_substr($rowzw['l_name'],0,1,'UTF-8'),'. '.mb_substr($rowzw['o_name'],0,1,'UTF-8').'</td>';
-                echo'<td style="font-size: 14px;"><audio controls><source src="/voicecatalog/'. $rowzw["callmessage"].'"></audio></td>';
-                echo'<td style="font-size: 14px;">'.$rowzw["date_answer"].'</td>';
-                echo'</tr>';
-            }
-            echo '</tbody>
-</table>
-</div>
-</div>
-	
-	
 <script  type="text/javascript">
-var ckeditor'.$_GET['rand'].' = CKEDITOR.replace( "editor'.$_GET['rand'].'" ).config.toolbarGroups = [
-{ name: "tools" },
-{ name: "others" },
-{ name: "basicstyles", groups: [ "basicstyles", "cleanup" ]},
-{ name: "colors" }
-];
-
-
+(function () {
+    var editorId = "editor'.$_GET['rand'].'";
+    var toolbarGroups = [
+        { name: "tools" },
+        { name: "others" },
+        { name: "basicstyles", groups: [ "basicstyles", "cleanup" ]},
+        { name: "colors" }
+    ];
+    function initCommentEditor() {
+        if (!window.CKEDITOR || !document.getElementById(editorId)) {
+            return null;
+        }
+        if (CKEDITOR.instances[editorId]) {
+            return CKEDITOR.instances[editorId];
+        }
+        return CKEDITOR.replace(editorId, {
+            toolbarGroups: toolbarGroups
+        });
+    }
+    $(function(){
+        $(".komnete-comment-edit[data-editor-id=\'" + editorId + "\']").off("click.komneteCommentEdit").on("click.komneteCommentEdit", function(){
+            var commentBlock = $(this).closest("#zv");
+            commentBlock.find(".komnete-current-comment").hide();
+            commentBlock.find(".komnete-comment-form").removeClass("is-collapsed");
+            var editor = initCommentEditor();
+            if (editor) {
+                if (editor.status === "ready") {
+                    editor.focus();
+                } else {
+                    editor.on("instanceReady", function(){
+                        editor.focus();
+                    });
+                }
+            }
+        });
+    });
+})();
 </script>
 ';
 
             if(isset($_POST['submit'.$_GET['rand']])){
-                echo'<script>console.WriteLine("'.$_POST["editor".$_GET['rand']].'");</script>';
-                $koment = "UPDATE schet SET `koment`='".$_POST["editor".$_GET['rand']]." (".$userdata['f_name']." ".$userdata['l_name'].")' WHERE rand ='".$_GET['rand']."' ";
+                $editorValue = isset($_POST["editor".$_GET['rand']]) ? $_POST["editor".$_GET['rand']] : '';
+                $kolOpisValue = isset($_POST["kol_opis"]) ? $_POST["kol_opis"] : '';
+                $editorSql = mysql_real_escape_string($editorValue);
+                $kolOpisSql = mysql_real_escape_string($kolOpisValue);
+                $randSql = mysql_real_escape_string($_GET['rand']);
+                $userNameSql = mysql_real_escape_string($userdata['f_name']." ".$userdata['l_name']);
+                $koment = "UPDATE schet SET `koment`='".$editorSql." (".$userNameSql.")' WHERE rand ='".$randSql."' ";
                 mysql_query($koment) or die(mysql_error($link));
-                $komentk = "UPDATE schet SET `kol_opis`='".$_POST["kol_opis"]."' WHERE rand ='".$_GET['rand']."' ";
+                $komentk = "UPDATE schet SET `kol_opis`='".$kolOpisSql."' WHERE rand ='".$randSql."' ";
                 mysql_query($komentk) or die(mysql_error($link));
-                echo'<script type="text/javascript">document.location.href = "'.$_SERVER['REQUEST_URI'].'";</script>';
-                $oldkomment = "INSERT INTO `schetoldkomment` (`schet`,`komment`,`kto`,`data`) VALUES ('".$_GET['rand']."','".$_POST["editor".$_GET['rand']]."','".$userdata['users_id']."','".date("d.m.Y; H:i")."')";
+                echo'<script type="text/javascript">document.location.href = '.json_encode($_SERVER['REQUEST_URI']).';</script>';
+                $oldkomment = "INSERT INTO `schetoldkomment` (`schet`,`komment`,`kto`,`data`) VALUES ('".$randSql."','".$editorSql."','".intval($userdata['users_id'])."','".date("d.m.Y; H:i")."')";
                 mysql_query($oldkomment) or die(mysql_error($linkoldkoment));
                 $aktivn = "INSERT INTO `aktivn` (`data`,`deistvie`,`users`) VALUES ('".date("d.m.Y; H:i:s")."','Изменен коментарий счета','".$userdata['users_id']."')";
                 mysql_query($aktivn) or die(mysql_error($link));
@@ -2990,6 +4207,116 @@ var ckeditor'.$_GET['rand'].' = CKEDITOR.replace( "editor'.$_GET['rand'].'" ).co
                         mysql_query( "UPDATE av SET shtsert='".$_POST['shtpr']."' WHERE dobprodschet='".$personavvdob['dobprodschet']."'");
                     }
                 }
+                if(isset($_POST['dobprod']) && is_array($_POST['dobprod']))
+                {
+                    $randAv = mysql_real_escape_string($_GET['rand']);
+                    mysql_query("DELETE FROM av WHERE rand = '".$randAv."' AND ((dob_prod != '0' AND dob_prod != '') OR (dobprodschet != '0' AND dobprodschet != ''))") or die(mysql_error($link));
+
+                    $dop_prod_rows = $_POST['dobprod'];
+                    $avdob_rows = (isset($_POST['avdob']) && is_array($_POST['avdob'])) ? $_POST['avdob'] : array();
+                    $shtpr_rows = (isset($_POST['shtpr']) && is_array($_POST['shtpr'])) ? $_POST['shtpr'] : array();
+                    $osProdDp = isset($_GET['produkt']) ? intval($_GET['produkt']) : intval($schet['produkt']);
+                    $schetNomDp = mysql_real_escape_string($schet['nomerschetks']);
+                    $schetPriceDp = mysql_real_escape_string($schet['priceks']);
+                    $userDp = intval($userdata['users_id']);
+                    $dobprodschetBase = mysql_real_escape_string($schet['nomerschetks']."dob");
+
+                    for($dpIndex = 0; $dpIndex < count($dop_prod_rows); $dpIndex++)
+                    {
+                        $dopProdValue = intval($dop_prod_rows[$dpIndex]);
+                        if($dopProdValue <= 0)
+                        {
+                            continue;
+                        }
+
+                        $avdobValue = isset($avdob_rows[$dpIndex]) ? (string)$avdob_rows[$dpIndex] : "0";
+                        if(!in_array($avdobValue, array("0", "1", "2", "3", "4"), true))
+                        {
+                            $avdobValue = "0";
+                        }
+
+                        $shtValue = isset($shtpr_rows[$dpIndex]) ? intval($shtpr_rows[$dpIndex]) : 0;
+                        $pagentDp = "";
+                        $sagentDp = "";
+                        $dagentDp = "";
+                        $chisrolDp = 0;
+
+                        if($avdobValue === "0")
+                        {
+                            $pagentDp = $schet['nomerschetks']."L";
+                            $sagentDp = $schet['nomerschetks'];
+                            $chisrolDp = 2;
+                            if($shtValue > 0)
+                            {
+                                $dagentDp = $schet['nomerschetks'];
+                                $chisrolDp = 3;
+                            }
+                        }
+                        if($avdobValue === "1")
+                        {
+                            $sagentDp = $schet['nomerschetks'];
+                            $chisrolDp = 1;
+                            if($shtValue > 0)
+                            {
+                                $dagentDp = $schet['nomerschetks'];
+                                $chisrolDp = 2;
+                            }
+                        }
+                        if($avdobValue === "2" || $avdobValue === "3")
+                        {
+                            $chisrolDp = 0;
+                            if($shtValue > 0)
+                            {
+                                $dagentDp = $schet['nomerschetks'];
+                                $chisrolDp = 1;
+                            }
+                        }
+                        if($avdobValue === "4")
+                        {
+                            $pagentDp = "Без АВ";
+                            $sagentDp = "Без АВ";
+                            $chisrolDp = 2;
+                            if($shtValue > 0)
+                            {
+                                $dagentDp = "Без АВ";
+                                $chisrolDp = 3;
+                            }
+                        }
+
+                        $pagentDp = mysql_real_escape_string($pagentDp);
+                        $sagentDp = mysql_real_escape_string($sagentDp);
+                        $dagentDp = mysql_real_escape_string($dagentDp);
+
+                        $insertDp = "INSERT INTO `av` (
+                            `os_prod`,
+                            `dob_prod`,
+                            `dobprodschet`,
+                            `pagent`,
+                            `sagent`,
+                            `dagent`,
+                            `shtsert`,
+                            `chisrol`,
+                            `rand`,
+                            `schet`,
+                            `summschet`,
+                            `kto`
+                        ) VALUES (
+                            '".$osProdDp."',
+                            '".$dopProdValue."',
+                            '".$dobprodschetBase."',
+                            '".$pagentDp."',
+                            '".$sagentDp."',
+                            '".$dagentDp."',
+                            '".$shtValue."',
+                            '".$chisrolDp."',
+                            '".$randAv."',
+                            '".$schetNomDp."',
+                            '".$schetPriceDp."',
+                            '".$userDp."'
+                        )";
+                        mysql_query($insertDp) or die(mysql_error($link));
+                    }
+                }
                 echo'<script type="text/javascript">document.location.href = "'.$_SERVER['REQUEST_URI'].'";</script>';
             }
             ?>
@@ -3007,20 +4334,7 @@ var ckeditor'.$_GET['rand'].' = CKEDITOR.replace( "editor'.$_GET['rand'].'" ).co
 
     <script src="js/bootstrap.min.js"></script>
     <!--<script src="js/jquery.ba-throttle-debounce.min.js"></script>
-    <script src="js/jquery.stickyheader.js"></script>--><script  type="text/javascript">
-        $(document).ready(function() {
-            $.viewInput = {
-                '0' : $([]),
-//Это имя DIV вокруг невидимого поля
-                'zv' : $('#zv'),
-                'vs' : $('#vs'),
-            };$('#otherFieldOption').change(function() {
-// Прячет это поле, если выбрана другая опция
-                $.each($.viewInput, function() { this.hide(); });
-// Показывает поле при выборе необходимой опции
-                $.viewInput[$(this).val()].show();
-            });});
-    </script>
+    <script src="js/jquery.stickyheader.js"></script>-->
 
     <script>
 
@@ -3065,37 +4379,81 @@ var ckeditor'.$_GET['rand'].' = CKEDITOR.replace( "editor'.$_GET['rand'].'" ).co
             document.getElementById("dobusl").style.display="none";
             document.getElementById("shtsert").style.display="block";
         }
-        $(document).ready(function(){
-            var avdob = document.querySelectorAll('#avdob');
-            var dobuslprr = document.querySelectorAll('#dobuslpr');
-            var shtsertprr = document.querySelectorAll('#shtsertpr');
-            for (index = 0; index < avdob.length; index++) {
-                if(avdob[index].value=="4")
-                {
-                    dobuslprr[index].style.display="none";
-                    shtsertprr[index].style.display="none";
-                }
-                if(avdob[index].value=="0")
-                {
-                    dobuslprr[index].style.display="block";
-                    shtsertprr[index].style.display="block";
-                }
-                if(avdob[index].value=="1")
-                {
-                    dobuslprr[index].style.display="block";
-                    shtsertprr[index].style.display="block";
-                }
-                if(avdob[index].value=="2")
-                {
-                    dobuslprr.style.display="none";
-                    shtsertprr.style.display="block";
-                }
-                if(avdob[index].value=="3")
-                {
-                    dobuslprr.style.display="none";
-                    shtsertprr.style.display="block";
-                }
+        function vooviDpRow(element) {
+            return $(element).closest(".komnete-dp-row, #dobpp");
+        }
+        function vooviDpValue(row, selector) {
+            var control = $(row).find(selector).first();
+            return control.length ? control.val() : "";
+        }
+        function vooviShowDpBlock(block) {
+            $(block).removeClass("komnete-is-hidden");
+        }
+        function vooviHideDpBlock(block) {
+            $(block).addClass("komnete-is-hidden");
+        }
+        function vooviSetDpProductState(row) {
+            row = $(row);
+            var productValue = vooviDpValue(row, 'select[name="dobprod[]"]');
+            var typeBlock = row.find("#dobppr").first();
+            var serviceBlock = row.find("#dobuslpr").first();
+            var shtBlock = row.find("#shtsertpr").first();
+            if (productValue && productValue !== "0") {
+                vooviShowDpBlock(typeBlock);
+            } else {
+                vooviHideDpBlock(typeBlock);
+                vooviHideDpBlock(serviceBlock);
+                vooviHideDpBlock(shtBlock);
             }
+        }
+        function vooviSetDpTypeState(row) {
+            row = $(row);
+            var productValue = vooviDpValue(row, 'select[name="dobprod[]"]');
+            var typeValue = vooviDpValue(row, 'select[name="avdob[]"]');
+            var serviceBlock = row.find("#dobuslpr").first();
+            var shtBlock = row.find("#shtsertpr").first();
+            if (!productValue || productValue === "0" || typeValue === "4" || typeValue === "-1" || typeValue === "") {
+                vooviHideDpBlock(serviceBlock);
+                vooviHideDpBlock(shtBlock);
+            } else {
+                vooviHideDpBlock(serviceBlock);
+                vooviShowDpBlock(shtBlock);
+            }
+        }
+        function vooviResetDpRow(row) {
+            row = $(row);
+            var productSelect = row.find('select[name="dobprod[]"]').first();
+            var typeSelect = row.find('select[name="avdob[]"]').first();
+            if (!productSelect.find('option[value="0"]').length) {
+                productSelect.prepend('<option value="0"></option>');
+            }
+            productSelect.val("0");
+            typeSelect.val("0");
+            row.find('input[name="shtpr[]"]').first().val("0");
+            var serviceSelects = row.find('select[name="dobuslpr[]"]');
+            serviceSelects.not(":first").remove();
+            serviceSelects.first().val("-1");
+            vooviSetDpProductState(row);
+            vooviSetDpTypeState(row);
+        }
+        function vooviAddDpRow(button) {
+            var sourceRow = vooviDpRow(button);
+            if (!sourceRow.length) {
+                sourceRow = $(".komnete-dp-row, #dobpp").last();
+            }
+            if (!sourceRow.length) {
+                return;
+            }
+            var newRow = sourceRow.clone(false, false);
+            vooviResetDpRow(newRow);
+            sourceRow.closest(".komnete-dp-list, #dobp").append(newRow);
+            newRow.find('select[name="dobprod[]"]').first().focus();
+        }
+        $(document).ready(function(){
+            $(".komnete-dp-row, #dobpp").each(function(){
+                vooviSetDpProductState(this);
+                vooviSetDpTypeState(this);
+            });
         });
         av.onchange=function(event)
         {
@@ -3138,128 +4496,23 @@ var ckeditor'.$_GET['rand'].' = CKEDITOR.replace( "editor'.$_GET['rand'].'" ).co
                 document.getElementById("dobusll").appendChild(div2);
             }
         }
-        dobuslpr.onchange=function()
-        {
-            if(document.getElementById("dobusllpr").value!="0")
-            {
-                let div2=document.getElementById("dobusllpr").cloneNode(true);
-                document.getElementById("dobuslprl").appendChild(div2);
-            }
-        }
         $(document).ready(function(){
-            var li = document.querySelectorAll('#dobprod');
-            var dobppr = document.querySelectorAll('#dobppr');
-            var dobuslpr = document.querySelectorAll('#dobuslpr');
-            var shtsertpr = document.querySelectorAll('#shtsertpr');
-            for (index = 0; index < li.length; index++) {
-                if(li[index].value!="0")
-                {
-
-                    dobppr[index].style.display="block";
-                }
-                else
-                {
-                    dobppr[index].style.display="none";
-                    dobuslpr[index].style.display="none";
-                    shtsertpr[index].style.display="none";
-                }
-            }
-        });
-        dobprod.oninput = function() {
-            if(document.getElementById("dobprod").value!="0")
-            {
-                document.getElementById("dobppr").style.display="block";
-                /* let div2=document.getElementById("dobp").cloneNode(true);
-              document.getElementById("dobp").after(div2);*/
-            }
-            else
-            {
-                document.getElementById("dobppr").style.display="none";
-                document.getElementById("dobuslpr").style.display="none";
-                document.getElementById("shtsertpr").style.display="none";
-            }
-        };
-        $(document).ready(function(){
-            $('body').on("change", ".dobprod", function (e) {
-                var div3=document.getElementById("dobpp").cloneNode(true);
-                document.getElementById("dobp").append(div3);
+            $('body').on("change", ".dobprod", function () {
+                var row = vooviDpRow(this);
+                vooviSetDpProductState(row);
+                vooviSetDpTypeState(row);
             });
-        });
-        $(document).ready(function(){
-
-            $('body').on("change", ".avdob", function (e) {
-                var li = document.querySelectorAll('#avdob');
-                var dobuslpr = document.querySelectorAll('#dobuslpr');
-                var shtsertpr = document.querySelectorAll('#shtsertpr');
-                for (index = 0; index < li.length; index++) {
-
-                    if(li[index].value=="4")
-                    {
-                        dobuslpr[index].style.display="none";
-                        shtsertpr[index].style.display="none";
-                    }
-                    if(li[index].value=="-1")
-                    {
-                        dobuslpr[index].style.display="none";
-                        shtsertpr[index].style.display="none";
-                    }
-                    if(li[index].value=="0")
-                    {
-                        dobuslpr[index].style.display="none";
-                        shtsertpr[index].style.display="block";
-                    }
-                    if(li[index].value=="1")
-                    {
-                        dobuslpr[index].style.display="none";
-                        shtsertpr[index].style.display="block";
-                        shtsertpr[index].value="0";
-                    }
-                    if(li[index].value=="2")
-                    {
-                        dobuslpr[index].style.display="none";
-                        shtsertpr[index].style.display="block";
-                    }
-                    if(li[index].value=="3")
-                    {
-                        dobuslpr[index].style.display="none";
-                        shtsertpr[index].style.display="block";
-                    }
+            $('body').on("change", ".avdob", function () {
+                vooviSetDpTypeState(vooviDpRow(this));
+            });
+            $('body').on("change", 'select[name="dobuslpr[]"]', function () {
+                if ($(this).val() !== "0" && $(this).val() !== "-1") {
+                    var row = vooviDpRow(this);
+                    var holder = row.find("#dobuslprl").first();
+                    holder.append(this.cloneNode(true));
                 }
             });
         });
-        avdob.onchange=function()
-        {
-            if(document.getElementById("avdob").value=="4")
-            {
-                document.getElementById("dobuslpr").style.display="none";
-                document.getElementById("shtsertpr").style.display="none";
-            }
-            if(document.getElementById("avdob").value=="-1")
-            {
-                document.getElementById("dobuslpr").style.display="none";
-                document.getElementById("shtsertpr").style.display="none";
-            }
-            if(document.getElementById("avdob").value=="0")
-            {
-                document.getElementById("dobuslpr").style.display="none";
-                document.getElementById("shtsertpr").style.display="block";
-            }
-            if(document.getElementById("avdob").value=="1")
-            {
-                document.getElementById("dobuslpr").style.display="none";
-                document.getElementById("shtsertpr").style.display="block";
-            }
-            if(document.getElementById("avdob").value=="2")
-            {
-                document.getElementById("dobuslpr").style.display="none";
-                document.getElementById("shtsertpr").style.display="block";
-            }
-            if(document.getElementById("avdob").value=="3")
-            {
-                document.getElementById("dobuslpr").style.display="none";
-                document.getElementById("shtsertpr").style.display="block";
-            }
-        }
         <?}?>
         $('#callt').click(function () {
             document.getElementById("allmadalc").style.display = 'block';
@@ -3339,7 +4592,7 @@ var ckeditor'.$_GET['rand'].' = CKEDITOR.replace( "editor'.$_GET['rand'].'" ).co
                 $.ajax({
                     url: "iptel.php",
                     cache: false,
-                    data: "chanell=" + chanell + "&stat=" + stat + "&whomute="+<?echo $userdata['iptel'];?>+"",
+                    data: "chanell=" + chanell + "&stat=" + stat + "&whomute=<?echo rawurlencode($userdata['iptel']); ?>",
                     success: function (html) {
 
                     }
@@ -3352,7 +4605,7 @@ var ckeditor'.$_GET['rand'].' = CKEDITOR.replace( "editor'.$_GET['rand'].'" ).co
                 $.ajax({
                     url: "iptel.php",
                     cache: false,
-                    data: "chanell=" + chanell + "&stat=" + stat + "&whomute="+<?echo $userdata['iptel'];?>+"",
+                    data: "chanell=" + chanell + "&stat=" + stat + "&whomute=<?echo rawurlencode($userdata['iptel']); ?>",
                     success: function (html) {
 
                     }
@@ -3376,7 +4629,7 @@ var ckeditor'.$_GET['rand'].' = CKEDITOR.replace( "editor'.$_GET['rand'].'" ).co
             let stat = "perevod";
             let replaynumber = document.getElementById("replaynumber").value;
             let chynnel = chanell;
-            let whoreplay=<?echo $userdata['iptel'];?>;
+            let whoreplay="<?echo rawurlencode($userdata['iptel']); ?>";
             $.ajax({
 
                 type: "GET",
@@ -3415,7 +4668,7 @@ var ckeditor'.$_GET['rand'].' = CKEDITOR.replace( "editor'.$_GET['rand'].'" ).co
             // document.getElementById("header").style.display = 'none';
             document.getElementById("kew").style.display = 'none';
             document.getElementById("allctscrool").style.display = 'block';
-            document.getElementById("inn_call").innerHTML=<?php  echo $person['inn']; ?>;
+            document.getElementById("inn_call").innerHTML=<?php echo json_encode($person['inn']); ?>;
             document.getElementById("naim_call").innerHTML=naim.split("").join("").substr(0,50)+"....";
             document.getElementById("call_incomings").style.display='block';
             writeCookie('naim', naim.split("").join("").substr(0,50)+"....", 30);
@@ -3425,7 +4678,7 @@ var ckeditor'.$_GET['rand'].' = CKEDITOR.replace( "editor'.$_GET['rand'].'" ).co
                 date.setDate(date.getDate() + expires);
                 document.cookie = name+"="+val+"; path=/; expires=" + date.toUTCString();
             }
-            writeCookie('inn', <?php  echo $person['inn']; ?>, 30);
+            writeCookie('inn', <?php echo json_encode($person['inn']); ?>, 30);
 
             function writeCookie(name, val, expires) {
                 let date = new Date;

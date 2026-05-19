@@ -24,31 +24,68 @@ else
 
 if($_GET['tip'] == 'konttakt'){
 if(isset($_GET['lico'])){
-$koment = "UPDATE schet SET `lico`='".$_GET['lico']."' WHERE rand='".$_GET['rand']."'";
+$lico = intval($_GET['lico']);
+$rand = mysql_real_escape_string($_GET['rand']);
+$koment = "UPDATE schet SET `lico`='".$lico."' WHERE rand='".$rand."'";
 mysql_query($koment) or die(mysql_error($link));
-$lis = "SELECT * FROM klient WHERE id =".$_GET['lico'];
+$lis = "SELECT * FROM klient WHERE id =".$lico;
 $resultlis = mysql_query($lis);
 $personlis = mysql_fetch_array($resultlis);
+$fio = isset($personlis['fio']) ? $personlis['fio'] : '';
+$tel = isset($personlis['tel']) ? $personlis['tel'] : '';
+$dol = isset($personlis['dol']) ? $personlis['dol'] : '';
+$email = isset($personlis['email']) ? $personlis['email'] : '';
+$pol = isset($personlis['pol']) ? $personlis['pol'] : '';
 
-echo '{';
-echo '"fio"';
-echo ':"';
-echo $personlis['fio'];
-echo '", "tel"';
-echo ':"';
-echo $personlis['tel'];
-echo '", "dol"';
-echo ':"';
-echo $personlis['dol'];
-echo '", "email"';
-echo ':"';
-echo $personlis['email'];
-echo '"}';
+setcookie("fio", $fio, time()+60*60*24*30);
+setcookie("tel", $tel, time()+60*60*24*30);
+setcookie("email", $email, time()+60*60*24*30);
 
-setcookie("fio", $personlis['fio'], time()+60*60*24*30); 
-setcookie("tel", $personlis['tel'], time()+60*60*24*30); 
-setcookie("email", $personlis['email'], time()+60*60*24*30); 
+header('Content-Type: application/json; charset=utf-8');
+echo json_encode(array(
+    'id' => $lico,
+    'fio' => $fio,
+    'tel' => $tel,
+    'dol' => $dol,
+    'email' => $email,
+    'pol' => $pol
+));
+exit();
 
+}
+}
+
+if($_GET['tip'] == 'kontaktupdate'){
+if(isset($_GET['lico'])){
+$lico = intval($_GET['lico']);
+$fio = mysql_real_escape_string(isset($_GET['fio']) ? $_GET['fio'] : '');
+$dol = mysql_real_escape_string(isset($_GET['dol']) ? $_GET['dol'] : '');
+$tel = mysql_real_escape_string(isset($_GET['tel']) ? $_GET['tel'] : '');
+$email = mysql_real_escape_string(isset($_GET['email']) ? $_GET['email'] : '');
+$pol = mysql_real_escape_string(isset($_GET['pol']) ? $_GET['pol'] : '');
+$koment = "UPDATE klient SET `fio`='".$fio."', `dol`='".$dol."', `tel`='".$tel."', `email`='".$email."', `pol`='".$pol."' WHERE id='".$lico."'";
+mysql_query($koment) or die(mysql_error($link));
+header('Content-Type: application/json; charset=utf-8');
+echo json_encode(array(
+    'id' => $lico,
+    'fio' => isset($_GET['fio']) ? $_GET['fio'] : '',
+    'tel' => isset($_GET['tel']) ? $_GET['tel'] : '',
+    'dol' => isset($_GET['dol']) ? $_GET['dol'] : '',
+    'email' => isset($_GET['email']) ? $_GET['email'] : '',
+    'pol' => isset($_GET['pol']) ? $_GET['pol'] : ''
+));
+exit();
+}
+}
+
+if($_GET['tip'] == 'kontaktphones'){
+if(isset($_GET['lico'])){
+$lico = intval($_GET['lico']);
+$tel = mysql_real_escape_string($_GET['tel']);
+$koment = "UPDATE klient SET `tel`='".$tel."' WHERE id='".$lico."'";
+mysql_query($koment) or die(mysql_error($link));
+echo $tel;
+exit();
 }
 }
 
@@ -77,7 +114,9 @@ mysql_query($koment) or die(mysql_error($link));
 }
 
 if($_GET['tip'] == 'agentich'){
-$koment = "UPDATE schet SET `agent`='".$_GET['tel']."' WHERE rand='".$_GET['rand']."'";
+$agent = mysql_real_escape_string(isset($_GET['tel']) ? $_GET['tel'] : '');
+$rand = mysql_real_escape_string($_GET['rand']);
+$koment = "UPDATE schet SET `agent`='".$agent."' WHERE rand='".$rand."'";
 mysql_query($koment) or die(mysql_error($link));
 }
 if($_GET['tip'] == 'sos_opis'){
@@ -185,25 +224,33 @@ mysql_query($komentq) or die(mysql_error($linkq));
 
 if($_GET['tip'] == 'fadress'){
 if(isset($_GET['vlad'])){
-$koment = "UPDATE schet SET `fadress`='".$_GET['vlad']."' WHERE rand='".$_GET['rand']."'";
+$vlad = mysql_real_escape_string($_GET['vlad']);
+$rand = mysql_real_escape_string($_GET['rand']);
+$koment = "UPDATE schet SET `fadress`='".$vlad."' WHERE rand='".$rand."'";
 mysql_query($koment) or die(mysql_error($link));
 echo $_GET['vlad'];
+exit();
 }
 }
 
 if($_GET['tip'] == 'vladelec'){
 if(isset($_GET['vlad'])){
-$koment = "UPDATE schet SET `vladelec`='".$_GET['vlad']."' WHERE rand='".$_GET['rand']."'";
+$vlad = intval($_GET['vlad']);
+$rand = mysql_real_escape_string($_GET['rand']);
+$koment = "UPDATE schet SET `vladelec`='".$vlad."' WHERE rand='".$rand."'";
 mysql_query($koment) or die(mysql_error($link));
-$lis = "SELECT * FROM klient WHERE id =".$_GET['vlad'];
+$lis = "SELECT * FROM klient WHERE id =".$vlad;
 $resultlis = mysql_query($lis);
 $personlis = mysql_fetch_array($resultlis);
 
+if($vlad > 0 && $personlis){
 echo $personlis['fio'];
 echo ' ';
 echo $personlis['tel'];
 echo ' ';
 echo $personlis['email'];
+}
+exit();
 }
 }
 
@@ -270,14 +317,32 @@ echo $aaqoigrnq['f_name']," ",$aaqoigrnq['l_name'];
 }
 
 if($_GET['tip'] == 'addkontakt'){
-$q2 = "SELECT * FROM klient WHERE id=(SELECT MAX(id) FROM klient)";
-$result2 = mysql_query($q2);
-$person2 = mysql_fetch_array($result2);
-$lico = "INSERT INTO `klient`(`fio`, `dol`, `tel`, `email`, `pol`) VALUES ('$_GET[fio]', '$_GET[dol]', '$_GET[tel]', '$_GET[email]', '$_GET[pol]')";
+$fio = mysql_real_escape_string(isset($_GET['fio']) ? $_GET['fio'] : '');
+$dol = mysql_real_escape_string(isset($_GET['dol']) ? $_GET['dol'] : '');
+$tel = mysql_real_escape_string(isset($_GET['tel']) ? $_GET['tel'] : '');
+$email = mysql_real_escape_string(isset($_GET['email']) ? $_GET['email'] : '');
+$pol = mysql_real_escape_string(isset($_GET['pol']) ? $_GET['pol'] : '');
+$kli = intval(isset($_GET['kli']) ? $_GET['kli'] : 0);
+$rand = mysql_real_escape_string(isset($_GET['rand']) ? $_GET['rand'] : '');
+$lico = "INSERT INTO `klient`(`fio`, `dol`, `tel`, `email`, `pol`) VALUES ('".$fio."', '".$dol."', '".$tel."', '".$email."', '".$pol."')";
 mysql_query($lico) or die(mysql_error($links));
-$url2 = $person2['id'] + 1;
-$ogrnlico = "INSERT INTO `klient_ogrn`(`idkli`, `klient`)  VALUES ('".$_GET['kli']."', '".$url2."')";
+$url2 = mysql_insert_id();
+$ogrnlico = "INSERT INTO `klient_ogrn`(`idkli`, `klient`)  VALUES ('".$kli."', '".$url2."')";
 mysql_query($ogrnlico) or die(mysql_error($links));
+if($rand !== ''){
+    $schetlico = "UPDATE schet SET `lico`='".$url2."' WHERE rand='".$rand."'";
+    mysql_query($schetlico) or die(mysql_error($links));
+}
+header('Content-Type: application/json; charset=utf-8');
+echo json_encode(array(
+    'id' => $url2,
+    'fio' => isset($_GET['fio']) ? $_GET['fio'] : '',
+    'tel' => isset($_GET['tel']) ? $_GET['tel'] : '',
+    'dol' => isset($_GET['dol']) ? $_GET['dol'] : '',
+    'email' => isset($_GET['email']) ? $_GET['email'] : '',
+    'pol' => isset($_GET['pol']) ? $_GET['pol'] : ''
+));
+exit();
 }
 
 if($_GET['tip'] == 'regtkoment'){

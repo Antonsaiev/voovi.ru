@@ -9,6 +9,17 @@ function post_value($name, $fallback = '') {
     return isset($_POST[$name]) ? trim((string)$_POST[$name]) : (string)$fallback;
 }
 
+function lower_value($value) {
+    return function_exists('mb_strtolower') ? mb_strtolower((string)$value, 'UTF-8') : strtolower((string)$value);
+}
+
+if (!defined('AVATAR_MAX_BYTES')) {
+    define('AVATAR_MAX_BYTES', 8 * 1024 * 1024);
+}
+if (!defined('AVATAR_MAX_LABEL')) {
+    define('AVATAR_MAX_LABEL', '8 МБ');
+}
+
 if (isset($_COOKIE['id']) and isset($_COOKIE['hash']))
 {
     $userdata = mysql_fetch_assoc(mysql_query("SELECT * FROM users WHERE users_id = '".intval($_COOKIE['id'])."' LIMIT 1"));
@@ -45,9 +56,66 @@ if (!$profileUser) {
 }
 
 $isAdminEditingUser = intval($profileUser['users_id']) !== intval($userdata['users_id']);
+$canManageUslugiAccess = intval($userdata['adm']) === 1 && $isAdminEditingUser;
+
+$uslugiList = array();
+$validUslugiIds = array();
+$selectedUslugiIds = array();
+$uslugiAccessLoaded = !$canManageUslugiAccess;
+
+if ($canManageUslugiAccess) {
+    $uslugiQuery = mysql_query("
+        SELECT id, name, inn, ogrn
+        FROM uslugi
+        WHERE del != '1'
+        ORDER BY name ASC
+    ");
+    if ($uslugiQuery) {
+        $uslugiAccessLoaded = true;
+        while ($service = mysql_fetch_assoc($uslugiQuery)) {
+            $serviceId = intval($service['id']);
+            if ($serviceId <= 0) {
+                continue;
+            }
+            $service['id'] = $serviceId;
+            $validUslugiIds[$serviceId] = true;
+            $uslugiList[] = $service;
+        }
+    }
+
+    $accessQuery = mysql_query("
+        SELECT uslugi
+        FROM users_access
+        WHERE users = '".$profileUserId."'
+        GROUP BY uslugi
+    ");
+    if ($accessQuery) {
+        while ($access = mysql_fetch_assoc($accessQuery)) {
+            $accessId = intval($access['uslugi']);
+            if ($accessId > 0) {
+                $selectedUslugiIds[$accessId] = true;
+            }
+        }
+    } else {
+        $uslugiAccessLoaded = false;
+    }
+}
 
 $errors = array();
 $messages = array();
+$postedUslugiIds = array();
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_profile']) && $canManageUslugiAccess && !$uslugiAccessLoaded) {
+    $errors[] = 'Не удалось загрузить список услуг. Доступы не сохранены.';
+}
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_profile']) && $canManageUslugiAccess) {
+    $rawUslugiIds = isset($_POST['uslugi_access']) && is_array($_POST['uslugi_access']) ? $_POST['uslugi_access'] : array();
+    foreach ($rawUslugiIds as $rawUslugiId) {
+        $serviceId = intval($rawUslugiId);
+        if ($serviceId > 0 && isset($validUslugiIds[$serviceId])) {
+            $postedUslugiIds[$serviceId] = true;
+        }
+    }
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_profile'])) {
     $fName = post_value('f_name', $profileUser['f_name']);
@@ -93,10 +161,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_profile'])) {
     }
 
     if (isset($_FILES['avatar']) && $_FILES['avatar']['error'] !== UPLOAD_ERR_NO_FILE) {
-        if ($_FILES['avatar']['error'] !== UPLOAD_ERR_OK) {
+        if ($_FILES['avatar']['error'] === UPLOAD_ERR_INI_SIZE || $_FILES['avatar']['error'] === UPLOAD_ERR_FORM_SIZE) {
+            $errors[] = 'Фото должно быть не больше '.AVATAR_MAX_LABEL.'.';
+        } elseif ($_FILES['avatar']['error'] !== UPLOAD_ERR_OK) {
             $errors[] = 'Не удалось загрузить фото.';
-        } elseif ($_FILES['avatar']['size'] > 2 * 1024 * 1024) {
-            $errors[] = 'Фото должно быть не больше 2 МБ.';
+        } elseif ($_FILES['avatar']['size'] > AVATAR_MAX_BYTES) {
+            $errors[] = 'Фото должно быть не больше '.AVATAR_MAX_LABEL.'.';
         } else {
             $imageInfo = getimagesize($_FILES['avatar']['tmp_name']);
             $allowedTypes = array(
@@ -143,6 +213,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_profile'])) {
             if ($passwordHash !== '') {
                 $messages[] = 'Пароль изменен.';
             }
+            if ($canManageUslugiAccess) {
+                if (mysql_query("DELETE FROM users_access WHERE users = '".$profileUserId."'")) {
+                    $accessSaved = true;
+                    foreach ($postedUslugiIds as $serviceId => $isSelected) {
+                        if (!mysql_query("INSERT INTO users_access (`users`, `uslugi`) VALUES ('".$profileUserId."', '".$serviceId."')")) {
+                            $accessSaved = false;
+                            break;
+                        }
+                    }
+                    if ($accessSaved) {
+                        $selectedUslugiIds = $postedUslugiIds;
+                        $messages[] = 'Доступ к услугам обновлен.';
+                    } else {
+                        $errors[] = 'Не удалось сохранить доступ к услугам: '.mysql_error();
+                    }
+                } else {
+                    $errors[] = 'Не удалось обновить доступ к услугам: '.mysql_error();
+                }
+            }
             $profileUser = mysql_fetch_assoc(mysql_query("SELECT * FROM users WHERE users_id = '".$profileUserId."' LIMIT 1"));
             if (intval($profileUser['users_id']) === intval($userdata['users_id'])) {
                 $userdata = $profileUser;
@@ -159,6 +248,10 @@ $displayOName = post_value('o_name', $profileUser['o_name']);
 $displayMail = post_value('mail', $profileUser['mail']);
 $displayTel = post_value('tel', $profileUser['tel']);
 $displayPosition = post_value('pos_pos', $profileUser['pos_pos']);
+$displaySelectedUslugiIds = $selectedUslugiIds;
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_profile']) && $canManageUslugiAccess && count($errors) > 0) {
+    $displaySelectedUslugiIds = $postedUslugiIds;
+}
 $avatarFile = basename($profileUser['img'] ? $profileUser['img'] : 'icon-user-default.png');
 if ($avatarFile === '' || !file_exists(__DIR__.'/img/'.$avatarFile)) {
     $avatarFile = 'icon-user-default.png';
@@ -361,6 +454,72 @@ $cancelUrl = $isAdminEditingUser ? '/profile.php?id='.intval($profileUser['users
             margin-bottom: 8px;
             border-radius: 6px;
         }
+        .profile-access-tools {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto auto;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .profile-access-tools .btn {
+            min-height: 38px;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+        .profile-access-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 8px;
+            max-height: 340px;
+            overflow: auto;
+            padding: 2px 2px 4px;
+        }
+        .profile-access-option {
+            display: flex;
+            align-items: flex-start;
+            gap: 9px;
+            min-width: 0;
+            min-height: 44px;
+            margin: 0;
+            padding: 10px 11px;
+            border: 1px solid #dfe6ec;
+            border-radius: 6px;
+            background: #fbfcfd;
+            color: #26313d;
+            cursor: pointer;
+        }
+        .profile-access-option:hover {
+            border-color: #b9d2e6;
+            background: #f3f8fc;
+        }
+        .profile-access-option input {
+            flex: 0 0 auto;
+            margin: 3px 0 0;
+        }
+        .profile-access-option span {
+            min-width: 0;
+        }
+        .profile-access-option strong {
+            display: block;
+            font-size: 13px;
+            line-height: 1.25;
+            word-break: break-word;
+        }
+        .profile-access-option small {
+            display: block;
+            margin-top: 3px;
+            color: #7a8793;
+            font-size: 11px;
+            line-height: 1.25;
+            word-break: break-word;
+        }
+        .profile-empty-access {
+            margin: 0;
+            padding: 14px;
+            border: 1px dashed #cbd7e0;
+            border-radius: 6px;
+            color: #6d7b88;
+            background: #fbfcfd;
+        }
         @media (max-width: 860px) {
             .profile-heading {
                 display: block;
@@ -373,6 +532,13 @@ $cancelUrl = $isAdminEditingUser ? '/profile.php?id='.intval($profileUser['users
             }
             .profile-form-panel {
                 padding: 20px;
+            }
+            .profile-access-tools {
+                grid-template-columns: 1fr;
+            }
+            .profile-access-grid {
+                grid-template-columns: 1fr;
+                max-height: none;
             }
         }
     </style>
@@ -402,6 +568,7 @@ $cancelUrl = $isAdminEditingUser ? '/profile.php?id='.intval($profileUser['users
 
     <form method="post" enctype="multipart/form-data">
         <input type="hidden" name="save_profile" value="1">
+        <input type="hidden" name="MAX_FILE_SIZE" value="<?php echo AVATAR_MAX_BYTES; ?>">
         <div class="profile-layout">
             <aside class="profile-panel profile-photo-panel">
                 <img id="avatar-preview" class="profile-avatar" src="<?php echo h($avatarSrc); ?>" alt="<?php echo h($fullName); ?>">
@@ -412,7 +579,7 @@ $cancelUrl = $isAdminEditingUser ? '/profile.php?id='.intval($profileUser['users
                     Выбрать фото
                 </label>
                 <input id="avatar" class="profile-file-input" type="file" name="avatar" accept="image/png,image/jpeg,image/gif">
-                <div id="avatar-file-name" class="profile-file-name">JPG, PNG или GIF до 2 МБ</div>
+                <div id="avatar-file-name" class="profile-file-name">JPG, PNG или GIF до <?php echo h(AVATAR_MAX_LABEL); ?></div>
             </aside>
 
             <section class="profile-panel profile-form-panel">
@@ -483,6 +650,41 @@ $cancelUrl = $isAdminEditingUser ? '/profile.php?id='.intval($profileUser['users
                     </div>
                 </div>
 
+                <?php if ($canManageUslugiAccess): ?>
+                    <h2 class="profile-section-title">Доступ к услугам</h2>
+                    <?php if (count($uslugiList) > 0): ?>
+                        <div class="profile-access-tools">
+                            <input id="uslugi-access-search" class="form-control" type="search" placeholder="Найти услугу" autocomplete="off">
+                            <button class="btn profile-secondary-btn" type="button" id="uslugi-access-all">Выбрать все</button>
+                            <button class="btn profile-secondary-btn" type="button" id="uslugi-access-none">Снять все</button>
+                        </div>
+                        <div class="profile-access-grid" id="uslugi-access-list">
+                            <?php foreach ($uslugiList as $service): ?>
+                                <?php
+                                $serviceMeta = array();
+                                if (trim($service['inn']) !== '') {
+                                    $serviceMeta[] = 'ИНН '.trim($service['inn']);
+                                }
+                                if (trim($service['ogrn']) !== '') {
+                                    $serviceMeta[] = 'ОГРН '.trim($service['ogrn']);
+                                }
+                                ?>
+                                <label class="profile-access-option" data-search="<?php echo h(lower_value($service['name'].' '.implode(' ', $serviceMeta))); ?>">
+                                    <input type="checkbox" name="uslugi_access[]" value="<?php echo intval($service['id']); ?>"<?php echo isset($displaySelectedUslugiIds[intval($service['id'])]) ? ' checked' : ''; ?>>
+                                    <span>
+                                        <strong><?php echo h($service['name']); ?></strong>
+                                        <?php if (count($serviceMeta) > 0): ?>
+                                            <small><?php echo h(implode(' · ', $serviceMeta)); ?></small>
+                                        <?php endif; ?>
+                                    </span>
+                                </label>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php else: ?>
+                        <p class="profile-empty-access">Нет доступных услуг для настройки.</p>
+                    <?php endif; ?>
+                <?php endif; ?>
+
                 <div class="profile-actions">
                     <a class="btn profile-secondary-btn" href="<?php echo h($cancelUrl); ?>">Отмена</a>
                     <button class="btn profile-save-btn" type="submit">Сохранить</button>
@@ -497,19 +699,50 @@ $cancelUrl = $isAdminEditingUser ? '/profile.php?id='.intval($profileUser['users
     var input = document.getElementById('avatar');
     var preview = document.getElementById('avatar-preview');
     var fileName = document.getElementById('avatar-file-name');
+    var form = input ? input.form : null;
+    var maxAvatarSize = <?php echo AVATAR_MAX_BYTES; ?>;
+    var maxAvatarLabel = <?php echo json_encode(AVATAR_MAX_LABEL); ?>;
+    var defaultFileText = 'JPG, PNG или GIF до ' + maxAvatarLabel;
 
     if (!input || !preview || !fileName) {
         return;
     }
 
+    function setFileError(message) {
+        fileName.textContent = message;
+        fileName.style.color = '#c9413b';
+    }
+
+    function setFileText(message) {
+        fileName.textContent = message;
+        fileName.style.color = '';
+    }
+
+    function validateAvatarFile() {
+        var file = input.files && input.files[0];
+        if (!file) {
+            setFileText(defaultFileText);
+            return true;
+        }
+        if (file.size > maxAvatarSize) {
+            setFileError('Фото должно быть не больше ' + maxAvatarLabel + '.');
+            return false;
+        }
+        return true;
+    }
+
     input.addEventListener('change', function () {
         var file = input.files && input.files[0];
         if (!file) {
-            fileName.textContent = 'JPG, PNG или GIF до 2 МБ';
+            setFileText(defaultFileText);
             return;
         }
 
-        fileName.textContent = file.name;
+        if (!validateAvatarFile()) {
+            return;
+        }
+
+        setFileText(file.name);
         if (window.FileReader && file.type.indexOf('image/') === 0) {
             var reader = new FileReader();
             reader.onload = function (event) {
@@ -518,6 +751,63 @@ $cancelUrl = $isAdminEditingUser ? '/profile.php?id='.intval($profileUser['users
             reader.readAsDataURL(file);
         }
     });
+
+    if (form) {
+        form.addEventListener('submit', function (event) {
+            if (!validateAvatarFile()) {
+                event.preventDefault();
+            }
+        });
+    }
+}());
+
+(function () {
+    var search = document.getElementById('uslugi-access-search');
+    var list = document.getElementById('uslugi-access-list');
+    var selectAll = document.getElementById('uslugi-access-all');
+    var selectNone = document.getElementById('uslugi-access-none');
+
+    if (!list) {
+        return;
+    }
+
+    function getOptions() {
+        return list.querySelectorAll('.profile-access-option');
+    }
+
+    function getCheckboxes() {
+        return list.querySelectorAll('input[type="checkbox"]');
+    }
+
+    if (search) {
+        search.addEventListener('input', function () {
+            var query = search.value.toLocaleLowerCase();
+            var options = getOptions();
+            for (var i = 0; i < options.length; i++) {
+                var option = options[i];
+                var haystack = (option.getAttribute('data-search') || option.textContent || '').toLocaleLowerCase();
+                option.style.display = haystack.indexOf(query) === -1 ? 'none' : '';
+            }
+        });
+    }
+
+    if (selectAll) {
+        selectAll.addEventListener('click', function () {
+            var checkboxes = getCheckboxes();
+            for (var i = 0; i < checkboxes.length; i++) {
+                checkboxes[i].checked = true;
+            }
+        });
+    }
+
+    if (selectNone) {
+        selectNone.addEventListener('click', function () {
+            var checkboxes = getCheckboxes();
+            for (var i = 0; i < checkboxes.length; i++) {
+                checkboxes[i].checked = false;
+            }
+        });
+    }
 }());
 </script>
 </body>

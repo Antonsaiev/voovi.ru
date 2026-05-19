@@ -31,6 +31,66 @@ $restar2 = mysql_query($qestar2);
 $pestar2 = mysql_fetch_array($restar2);
 $schetLoadingVisible = isset($_POST['submitsch']) || isset($_POST['submitsave']);
 $schetLoadingTitle = isset($_POST['submitsave']) ? 'Сохраняем счет' : 'Создаем счет';
+
+if (!function_exists('newschet_h')) {
+    function newschet_h($value)
+    {
+        return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
+    }
+}
+
+if (!function_exists('newschet_icon_url')) {
+    function newschet_icon_url($value)
+    {
+        $value = trim((string)$value);
+        if ($value === '' || $value === '0' || $value === '1') {
+            return '/img/product_icons_20x20.png';
+        }
+        if (preg_match('/^url\((["\']?)(.*?)\1\)$/', $value, $matches)) {
+            $value = trim($matches[2]);
+        }
+        if ($value === '') {
+            return '/img/product_icons_20x20.png';
+        }
+        if ($value[0] !== '/') {
+            $value = '/'.ltrim($value, '/');
+        }
+        if (strpos($value, '/img/') !== 0) {
+            return '/img/product_icons_20x20.png';
+        }
+
+        return $value;
+    }
+}
+
+$newschetEmbedded = isset($_GET['rand']) || (isset($_GET['head']) && $_GET['head'] == 1);
+$newschetClientId = isset($_GET['id']) ? intval($_GET['id']) : 0;
+$newschetProductId = isset($_GET['parent']) ? intval($_GET['parent']) : 0;
+$newschetTipId = isset($_GET['tip']) ? intval($_GET['tip']) : 0;
+$newschetProduct = mysql_fetch_assoc(mysql_query("SELECT * FROM `produkti` WHERE id = ".$newschetProductId));
+$newschetService = mysql_fetch_assoc(mysql_query("SELECT * FROM `uslugi` WHERE id = ".$newschetTipId));
+$newschetClient = mysql_fetch_assoc(mysql_query("SELECT * FROM `ogrn` WHERE id = ".$newschetClientId));
+$newschetIconValue = isset($newschetProduct['icon']) && $newschetProduct['icon'] !== '' ? $newschetProduct['icon'] : (isset($newschetProduct['tel']) ? $newschetProduct['tel'] : '');
+$newschetIconUrl = newschet_icon_url($newschetIconValue);
+$newschetIconIsSprite = $newschetIconUrl === '/img/product_icons_20x20.png';
+$newschetBackParams = array(
+    'id' => isset($_GET['id']) ? $_GET['id'] : '',
+    'ogrn' => isset($_GET['ogrn']) ? $_GET['ogrn'] : '',
+    'parent' => isset($_GET['tip']) ? $_GET['tip'] : ''
+);
+if (isset($_GET['inn'])) {
+    $newschetBackParams['inn'] = $_GET['inn'];
+}
+if (isset($_GET['kpp'])) {
+    $newschetBackParams['kpp'] = $_GET['kpp'];
+}
+if (isset($_GET['head'])) {
+    $newschetBackParams['head'] = $_GET['head'];
+}
+if (isset($_GET['rand'])) {
+    $newschetBackParams['rand'] = $_GET['rand'];
+}
+$newschetBackHref = '/newusluga.php?'.http_build_query($newschetBackParams);
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="ru" lang="ru">
@@ -98,9 +158,561 @@ $schetLoadingTitle = isset($_POST['submitsave']) ? 'Сохраняем счет'
     from { transform: rotate(0deg); }
     to { transform: rotate(360deg); }
 }
+body.newschet-modern {
+    margin: 0;
+    background: #f3f6f8;
+    color: #26313d;
+    font-family: "Helvetica Neue", Arial, sans-serif;
+}
+.newschet-modern *,
+.newschet-modern *:before,
+.newschet-modern *:after {
+    box-sizing: border-box;
+}
+.newschet-page {
+    width: 100%;
+    max-width: 1180px;
+    margin: 74px auto 34px;
+    padding: 0 16px;
+}
+.newschet-page.is-embedded {
+    margin-top: 18px;
+}
+.newschet-main {
+    float: none;
+    width: 100%;
+    padding: 0;
+}
+.newschet-titlebar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 14px;
+    padding: 18px 20px;
+    border: 1px solid #dfe6ec;
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 8px 22px rgba(31, 45, 58, 0.06);
+}
+.newschet-title-main {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    gap: 13px;
+}
+.newschet-product-icon {
+    flex: 0 0 42px;
+    width: 42px;
+    height: 42px;
+    border: 1px solid #dfe6ec;
+    border-radius: 8px;
+    background-color: #fff;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+}
+.newschet-product-icon.is-sprite {
+    background-size: auto;
+}
+.newschet-eyebrow {
+    margin-bottom: 4px;
+    color: #526170;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.2;
+    text-transform: uppercase;
+}
+.newschet-titlebar h1 {
+    margin: 0;
+    color: #26313d;
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+}
+.newschet-client {
+    margin-top: 5px;
+    color: #526170;
+    font-size: 14px;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+}
+.newschet-back {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 36px;
+    padding: 8px 13px;
+    border: 1px solid #cfd8e3;
+    border-radius: 6px;
+    background: #fff;
+    color: #26313d;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.2;
+    text-decoration: none;
+    white-space: nowrap;
+}
+.newschet-back:hover,
+.newschet-back:focus {
+    border-color: #2f7fb8;
+    color: #2f7fb8;
+    text-decoration: none;
+    outline: 0;
+}
+.newschet-card {
+    padding: 16px;
+    border: 1px solid #dfe6ec;
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 8px 22px rgba(31, 45, 58, 0.05);
+}
+.newschet-card form {
+    margin: 0;
+}
+.newschet-card table.table {
+    margin-bottom: 12px;
+    border: 1px solid #edf1f5;
+    border-radius: 8px;
+    background: #fff;
+    overflow: hidden;
+}
+.newschet-card table.table > tbody > tr > td,
+.newschet-card table.table > thead > tr > th {
+    border-color: #edf1f5;
+    padding: 10px !important;
+    vertical-align: middle;
+}
+.newschet-card table.table > thead > tr > th {
+    background: #eef3f7;
+    color: #52616f;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+.newschet-card input[type="text"],
+.newschet-card input[type="number"],
+.newschet-card input[type="date"],
+.newschet-card select,
+.newschet-card textarea,
+.newschet-card .form-control {
+    min-height: 36px;
+    border: 1px solid #cfd8e3;
+    border-radius: 6px;
+    box-shadow: none;
+    color: #26313d;
+    font-size: 14px;
+}
+.newschet-card input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    margin: 0;
+}
+.newschet-card input[type="submit"] {
+    width: 100%;
+    min-height: 42px;
+    margin-top: 8px;
+    border: 0;
+    border-radius: 8px;
+    background: #2f86c1;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 700;
+}
+.newschet-card input[type="submit"]:hover,
+.newschet-card input[type="submit"]:focus {
+    background: #2876aa;
+    outline: 0;
+}
+.newschet-card #prodkschet {
+    overflow-x: auto;
+}
+.newschet-card #tab {
+    min-width: 620px;
+}
+.newschet-card #oldns {
+    float: none !important;
+    width: 100% !important;
+    margin: 12px 0;
+    padding: 12px;
+    border: 1px solid #dfe6ec;
+    border-radius: 8px;
+    background: #f8fafb;
+}
+.newschet-card #oldns > div:first-child {
+    float: none !important;
+    width: auto !important;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.newschet-mode-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+.newschet-mode-row label {
+    margin: 0;
+    color: #526170;
+    font-size: 13px;
+    font-weight: 700;
+}
+.newschet-mode-row #idprodkschet {
+    width: auto;
+    min-width: 190px;
+}
+.newschet-old-input-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+.newschet-old-input {
+    flex: 1 1 260px;
+    min-width: 220px;
+}
+.newschet-old-input label {
+    display: block;
+    margin: 0 0 6px;
+    color: #526170;
+    font-size: 13px;
+    font-weight: 700;
+}
+.newschet-old-input input {
+    width: 100%;
+}
+.newschet-old-status {
+    flex: 1 1 320px;
+    min-width: 240px;
+    padding: 8px 0;
+    color: #526170;
+    font-size: 13px;
+}
+.newschet-old-suggestions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+}
+.newschet-old-option {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    max-width: 100%;
+    padding: 7px 10px;
+    border: 1px solid #cfd8e3;
+    border-radius: 6px;
+    background: #fff;
+    color: #26313d;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.25;
+    text-align: left;
+}
+.newschet-old-option span {
+    color: #526170;
+    font-weight: 400;
+    overflow-wrap: anywhere;
+}
+.newschet-old-option:hover,
+.newschet-old-option:focus {
+    border-color: #2f7fb8;
+    color: #2f7fb8;
+    outline: 0;
+}
+.newschet-tarif-row {
+    transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+.newschet-tarif-row.is-selected {
+    background: #f3f9fd;
+    box-shadow: inset 3px 0 0 #2f86c1;
+}
+.newschet-tarif-name {
+    font-weight: 700;
+}
+.newschet-tarif-price,
+.newschet-tarif-sum {
+    white-space: nowrap;
+}
+.newschet-qty-input,
+.newschet-discount-input {
+    width: 74px !important;
+    max-width: 100%;
+    text-align: center;
+}
+.newschet-total-table {
+    background: #f8fafb !important;
+}
+.newschet-total-row td {
+    background: #eaf3f9;
+    font-size: 15px;
+}
+.newschet-total-label {
+    color: #26313d;
+    font-size: 16px;
+    font-weight: 800;
+}
+.newschet-discount-cell {
+    white-space: nowrap;
+}
+.newschet-discount-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+.newschet-total-sum {
+    margin: 0;
+    color: #1f6f9d;
+    font-size: 18px;
+    font-weight: 800;
+    white-space: nowrap;
+}
+.newschet-card .av {
+    margin-top: 12px;
+    clear: both;
+}
+.newschet-card .av .form-control,
+.newschet-card .newschet-av-panel {
+    float: none !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0;
+    margin-bottom: 12px;
+    padding: 12px;
+}
+.newschet-card .av label {
+    color: #526170;
+    font-size: 13px;
+    line-height: 1.35;
+}
+.newschet-card .av select {
+    max-width: 100%;
+}
+.newschet-av-panel {
+    border: 1px solid #edf1f5;
+    border-radius: 8px;
+    background: #fff;
+}
+.newschet-av-row,
+.newschet-dp-row {
+    display: flex !important;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 12px;
+    width: 100% !important;
+    min-height: 0 !important;
+    height: auto !important;
+    float: none !important;
+    overflow: visible;
+}
+#dobp.newschet-av-panel {
+    display: grid !important;
+    gap: 8px;
+    overflow: visible;
+}
+.newschet-dp-row {
+    display: grid !important;
+    grid-template-columns: minmax(250px, 1.35fr) minmax(190px, 0.8fr) auto;
+    padding: 7px 8px !important;
+    border: 1px solid #edf1f5;
+    border-radius: 8px;
+    background: #f8fafb;
+}
+.newschet-av-product,
+.newschet-av-field {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 7px;
+    width: auto !important;
+    height: auto !important;
+    min-height: 32px;
+    float: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+.newschet-av-product {
+    flex: 1 1 330px;
+    min-width: 230px;
+    color: #26313d;
+    font-weight: 800;
+}
+.newschet-av-product span {
+    color: #526170;
+    font-size: 13px;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+.newschet-av-product strong {
+    display: inline-block;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+.newschet-av-field label {
+    width: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    color: #26313d !important;
+    font-size: 12px !important;
+    font-weight: 800;
+    white-space: nowrap;
+}
+.newschet-av-field select,
+.newschet-av-field input {
+    width: auto !important;
+    min-width: 0;
+    min-height: 32px !important;
+    height: 32px !important;
+    margin: 0 !important;
+    padding: 4px 8px !important;
+    font-size: 13px !important;
+}
+.newschet-av-type {
+    flex: 0 0 280px;
+}
+.newschet-dp-product {
+    display: grid !important;
+    grid-template-columns: auto auto minmax(150px, 1fr);
+    flex: 1 1 320px;
+    min-width: 0;
+}
+.newschet-dp-select-wrap {
+    min-width: 0;
+}
+.newschet-dp-select-wrap select {
+    width: 100% !important;
+}
+.newschet-dp-type {
+    display: grid !important;
+    grid-template-columns: auto minmax(130px, 1fr);
+    flex: 0 0 220px;
+    min-width: 0;
+}
+.newschet-av-services {
+    flex: 1 1 100%;
+    width: 100% !important;
+    margin-top: 4px !important;
+    padding-top: 8px !important;
+    border-top: 1px solid #edf1f5;
+}
+.newschet-dp-services {
+    grid-column: 1 / -1;
+}
+.newschet-av-services > div {
+    flex: 1 1 220px;
+}
+.newschet-av-services select {
+    width: 100% !important;
+}
+.newschet-av-sht,
+.newschet-dp-sht {
+    flex: 0 0 auto;
+    display: grid !important;
+    grid-template-columns: auto 56px;
+    min-width: 0;
+}
+.newschet-av-sht input,
+.newschet-dp-sht input {
+    width: 56px !important;
+    min-width: 56px;
+    text-align: center;
+}
+.newschet-add-dp-button {
+    min-height: 32px;
+    padding: 5px 9px;
+    border: 1px solid #cfd8e3;
+    border-radius: 6px;
+    background: #fff;
+    color: #2f7fb8;
+    font-size: 13px;
+    font-weight: 800;
+    line-height: 1;
+}
+.newschet-is-hidden {
+    display: none !important;
+}
+.newschet-card #countdisplay {
+    display: none !important;
+}
+@media (max-width: 860px) {
+    .newschet-page {
+        margin-top: 64px;
+        padding: 0 10px;
+    }
+    .newschet-page.is-embedded {
+        margin-top: 10px;
+    }
+    .newschet-titlebar {
+        align-items: flex-start;
+        flex-direction: column;
+        padding: 14px;
+    }
+    .newschet-back {
+        width: 100%;
+    }
+    .newschet-card {
+        padding: 12px;
+    }
+    .newschet-mode-row,
+    .newschet-old-input-row {
+        align-items: stretch;
+        flex-direction: column;
+    }
+    .newschet-mode-row #idprodkschet,
+    .newschet-old-input,
+    .newschet-old-status {
+        width: 100%;
+        min-width: 0;
+    }
+    .newschet-card .av [style*="float: left"] {
+        float: none !important;
+        width: 100% !important;
+        height: auto !important;
+        margin-left: 0 !important;
+        padding-left: 0 !important;
+    }
+    .newschet-card .av select[style],
+    .newschet-card .av input[style] {
+        width: 100% !important;
+        margin-left: 0 !important;
+    }
+    .newschet-av-row,
+    .newschet-dp-row {
+        flex-wrap: wrap;
+        grid-template-columns: 1fr;
+        overflow: visible;
+    }
+    .newschet-av-product,
+    .newschet-av-type,
+    .newschet-dp-product,
+    .newschet-dp-type {
+        flex: 1 1 100%;
+        min-width: 0;
+    }
+}
+@media (max-width: 560px) {
+    .newschet-title-main {
+        align-items: flex-start;
+    }
+    .newschet-titlebar h1 {
+        font-size: 20px;
+    }
+    .newschet-card table.table > tbody > tr > td {
+        display: block;
+        width: 100% !important;
+    }
+    .newschet-card #tab > tbody > tr > td,
+    .newschet-card #tab > thead > tr > th,
+    .newschet-card .newschet-total-table > tbody > tr > td {
+        display: table-cell;
+        width: auto !important;
+    }
+}
 </style>
 </head>
-<body>
+<body class="newschet-modern">
 <div id="schetLoadingOverlay" class="schet-loading-overlay<?php if ($schetLoadingVisible) { echo ' is-visible'; } ?>">
     <div class="schet-loading-card">
         <div class="schet-loading-spinner"></div>
@@ -116,57 +728,43 @@ if ($schetLoadingVisible) {
 }
 ?>
 <?php
-if(isset($_GET['rand']) || $_GET['head'] == 1){
-echo '
-
-<script src="/js/jquery-1.11.0.min.js"></script><script src="/js/jquery-live-compat.js?v=1"></script><div style="
-margin-bottom: 25px;
-  font-size: 21px;
-  background: #26BB84;
-  text-align: center;
-  padding: 8px;
-  color: #fff;
-">Новый продукт для ';
-
-		$q1 = "SELECT * FROM `ogrn` WHERE id =$_GET[id]";
-		$result1 = mysql_query($q1);
-		$person1 = mysql_fetch_array($result1);
-		
-		echo $person1['naim'].'</div>';
+if($newschetEmbedded){
+    echo '<script src="/js/jquery-1.11.0.min.js"></script><script src="/js/jquery-live-compat.js?v=1"></script>';
 }else{
-include 'header.php';  }
-
-if(isset($_GET['rand']) || $_GET['head'] == 1){
-echo '<div class="container" style="margin-top: 20px;">';
-}else{
-echo '<div class="container" style="margin-top: 60px;">';  }
+    include 'header.php';
+}
 ?>
+<div class="container newschet-page<?php if ($newschetEmbedded) { echo ' is-embedded'; } ?>">
 <div class="row">
 
-<?php 
-
+<?php
 if(isset($_GET['rand'])){
-echo '<div class="col-md-12">';
+    echo '<div class="col-md-12 newschet-main">';
 }else{
-echo '<div class="col-md-8">';
+    echo '<div class="col-md-8 newschet-main">';
 }
-
 ?>
 
-<div class="bs-example">
-<strong><h4 style="margin-top: 10px; font-weight: bold; border-bottom: 1px #333 solid;"><a href="/newusluga.php?id=<?php echo $_GET['id']; ?>&ogrn=<?php echo $_GET['ogrn']; ?>&parent=<?php echo $_GET['tip'];
+<div class="newschet-titlebar">
+    <div class="newschet-title-main">
+        <span class="newschet-product-icon<?php if ($newschetIconIsSprite) { echo ' is-sprite'; } ?>" style="background-image: url('<?php echo newschet_h($newschetIconUrl); ?>'); background-position: <?php echo $newschetIconIsSprite ? '7px -300px' : 'center'; ?>;"></span>
+        <div>
+            <div class="newschet-eyebrow">Выставление счета</div>
+            <h1><?php echo newschet_h(isset($newschetProduct['name']) ? $newschetProduct['name'] : ''); ?></h1>
+            <div class="newschet-client"><?php echo newschet_h(isset($newschetClient['naim']) ? $newschetClient['naim'] : ''); ?><?php if (!empty($newschetService['name'])) { ?> · <?php echo newschet_h($newschetService['name']); ?><?php } ?></div>
+        </div>
+    </div>
+    <a class="newschet-back" href="<?php echo newschet_h($newschetBackHref); ?>"><span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>&nbsp;Назад к продуктам</a>
+</div>
 
-if(isset($_GET['rand'])){
-echo '&rand='.$_GET['rand'];
-}
-
- ?>"><< Назад</a> : Счет на "<?php
+<div class="bs-example newschet-card">
+<?php
 $id = (int)$_GET['parent']; // приводим к int
-$person = mysql_fetch_assoc(mysql_query("SELECT * FROM `produkti` WHERE id = $id"));
+$person = $newschetProduct ? $newschetProduct : mysql_fetch_assoc(mysql_query("SELECT * FROM `produkti` WHERE id = $id"));
 
 // tip → uslugi
 $tip    = isset($_GET['tip']) ? (int)$_GET['tip'] : 0;
-$usluga = mysql_fetch_assoc(mysql_query("SELECT * FROM `uslugi` WHERE `id` = $tip"));
+$usluga = $newschetService ? $newschetService : mysql_fetch_assoc(mysql_query("SELECT * FROM `uslugi` WHERE `id` = $tip"));
 
 if ($usluga && $usluga['nds'] !== '' && $usluga['nds'] !== 'none' && $usluga['nds'] !== null) {
     $nds = "'" . mysql_real_escape_string($usluga['nds']) . "'";
@@ -175,10 +773,8 @@ if ($usluga && $usluga['nds'] !== '' && $usluga['nds'] !== 'none' && $usluga['nd
     $nds = "NULL";
 }
 
-echo $person['name'];
-?>"</h4></strong>
-
-<?php 
+?>
+<?php
 if(isset($_GET['rand'])){
 $shetrand = $_GET['rand'];
 }else{
@@ -188,7 +784,7 @@ $sujmdfhsd = '';
 $schetNs = '';
 
 $qs = mysql_query("SELECT count(*) FROM schet WHERE idkli = '".$_GET['id']."' AND produkt = '".$_GET['parent']."'");
-echo mysql_result($qs, 0); 
+$newschetExistingCount = mysql_result($qs, 0);
 $qs = mysql_query("SELECT * FROM schet WHERE idkli = '".$_GET['id']."' ORDER BY id DESC LIMIT 1");
 $ps = mysql_fetch_array($qs);
 $zs = $ps['nomerschet'] + 1;
@@ -1752,6 +2348,29 @@ $depo = "SELECT * FROM schet WHERE del = '0' AND rand ='".$_GET['rand']."'";
 $rdepo = mysql_query($depo);
 $pdepo = mysql_fetch_array($rdepo);
 
+$newschetOldSchetOptions = array();
+$newschetOldSchetQuery = mysql_query(
+    "SELECT s.ns, s.nomerschet, s.nomerschetks, s.data, s.priceks, s.name, s.rand
+     FROM schet s
+     INNER JOIN (
+         SELECT MAX(id) AS max_id
+         FROM schet
+         WHERE del = '0'
+           AND idkli = '".$newschetClientId."'
+           AND produkt = '".$newschetProductId."'
+           AND ns IS NOT NULL
+           AND ns != ''
+         GROUP BY ns
+     ) last_schet ON last_schet.max_id = s.id
+     ORDER BY s.id DESC
+     LIMIT 20"
+);
+if ($newschetOldSchetQuery) {
+    while ($newschetOldSchet = mysql_fetch_assoc($newschetOldSchetQuery)) {
+        $newschetOldSchetOptions[] = $newschetOldSchet;
+    }
+}
+
 ?>
 
 
@@ -1759,15 +2378,36 @@ $pdepo = mysql_fetch_array($rdepo);
 
 <form method="post" id="schetForm">
 
-<div>
-<select  id="idprodkschet"class='form-control'>
+<div class="newschet-mode-row">
+<label for="idprodkschet">Режим счета</label>
+<select id="idprodkschet" class="form-control">
 <option value="2">Продление</option>
 <option value="1">Новый</option>
 </select>
-<div id="oldns" style="display:none;width: 100%;float: left;"><div style="
-    width: 23%;
-    float: left;
-"><span>Введите предыдущий № счета</span> <input id="nsold" name="nsold" type="text" value="<?echo $_GET['oldns']?>"/></div><div id="oldschet"></div></div>
+</div>
+<div id="oldns" style="display:none;">
+    <div class="newschet-old-input-row">
+        <div class="newschet-old-input">
+            <label for="nsold">Предыдущий счет</label>
+            <input id="nsold" name="nsold" class="form-control" type="text" list="newschetOldSchetList" autocomplete="off" value="<?php echo isset($_GET['oldns']) ? newschet_h($_GET['oldns']) : ''; ?>" placeholder="Введите номер или выберите из подсказок" />
+            <datalist id="newschetOldSchetList">
+                <?php foreach ($newschetOldSchetOptions as $newschetOldSchet) { ?>
+                    <option value="<?php echo newschet_h($newschetOldSchet['ns']); ?>"><?php echo newschet_h(trim($newschetOldSchet['nomerschetks'].' '.$newschetOldSchet['data'].' '.$newschetOldSchet['priceks'])); ?></option>
+                <?php } ?>
+            </datalist>
+        </div>
+        <div id="oldschet" class="newschet-old-status"></div>
+    </div>
+    <?php if (count($newschetOldSchetOptions) > 0) { ?>
+        <div class="newschet-old-suggestions">
+            <?php foreach ($newschetOldSchetOptions as $newschetOldSchet) { ?>
+                <button type="button" class="newschet-old-option" data-ns="<?php echo newschet_h($newschetOldSchet['ns']); ?>">
+                    № <?php echo newschet_h($newschetOldSchet['ns']); ?>
+                    <span><?php echo newschet_h(trim($newschetOldSchet['nomerschetks'].' '.$newschetOldSchet['data'])); ?></span>
+                </button>
+            <?php } ?>
+        </div>
+    <?php } ?>
 </div>
 <div id="prodkschet" style="display:none;">
 
@@ -1787,7 +2427,7 @@ $pdepo = mysql_fetch_array($rdepo);
 $int = 1;
 $query = mysql_query(voovi_tarif_schet_query($_GET['parent'], isset($_GET['rand']) ? $_GET['rand'] : ''));
 while($row = mysql_fetch_array($query)) {
-echo '<tr style="width:1px;"><td>
+echo '<tr class="newschet-tarif-row"><td class="newschet-tarif-check">
 <input id="check'.$row['id'].'" name="'.$row['id'].'" type="checkbox" value="1" onclick="validate'.$row['id'].'()"';
 
 if(isset($_GET['rand'])){
@@ -1801,17 +2441,17 @@ echo 'checked';
 
 echo'>';
 echo '</td>';
-echo '<td style="padding: 3px;">';
+echo '<td class="newschet-tarif-name">';
 echo $row['name'];
 echo '</td>';
-echo '<td style="padding: 3px;">';
+echo '<td class="newschet-tarif-price">';
 $vowels = array(" "," ");
 $price = str_replace($vowels, "", $row['price']);
 echo $price;
 
 echo '</td>';
-echo '<td style="width: 5px;">';
-echo '<input id="input'.$row['id'].'" name="input'.$row['id'].'" type="text" value="';
+echo '<td class="newschet-tarif-qty">';
+echo '<input id="input'.$row['id'].'" name="input'.$row['id'].'" class="newschet-qty-input" type="number" min="0" step="1" inputmode="numeric" value="';
 if(isset($_GET['rand'])){
 $dopschet = "SELECT * FROM schet WHERE del = '0' AND rand ='".$_GET['rand']."' AND prod = '".$row['id']."'";
 $rdopschet = mysql_query($dopschet);
@@ -1825,10 +2465,10 @@ echo '0';
 echo '0';
 }
 
-echo'" style="width: 50px; height: 20px; color:#666;">';
+echo'">';
 echo '</td>';
-echo '<td style="width: 50px;">';
-echo '<p id="summ'.$row['id'].'" name="summ'.$row['id'].'">';
+echo '<td class="newschet-tarif-sum">';
+echo '<p id="summ'.$row['id'].'" name="summ'.$row['id'].'" class="newschet-total-sum">';
 if(isset($_GET['rand'])){
 $dopschet = "SELECT * FROM schet WHERE del = '0' AND rand ='".$_GET['rand']."' AND prod = '".$row['id']."'";
 $rdopschet = mysql_query($dopschet);
@@ -1879,7 +2519,7 @@ echo '</td></tr>';
 ?>
 </table>
 
-<table class="table ">
+<table class="table newschet-total-table">
 <tr  style="display:none"><td style="width:20px;">
 </td>
 <td style="padding: 5px;">
@@ -1927,19 +2567,19 @@ echo'</option>';
 </tr>
 
 
-<tr><td style="width:1px;">
+<tr class="newschet-total-row"><td style="width:1px;">
 </td>
 <td style="padding: 5px;">
-<strong style="font-size: 15px;">Итого:</strong>
+<strong class="newschet-total-label">Итого:</strong>
 </td>
-<td style="font-size: 15px;width: 120px;">
-Скидка %
+<td class="newschet-discount-cell">
+<span>Скидка</span>
 </td>
 <td  style="width: 58px; ">
-<input id="skidka" name="skidka" type="text" value="0" style="width: 50px; color:#666;">
+<span class="newschet-discount-wrap"><input id="skidka" name="skidka" class="newschet-discount-input" type="number" min="0" max="100" step="1" value="0"><span>%</span></span>
 </td>
 <td style="width: 50px;">
-<p id="allsumm"></p>
+<p id="allsumm" class="newschet-total-sum"></p>
 <input type="text" style="display: none;" name="aallsumm" id="aallsumm">
 </td></tr>
 </table>
@@ -2056,15 +2696,14 @@ $("#aallsumm").val(Decimal(allsumm).minus(Decimal(sskidka)));
 }
 </script>
 <?if ($_GET['tip']==12){?>
-<div  class="av"id="agent">
-<div class="form-control" style="height: auto;float: left;">
-<label> Основной продукт&nbsp;&nbsp;&nbsp;&nbsp;<span style="font-size: 10pt;
-    border: 1px solid #ddd; padding:5px;"><?php
+<div class="av newschet-av" id="agent">
+<div class="form-control newschet-av-panel newschet-av-row" style="height: auto;float: left;">
+<label class="newschet-av-product"><span>ОП</span><strong><?php
 $id = (int)$_GET['parent']; // приводим к int
 $person = mysql_fetch_assoc(mysql_query("SELECT * FROM `produkti` WHERE id = $id"));
-echo $person['name'];
-?></span></label>
-<div style="
+echo newschet_h($person['name']);
+?></strong></label>
+<div class="newschet-av-field newschet-av-type" style="
     width: 25%;
     height: 50px;
     float: left;
@@ -2073,13 +2712,13 @@ echo $person['name'];
   width: 30%;
     text-align: left;
 	padding-top:7px;
-"> Тип основного продукта&nbsp;&nbsp;&nbsp;&nbsp;</label>
+"> Тип оп&nbsp;&nbsp;&nbsp;&nbsp;</label>
 <select style="
     width: 53%;
     font-size: 15pt;
     margin-top: 7px;
     padding-top: 4px;
-    padding-bottom: 4px;margin-left: 40px;"id="av" name="av">
+    padding-bottom: 4px;margin-left: 40px;" id="av" name="av">
 <option value="-1"selected></option>
 <option value="0">Новый</option>
 <option value="1">Продление</option>
@@ -2088,18 +2727,17 @@ echo $person['name'];
 <option value="4">Бесплатно</option>
 </select>
 </div>
-<div style="
+<div class="newschet-av-field newschet-av-services" style="
     width: 35%;
     height: auto;
     float: left;
 	display:none;
-"id="dobusl">
+" id="dobusl">
 <label style="
   width: 50%;
     text-align: left;
 	padding-top:7px;
-">Укажите  какие услуги есть
- в счете основного продукта&nbsp;&nbsp;&nbsp;&nbsp;</label>
+">Услуги в счете ОП&nbsp;&nbsp;&nbsp;&nbsp;</label>
  <div style="
     width: 50%;
     font-size: 15pt;
@@ -2111,7 +2749,7 @@ echo $person['name'];
     font-size: 15pt;
     margin-top: 7px;
     padding-top: 4px;
-    padding-bottom: 4px;"name="dobusl[]"id="dobuslll" >
+    padding-bottom: 4px;" name="dobusl[]" id="dobuslll" >
 	<option value="0"selected></option>
  <?$r=mysql_query("SELECT * from dobusl ");
    while($res = mysql_fetch_assoc($r)) :?>	  
@@ -2120,7 +2758,7 @@ echo $person['name'];
 </select>
 </div>
 </div>
-<div style="
+<div class="newschet-av-field newschet-av-sht" style="
     
     width: 15%;
     height: 50px;
@@ -2136,37 +2774,37 @@ echo $person['name'];
   text-align: left;
   padding-top:7px;
 
-">Количество
-выпусков эцп&nbsp;&nbsp;&nbsp;&nbsp;</label>
+">ШТ. эцп&nbsp;&nbsp;&nbsp;&nbsp;</label>
 <input class="form-control" style="width:50px;float: left;margin-top: 10px;font-size: 15pt;
-    text-align: center;"id="sht" name="sht"></input>
+    text-align: center;" id="sht" name="sht"></input>
 </div>
 </div>
 
-<div class="form-control" style="height: auto;float: left;"id="dobp">
-<div  style="
+<div class="form-control newschet-av-panel" style="height: auto;float: left;" id="dobp">
+<div class="newschet-dp-row" style="
     height: auto;
     float: left;
     width: 100%;
-"id="dobpp">
-<div style="
+" id="dobpp">
+<div class="newschet-av-field newschet-dp-product" style="
     width: 25%;
     height: auto;
 	float: left;
-"id="dobpr">
+" id="dobpr">
+<button type="button" class="newschet-add-dp-button" onclick="newschetAddDpRow(this)">+ дп</button>
 <label style="
     width: 40%;
     padding-top: 5px;
-">Добавить доп  продукт к основному продукту</label>
-<div id="dobpp"> 
+">дп</label>
+<div class="newschet-dp-select-wrap">
 <select style="
     width: 53%;
     margin-left: 10px;
     margin-top: 8px;
     font-size: 15pt;
-	padding-top: 4px;
+    padding-top: 4px;
     padding-bottom: 4px;
-"name="dobprod[]"id="dobprod"class="dobprod">
+" name="dobprod[]" id="dobprod" class="dobprod">
 <option value="0"selected></option>
 <?$r=mysql_query("SELECT * from dobprod");
    while($res = mysql_fetch_assoc($r)) :?>	  
@@ -2175,26 +2813,26 @@ echo $person['name'];
 </select>
 </div>
 </div>
-<div style="
+<div class="newschet-av-field newschet-dp-type" style="
     width: 25%;
     height: 50px;
     float: left;
 	display:none;
-"id="dobppr"class="dobppr">
+" id="dobppr" class="dobppr">
 <label style="
   
   width: 39%;
   text-align: left;
   padding-top:7px;
 
-">Тип дополнительного продукта&nbsp;&nbsp;&nbsp;&nbsp;</label>
+">Тип дп&nbsp;&nbsp;&nbsp;&nbsp;</label>
 <select style="
   width: 53%;
     font-size: 15pt;
     margin-top: 7px;
     padding-top: 4px;
     padding-bottom: 4px;
-    margin-left: 6px;"id="avdob" name="avdob[]" class="avdob">
+    margin-left: 6px;" id="avdob" name="avdob[]" class="avdob">
 <option value="-1"selected></option>
 <option value="0">Новый</option>
 <option value="1">Продление</option>
@@ -2203,26 +2841,25 @@ echo $person['name'];
 <option value="4">Бесплатно</option>
 </select>
 </div>
-<div style="
- width: 35%; height: auto; float: left; display: none;"id="dobuslpr">
+<div class="newschet-av-field newschet-av-services newschet-dp-services" style="
+ width: 35%; height: auto; float: left; display: none;" id="dobuslpr">
 <label style="
   width: 50%;
     text-align: left;
 	padding-top:7px;
-">Укажите  какие услуги есть
- в счете доп.продукта&nbsp;&nbsp;&nbsp;&nbsp;</label>
+">Услуги в счете ДП&nbsp;&nbsp;&nbsp;&nbsp;</label>
  <div style="
     width: 50%;
     font-size: 15pt;
 
     padding-top: 4px;
-    padding-bottom: 4px;float: left;"id="dobuslprl">
+    padding-bottom: 4px;float: left;" id="dobuslprl">
 <select style="
     width: 100%;
     font-size: 15pt;
     margin-top: 7px;
     padding-top: 4px;
-    padding-bottom: 4px;"name="dobuslpr[]"id="dobusllpr">
+    padding-bottom: 4px;" name="dobuslpr[]" id="dobusllpr">
 	<option value="-1" selected></option>
  <?$r=mysql_query("SELECT * from dobusl ");
    while($res = mysql_fetch_assoc($r)) :?>	  
@@ -2231,7 +2868,7 @@ echo $person['name'];
 </select>
 </div>
 </div>
-<div style="
+<div class="newschet-av-field newschet-dp-sht" style="
     
     width: 15%;
     height: 50px;
@@ -2247,10 +2884,9 @@ echo $person['name'];
   text-align: left;
   padding-top:7px;
 
-">Количество
-выпусков эцп&nbsp;&nbsp;&nbsp;&nbsp;</label>
+">ШТ. эцп&nbsp;&nbsp;&nbsp;&nbsp;</label>
 <input class="form-control" style="width:50px;float: left;margin-top: 10px;font-size: 15pt;
-    text-align: center;"id="shtpr" name="shtpr[]" value="0"></input>
+    text-align: center;" id="shtpr" name="shtpr[]" value="0"></input>
 </div>
 </div>
 </div>
@@ -2314,297 +2950,284 @@ echo '
 </div>
 
 
-<!--<div>
-<label> Основной продукт&nbsp;&nbsp;&nbsp;&nbsp;<span style="font-size: 10pt;
-    border: 1px solid #ddd; padding:5px;"><?php
-$id = (int)$_GET['parent']; // приводим к int
-$person = mysql_fetch_assoc(mysql_query("SELECT * FROM `produkti` WHERE id = $id"));
-echo $person['name'];
-?></span></label>
-</div>!-->
 
 
 <script>
-  var count = 0;
-$(function() {
-    count = $('input[type=checkbox]:checked').length;
-    displayCount();
+(function () {
+    function newschetShow(block) {
+        $(block).removeClass("newschet-is-hidden").show();
+    }
 
-    $('input[type=checkbox]').bind('click' , function(e, a) {   
-         if (this.checked) {
-              count += a ? -1 : 1;
-         } else {
-              count += a ? 1 : -1;
-         }
-         displayCount();
-    });
-    $('#invert').click(function(e) {    
-         $('input[type=checkbox]').trigger('click', true)
-    });
-	$('#deleteol').click(function() {    
-        $('#count').text(count); 
-		count = 0;
-		document.getElementById("countdisplay").style.display="none";
-    });
-	
-});
-function displayCount() {
-    $('#count').text(count); 
-if(count == 0){
-	document.getElementById("countdisplay").style.display="none";
-	}else{
-	document.getElementById("countdisplay").style.display="block";
-	}
-}
-	
+    function newschetHide(block) {
+        $(block).addClass("newschet-is-hidden").hide();
+    }
 
-</script>
-<script>
-if(document.getElementById('idprodkschet').value=="1")
-	{
-		document.getElementById('prodkschet').style.display='block';
-		document.getElementById('oldns').style.display='none';
-	}
-	if(document.getElementById('idprodkschet').value=="2")
-	{
-		document.getElementById('oldns').style.display='block';
-		document.getElementById('prodkschet').style.display='none';
-	}
-$(document).ready(function(){
-$( "#idprodkschet" ).change(function () {
-	if(document.getElementById('idprodkschet').value=="1")
-	{
-		document.getElementById('prodkschet').style.display='block';
-		document.getElementById('oldns').style.display='none';
-	}
-	if(document.getElementById('idprodkschet').value=="2")
-	{
-		document.getElementById('oldns').style.display='block';
-		document.getElementById('prodkschet').style.display='none';
-	}
-	/*ogrn=document.getElementById('getOrg').value;
-	tip=document.getElementById('tip').value;
-	datastart=document.getElementsByClassName("firstDate")[0].value;
-	datafinish=document.getElementsByClassName("secondDate")[0].value;
-			$.ajax({
-				type: "GET",
-				url: "tablschetog.php",
-				data: "users=<?echo $_GET['id'];?>&ogrn="+ogrn+"&tip="+tip+"&datas="+datastart+"&dataf="+datafinish+"",
-				success: function(html){
-					 $("#tablschetog").html(html);
-				}
-			});*/
-		});
-    if (document.getElementById("nsold").value != '')
-    {
-        var ns = document.getElementById("nsold").value;
+    function newschetSetMode() {
+        var mode = $("#idprodkschet").val();
+        if (mode === "1") {
+            $("#prodkschet").show();
+            $("#oldns").hide();
+        } else {
+            $("#oldns").show();
+            if ($.trim($("#nsold").val()) === "") {
+                $("#prodkschet").hide();
+            }
+        }
+    }
 
+    function newschetSetOldResult(message, ns) {
+        var text = $.trim(message);
+        var notFound = "Данный номер счета не найден в системе";
+        var wrongProduct = "Выбранный продукт не указан в счете №'" + ns + "'";
+        var status = $("#oldschet");
+
+        if (text === notFound || text === wrongProduct) {
+            status.text(text).css("color", "#c9413b");
+            $("#prodkschet").hide();
+            return;
+        }
+
+        status.text(text || "Счет подходит для продления, можно выбрать тарифы ниже.").css("color", "#16803a");
+        $("#prodkschet").show();
+    }
+
+    function newschetCheckOldSchet() {
+        var ns = $.trim($("#nsold").val());
+        if (ns === "") {
+            $("#oldschet").text("");
+            $("#prodkschet").hide();
+            return;
+        }
 
         $.ajax({
             type: "GET",
             url: "oldschet.php",
-            data: "nsold="+ns+"&idkli=<?echo $_GET['id'];?>&parent=<?echo $_GET['parent'];?>",
-            success: function(msg){
-                var s = document.getElementById("oldschet");
-                s.innerHTML = msg;
-                if(s.innerHTML=="Данный номер счета не найден в системе")
-                {
-                    document.getElementById("prodkschet").style.display="none";
-                    document.getElementById("oldschet").style.color="red";
-                }
-                if(s.innerHTML!="Данный номер счета не найден в системе")
-                {
-                    if(s.innerHTML!="Выбранный продукт не указан в счете №'"+ns+"'")
-                    {
-                        document.getElementById("prodkschet").style.display="block";
-                    }
-                }
-                if(s.innerHTML=="Выбранный продукт не указан в счете №'"+ns+"'")
-                {
-                    document.getElementById("prodkschet").style.display="none";
-                    document.getElementById("oldschet").style.color="red";
-                }
-
-            }
-        })
-    }
-		 $("#nsold").keyup(function () {
-            if (document.getElementById("nsold").value != '')
-            {
-                var ns = document.getElementById("nsold").value;
-
-
-				$.ajax({
-				type: "GET",
-				url: "oldschet.php",
-				data: "nsold="+ns+"&idkli=<?echo $_GET['id'];?>&parent=<?echo $_GET['parent'];?>",
-				success: function(msg){
-					 var s = document.getElementById("oldschet");
-				s.innerHTML = msg;
-				if(s.innerHTML=="Данный номер счета не найден в системе")
-				{
-					document.getElementById("prodkschet").style.display="none";
-					document.getElementById("oldschet").style.color="red";
-				}
-				if(s.innerHTML!="Данный номер счета не найден в системе")
-				{
-					if(s.innerHTML!="Выбранный продукт не указан в счете №'"+ns+"'")
-				    {
-					document.getElementById("prodkschet").style.display="block";
-				    }
-				}
-				if(s.innerHTML=="Выбранный продукт не указан в счете №'"+ns+"'")
-				{
-					document.getElementById("prodkschet").style.display="none";
-					document.getElementById("oldschet").style.color="red";
-				}
-				
-				}
-			})
-            }
-            if (document.getElementById("nsold").value == '' )
-            {
-				var ns=document.getElementById("nsold").value;
-				$.ajax({
-				type: "GET",
-				url: "oldschet.php",
-				data: "nsold="+ns+"&idkli=<?echo $_GET['id'];?>&parent=<?echo $_GET['parent'];?>",
-				success: function(msg){
-					 var s = document.getElementById("oldschet");
-				s.innerHTML = msg;
-				document.getElementById("prodkschet").style.display="none";
-				}
-							
-			})
+            data: "nsold=" + encodeURIComponent(ns) + "&idkli=<?php echo intval($_GET['id']); ?>&parent=<?php echo intval($_GET['parent']); ?>",
+            success: function (msg) {
+                newschetSetOldResult(msg, ns);
             }
         });
-});
-if(<?echo $_GET['tip']?>=="12")
-{
-nomerschetks.oninput = function() {
-    if(document.getElementById("nomerschetks").value!="")
-	{
-	document.getElementById("agent").style.display="block";
-	}
-	else
-	{
-		document.getElementById("agent").style.display="none";
-	}
-  };
-  av.onchange=function(event)
-  {
-	  if(document.getElementById("av").value=="3")
-	  {
-          document.getElementById("dobusl").style.display="none";
-          document.getElementById("shtsert").style.display="block";
-	  }
-      if(document.getElementById("av").value=="4")
-      {
-          document.getElementById("dobusl").style.display="none";
-          document.getElementById("shtsert").style.display="none";
-      }
-	  if(document.getElementById("av").value=="-1")
-	  {
-		  document.getElementById("dobusl").style.display="none";
-		  document.getElementById("shtsert").style.display="none";
-	  }
-	   if(document.getElementById("av").value=="0")
-	  {
-		  document.getElementById("dobusl").style.display="block";
-		  document.getElementById("shtsert").style.display="block";
-	  }
-	   if(document.getElementById("av").value=="1")
-	  {
-		  document.getElementById("dobusl").style.display="block";
-		  document.getElementById("shtsert").style.display="block";
-	  }
-	  if(document.getElementById("av").value=="2")
-	  {
-		  document.getElementById("dobusl").style.display="none";
-		  document.getElementById("shtsert").style.display="block";
-	  }
-  }
-  dobusl.onchange=function()
-  {
-	  if(document.getElementById("dobuslll").value!="0")
-	  {
-		  let div2=document.getElementById("dobuslll").cloneNode(true);
-          document.getElementById("dobusll").appendChild(div2);
-	  }
-  }
-    dobuslpr.onchange=function()
-  {
-	  if(document.getElementById("dobusllpr").value!="0")
-	  {
-		  let div2=document.getElementById("dobusllpr").cloneNode(true);
-          document.getElementById("dobuslprl").appendChild(div2);
-	  }
-  }
- dobprod.oninput = function() {
-    if(document.getElementById("dobprod").value!="-1")
-	{
-	document.getElementById("dobppr").style.display="block";
-	 
-	}
-	else
-	{
-		document.getElementById("dobppr").style.display="none";
-		 document.getElementById("dobuslpr").style.display="none";
-		  document.getElementById("shtsertpr").style.display="none";
-	}
-  };
-  $(document).ready(function(){
-	 $('body').on("change", ".dobprod", function (e) {
-		var div3=document.getElementById("dobpp").cloneNode(true);
-  document.getElementById("dobp").append(div3);
- });  
-});
-  $(document).ready(function(){
-     
-	 $('body').on("change", ".avdob", function (e) {
-		 var li = document.querySelectorAll('#avdob');
-		 var dobuslpr = document.querySelectorAll('#dobuslpr');
-		  var shtsertpr = document.querySelectorAll('#shtsertpr');
-         for (index = 0; index < li.length; index++) {
+    }
 
-      if(li[index].value=="3")
-	  {
-          dobuslpr[index].style.display="none";
-          shtsertpr[index].style.display="block";
-	  }
-             if(li[index].value=="4")
-             {
-                 dobuslpr[index].style.display="none";
-                 shtsertpr[index].style.display="none";
-             }
-	  if(li[index].value=="-1")
-	  {
-		   dobuslpr[index].style.display="none";
-		  shtsertpr[index].style.display="none";
-	  }
-	   if(li[index].value=="0")
-	  {
-		  dobuslpr[index].style.display="block";
-		  shtsertpr[index].style.display="block";
-	  }
-	   if(li[index].value=="1")
-	  {
-		   dobuslpr[index].style.display="block";
-		  shtsertpr[index].style.display="block";
-		  shtsertpr[index].value="0";
-	  }
-	  if(li[index].value=="2")
-	  {
-		   dobuslpr[index].style.display="none";
-		  shtsertpr[index].style.display="block";
-	  }
-	  }
- }); 
+    function newschetRefreshTarifRows() {
+        $("#tab .newschet-tarif-row").each(function () {
+            var row = $(this);
+            var checked = row.find('input[type="checkbox"]').prop("checked");
+            var qty = parseFloat(row.find(".newschet-qty-input").val()) || 0;
+            row.toggleClass("is-selected", checked || qty > 0);
+        });
+    }
 
-});
-}
+    function newschetDpRow(element) {
+        return $(element).closest(".newschet-dp-row, #dobpp");
+    }
+
+    function newschetDpValue(row, selector) {
+        var control = $(row).find(selector).first();
+        return control.length ? control.val() : "";
+    }
+
+    function newschetSetDpProductState(row) {
+        row = $(row);
+        var productValue = newschetDpValue(row, 'select[name="dobprod[]"]');
+        var typeBlock = row.find("#dobppr").first();
+        var serviceBlock = row.find("#dobuslpr").first();
+        var shtBlock = row.find("#shtsertpr").first();
+
+        if (productValue && productValue !== "0" && productValue !== "-1") {
+            newschetShow(typeBlock);
+        } else {
+            newschetHide(typeBlock);
+            newschetHide(serviceBlock);
+            newschetHide(shtBlock);
+        }
+    }
+
+    function newschetSetDpTypeState(row) {
+        row = $(row);
+        var productValue = newschetDpValue(row, 'select[name="dobprod[]"]');
+        var typeValue = newschetDpValue(row, 'select[name="avdob[]"]');
+        var serviceBlock = row.find("#dobuslpr").first();
+        var shtBlock = row.find("#shtsertpr").first();
+
+        if (!productValue || productValue === "0" || productValue === "-1" || typeValue === "4" || typeValue === "-1" || typeValue === "") {
+            newschetHide(serviceBlock);
+            newschetHide(shtBlock);
+            return;
+        }
+
+        if (typeValue === "0" || typeValue === "1") {
+            newschetShow(serviceBlock);
+        } else {
+            newschetHide(serviceBlock);
+        }
+        newschetShow(shtBlock);
+    }
+
+    function newschetResetDpRow(row) {
+        row = $(row);
+        row.find('select[name="dobprod[]"]').first().val("0");
+        row.find('select[name="avdob[]"]').first().val("-1");
+        row.find('input[name="shtpr[]"]').first().val("0");
+        row.find('select[name="dobuslpr[]"]').not(":first").remove();
+        row.find('select[name="dobuslpr[]"]').first().val("-1");
+        newschetSetDpProductState(row);
+        newschetSetDpTypeState(row);
+    }
+
+    function newschetIsEmptyServiceValue(value) {
+        return value === "" || value === "0" || value === "-1" || typeof value === "undefined";
+    }
+
+    function newschetNormalizeServiceSelects(holder, selector, emptyValue) {
+        holder = $(holder);
+        var selects = holder.find(selector);
+        var emptySelects;
+        var newSelect;
+
+        if (!selects.length) {
+            return;
+        }
+
+        emptySelects = selects.filter(function () {
+            return newschetIsEmptyServiceValue($(this).val());
+        });
+
+        if (emptySelects.length > 1) {
+            emptySelects.slice(1).remove();
+        }
+
+        selects = holder.find(selector);
+        emptySelects = selects.filter(function () {
+            return newschetIsEmptyServiceValue($(this).val());
+        });
+
+        if (!emptySelects.length) {
+            newSelect = selects.first().clone(false, false);
+            newSelect.val(emptyValue);
+            holder.append(newSelect);
+        }
+    }
+
+    function newschetPrepareServiceHolderForSubmit(holder, selector) {
+        holder = $(holder);
+        var selects = holder.find(selector);
+        var hasSelected = false;
+
+        selects.prop("disabled", false);
+        selects.each(function () {
+            if (!newschetIsEmptyServiceValue($(this).val())) {
+                hasSelected = true;
+            }
+        });
+
+        if (hasSelected) {
+            selects.filter(function () {
+                return newschetIsEmptyServiceValue($(this).val());
+            }).prop("disabled", true);
+        }
+    }
+
+    window.newschetPrepareServicesForSubmit = function () {
+        newschetPrepareServiceHolderForSubmit($("#dobusll"), 'select[name="dobusl[]"]');
+        $(".newschet-dp-row, #dobpp").each(function () {
+            newschetPrepareServiceHolderForSubmit($(this).find("#dobuslprl").first(), 'select[name="dobuslpr[]"]');
+        });
+    };
+
+    window.newschetAddDpRow = function (button) {
+        var sourceRow = newschetDpRow(button);
+        if (!sourceRow.length) {
+            sourceRow = $(".newschet-dp-row, #dobpp").last();
+        }
+        if (!sourceRow.length) {
+            return;
+        }
+
+        var newRow = sourceRow.clone(false, false);
+        newschetResetDpRow(newRow);
+        sourceRow.closest("#dobp").append(newRow);
+        newRow.find('select[name="dobprod[]"]').first().focus();
+    };
+
+    function newschetSetMainAvState() {
+        var value = $("#av").val();
+        if (value === "0" || value === "1") {
+            newschetShow($("#dobusl"));
+            newschetShow($("#shtsert"));
+        } else if (value === "2" || value === "3") {
+            newschetHide($("#dobusl"));
+            newschetShow($("#shtsert"));
+        } else {
+            newschetHide($("#dobusl"));
+            newschetHide($("#shtsert"));
+        }
+    }
+
+    function newschetShowAgentBlock() {
+        $("#agent").show();
+    }
+
+    $(document).ready(function () {
+        var oldCheckTimer = null;
+
+        newschetSetMode();
+        newschetRefreshTarifRows();
+
+        $("#idprodkschet").on("change", function () {
+            newschetSetMode();
+            if ($(this).val() === "2") {
+                newschetCheckOldSchet();
+            }
+        });
+
+        $("#nsold").on("input", function () {
+            window.clearTimeout(oldCheckTimer);
+            oldCheckTimer = window.setTimeout(newschetCheckOldSchet, 350);
+        }).on("change", newschetCheckOldSchet);
+
+        $(".newschet-old-option").on("click", function () {
+            $("#nsold").val($(this).data("ns"));
+            newschetCheckOldSchet();
+        });
+
+        $(document).on("keyup change click", "#tab input", newschetRefreshTarifRows);
+        $(document).on("input change", ".newschet-qty-input", function () {
+            $(this).trigger("keyup");
+        });
+
+        if ($.trim($("#nsold").val()) !== "") {
+            newschetCheckOldSchet();
+        }
+
+        if (<?php echo intval($_GET['tip']); ?> === 12) {
+            newschetShowAgentBlock();
+            newschetSetMainAvState();
+            $(".newschet-dp-row, #dobpp").each(function () {
+                newschetSetDpProductState(this);
+                newschetSetDpTypeState(this);
+            });
+
+            $("#av").on("change", newschetSetMainAvState);
+            $("#dobusl").on("change", 'select[name="dobusl[]"]', function () {
+                newschetNormalizeServiceSelects($("#dobusll"), 'select[name="dobusl[]"]', "0");
+            });
+            $("body").on("change", ".dobprod", function () {
+                var row = newschetDpRow(this);
+                newschetSetDpProductState(row);
+                newschetSetDpTypeState(row);
+            });
+            $("body").on("change", ".avdob", function () {
+                newschetSetDpTypeState(newschetDpRow(this));
+            });
+            $("body").on("change", 'select[name="dobuslpr[]"]', function () {
+                var row = newschetDpRow(this);
+                newschetNormalizeServiceSelects(row.find("#dobuslprl").first(), 'select[name="dobuslpr[]"]', "-1");
+            });
+        }
+    });
+})();
 </script>
-<p id="countdisplay" style="">Выбранно: <b style="font-size:15px;" id="count"></b></p>
 
 <?php
 $messaeLog = ' Пользователь ' . $userdata['users_id'] . ' GET[rand] ' . $_GET['rand'] . ' $shetrand ' . $shetrand . ' $_POST[shetrand] ' . $_POST['shetrand']
@@ -2656,6 +3279,10 @@ error_log(date('Y-m-d H:i:s') . ' ' . $messaeLog . PHP_EOL, 3, 'log/voovi.log');
                     form.reportValidity();
                 }
                 return false;
+            }
+
+            if (window.newschetPrepareServicesForSubmit) {
+                window.newschetPrepareServicesForSubmit();
             }
 
             form.setAttribute('data-loading', '1');

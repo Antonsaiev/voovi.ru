@@ -32,6 +32,7 @@ RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-av
 
 # Копируем приложение (исключения в .dockerignore)
 COPY . /var/www/html/
+COPY docker/uploads.ini /usr/local/etc/php/conf.d/uploads.ini
 
 # Подменяем conf.php и .htaccess для Docker (БД = сервис db, без редиректа на HTTPS)
 COPY docker/conf.php /var/www/html/conf.php

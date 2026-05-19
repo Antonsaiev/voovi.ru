@@ -22,6 +22,66 @@ else
 }
 $schetLoadingVisible = isset($_POST['submitsch']);
 $schetLoadingTitle = 'Создаем счет';
+
+if (!function_exists('newschet_h')) {
+    function newschet_h($value)
+    {
+        return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
+    }
+}
+
+if (!function_exists('newschet_icon_url')) {
+    function newschet_icon_url($value)
+    {
+        $value = trim((string)$value);
+        if ($value === '' || $value === '0' || $value === '1') {
+            return '/img/product_icons_20x20.png';
+        }
+        if (preg_match('/^url\((["\']?)(.*?)\1\)$/', $value, $matches)) {
+            $value = trim($matches[2]);
+        }
+        if ($value === '') {
+            return '/img/product_icons_20x20.png';
+        }
+        if ($value[0] !== '/') {
+            $value = '/'.ltrim($value, '/');
+        }
+        if (strpos($value, '/img/') !== 0) {
+            return '/img/product_icons_20x20.png';
+        }
+
+        return $value;
+    }
+}
+
+$newschetEmbedded = isset($_GET['rand']);
+$newschetClientId = isset($_GET['id']) ? intval($_GET['id']) : 0;
+$newschetProductId = isset($_GET['parent']) ? intval($_GET['parent']) : 0;
+$newschetTipId = isset($_GET['tip']) ? intval($_GET['tip']) : 0;
+$newschetProduct = mysql_fetch_assoc(mysql_query("SELECT * FROM `produkti` WHERE id = ".$newschetProductId));
+$newschetService = mysql_fetch_assoc(mysql_query("SELECT * FROM `uslugi` WHERE id = ".$newschetTipId));
+$newschetClient = mysql_fetch_assoc(mysql_query("SELECT * FROM `ogrn` WHERE id = ".$newschetClientId));
+$newschetIconValue = isset($newschetProduct['icon']) && $newschetProduct['icon'] !== '' ? $newschetProduct['icon'] : (isset($newschetProduct['tel']) ? $newschetProduct['tel'] : '');
+$newschetIconUrl = newschet_icon_url($newschetIconValue);
+$newschetIconIsSprite = $newschetIconUrl === '/img/product_icons_20x20.png';
+$newschetBackParams = array(
+    'id' => isset($_GET['id']) ? $_GET['id'] : '',
+    'ogrn' => isset($_GET['ogrn']) ? $_GET['ogrn'] : '',
+    'parent' => isset($_GET['tip']) ? $_GET['tip'] : ''
+);
+if (isset($_GET['inn'])) {
+    $newschetBackParams['inn'] = $_GET['inn'];
+}
+if (isset($_GET['kpp'])) {
+    $newschetBackParams['kpp'] = $_GET['kpp'];
+}
+if (isset($_GET['head'])) {
+    $newschetBackParams['head'] = $_GET['head'];
+}
+if (isset($_GET['rand'])) {
+    $newschetBackParams['rand'] = $_GET['rand'];
+}
+$newschetBackHref = '/newusluga.php?'.http_build_query($newschetBackParams);
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="ru" lang="ru">
@@ -88,10 +148,201 @@ $schetLoadingTitle = 'Создаем счет';
     from { transform: rotate(0deg); }
     to { transform: rotate(360deg); }
 }
+body.newschet-modern {
+    margin: 0;
+    background: #f3f6f8;
+    color: #26313d;
+    font-family: "Helvetica Neue", Arial, sans-serif;
+}
+.newschet-modern *,
+.newschet-modern *:before,
+.newschet-modern *:after {
+    box-sizing: border-box;
+}
+.newschet-page {
+    width: 100%;
+    max-width: 1180px;
+    margin: 74px auto 34px;
+    padding: 0 16px;
+}
+.newschet-page.is-embedded {
+    margin-top: 18px;
+}
+.newschet-main {
+    padding-left: 0;
+}
+.newschet-sidebar {
+    padding-right: 0;
+}
+.newschet-titlebar,
+.newschet-card,
+.newschet-sidebar-card {
+    border: 1px solid #dfe6ec;
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 8px 22px rgba(31, 45, 58, 0.05);
+}
+.newschet-titlebar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 14px;
+    padding: 18px 20px;
+}
+.newschet-title-main {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    gap: 13px;
+}
+.newschet-product-icon {
+    flex: 0 0 42px;
+    width: 42px;
+    height: 42px;
+    border: 1px solid #dfe6ec;
+    border-radius: 8px;
+    background-color: #fff;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+}
+.newschet-product-icon.is-sprite {
+    background-size: auto;
+}
+.newschet-eyebrow {
+    margin-bottom: 4px;
+    color: #526170;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.2;
+    text-transform: uppercase;
+}
+.newschet-titlebar h1 {
+    margin: 0;
+    color: #26313d;
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+}
+.newschet-client {
+    margin-top: 5px;
+    color: #526170;
+    font-size: 14px;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+}
+.newschet-back {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 36px;
+    padding: 8px 13px;
+    border: 1px solid #cfd8e3;
+    border-radius: 6px;
+    background: #fff;
+    color: #26313d;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.2;
+    text-decoration: none;
+    white-space: nowrap;
+}
+.newschet-back:hover,
+.newschet-back:focus {
+    border-color: #2f7fb8;
+    color: #2f7fb8;
+    text-decoration: none;
+    outline: 0;
+}
+.newschet-card,
+.newschet-sidebar-card {
+    padding: 16px;
+}
+.newschet-card form {
+    margin: 0;
+}
+.newschet-card table.table {
+    margin-bottom: 12px;
+    border: 1px solid #edf1f5;
+    border-radius: 8px;
+    background: #fff;
+    overflow: hidden;
+}
+.newschet-card table.table > tbody > tr > td {
+    border-color: #edf1f5;
+    padding: 10px !important;
+    vertical-align: middle;
+}
+.newschet-card input[type="text"],
+.newschet-card input[type="number"],
+.newschet-card input[type="date"],
+.newschet-card select,
+.newschet-card textarea,
+.newschet-card .form-control {
+    min-height: 36px;
+    border: 1px solid #cfd8e3;
+    border-radius: 6px;
+    box-shadow: none;
+    color: #26313d;
+    font-size: 14px;
+}
+.newschet-card input[type="submit"] {
+    min-height: 42px;
+    padding: 9px 16px;
+    border: 0;
+    border-radius: 8px;
+    background: #2f86c1;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 700;
+}
+.newschet-card input[type="submit"]:hover,
+.newschet-card input[type="submit"]:focus {
+    background: #2876aa;
+    outline: 0;
+}
+@media (max-width: 860px) {
+    .newschet-page {
+        margin-top: 64px;
+        padding: 0 10px;
+    }
+    .newschet-page.is-embedded {
+        margin-top: 10px;
+    }
+    .newschet-titlebar {
+        align-items: flex-start;
+        flex-direction: column;
+        padding: 14px;
+    }
+    .newschet-back {
+        width: 100%;
+    }
+    .newschet-main,
+    .newschet-sidebar {
+        padding: 0;
+    }
+    .newschet-sidebar {
+        margin-top: 14px;
+    }
+}
+@media (max-width: 560px) {
+    .newschet-title-main {
+        align-items: flex-start;
+    }
+    .newschet-titlebar h1 {
+        font-size: 20px;
+    }
+    .newschet-card table.table > tbody > tr > td {
+        display: block;
+        width: 100% !important;
+    }
+}
 </style>
 
 </head>
-<body>
+<body class="newschet-modern">
 <div id="schetLoadingOverlay" class="schet-loading-overlay<?php if ($schetLoadingVisible) { echo ' is-visible'; } ?>">
     <div class="schet-loading-card">
         <div class="schet-loading-spinner"></div>
@@ -108,54 +359,37 @@ if ($schetLoadingVisible) {
 ?>
 <?php
 if(isset($_GET['rand'])){
-echo '<script src="/js/jquery-1.11.0.min.js"></script><script src="/js/jquery-live-compat.js?v=1"></script><div style="
-margin-bottom: 25px;
-  font-size: 21px;
-  background: #26BB84;
-  text-align: center;
-  padding: 8px;
-  color: #fff;
-">Новый продукт для ';
-
-		$q1 = "SELECT * FROM `ogrn` WHERE id =$_GET[id]";
-		$result1 = mysql_query($q1);
-		$person1 = mysql_fetch_array($result1);
-		
-		echo $person1['naim'].'</div>';
+    echo '<script src="/js/jquery-1.11.0.min.js"></script><script src="/js/jquery-live-compat.js?v=1"></script>';
 }else{
-include 'header.php';  }
-
-if(isset($_GET['rand'])){
-echo '<div class="container" style="margin-top: 20px;">';
-}else{
-echo '<div class="container" style="margin-top: 60px;">';  }
+    include 'header.php';
+}
 ?>
+<div class="container newschet-page<?php if ($newschetEmbedded) { echo ' is-embedded'; } ?>">
 <div class="row">
 <?php 
 
 if(isset($_GET['rand'])){
-echo '<div class="col-md-12">';
+echo '<div class="col-md-12 newschet-main">';
 }else{
-echo '<div class="col-md-8">';
+echo '<div class="col-md-8 newschet-main">';
 }
 
 ?>
-<div class="bs-example">
-<strong><h4 style="margin-top: 10px; font-weight: bold; border-bottom: 1px #333 solid;"><a href="/newusluga.php?id=<?php echo $_GET['id']; ?>&ogrn=<?php echo $_GET['ogrn']; ?>&parent=<?php echo $_GET['tip']; 
-
-if(isset($_GET['rand'])){
-echo '&rand='.$_GET['rand'];
-}
-
-
-
-
-?>"><< Назад</a> : Счет на "<?php
-$q = "SELECT * FROM `produkti` WHERE id =$_GET[parent]";
-$result = mysql_query($q);
-$person = mysql_fetch_array($result);
-echo $person['name'];
-?>"</h4></strong>
+<div class="newschet-titlebar">
+    <div class="newschet-title-main">
+        <span class="newschet-product-icon<?php if ($newschetIconIsSprite) { echo ' is-sprite'; } ?>" style="background-image: url('<?php echo newschet_h($newschetIconUrl); ?>'); background-position: <?php echo $newschetIconIsSprite ? '7px -300px' : 'center'; ?>;"></span>
+        <div>
+            <div class="newschet-eyebrow">Выставление счета</div>
+            <h1><?php echo newschet_h(isset($newschetProduct['name']) ? $newschetProduct['name'] : ''); ?></h1>
+            <div class="newschet-client"><?php echo newschet_h(isset($newschetClient['naim']) ? $newschetClient['naim'] : ''); ?><?php if (!empty($newschetService['name'])) { ?> · <?php echo newschet_h($newschetService['name']); ?><?php } ?></div>
+        </div>
+    </div>
+    <a class="newschet-back" href="<?php echo newschet_h($newschetBackHref); ?>"><span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>&nbsp;Назад к продуктам</a>
+</div>
+<div class="bs-example newschet-card">
+<?php
+$person = $newschetProduct ? $newschetProduct : mysql_fetch_array(mysql_query("SELECT * FROM `produkti` WHERE id =".intval($_GET['parent'])));
+?>
 <?php 
 $shetrand = '';
 
@@ -178,7 +412,6 @@ $qrand = "SELECT sortir FROM `schet` ORDER BY sortir DESC LIMIT 1";
 					$resultrand = mysql_query($qrand);
 					$personrand = mysql_fetch_array($resultrand);
 					
-echo $personrand['sortir'];
 $var = $personrand['sortir'] + 1;
 
 
@@ -314,9 +547,9 @@ echo '</script>';
 
 if(isset($_GET['rand'])){
 }else{
-echo '<div class="col-md-4">';
+echo '<div class="col-md-4 newschet-sidebar"><div class="newschet-sidebar-card">';
 include 'docmyogrn.php';
-echo '</div>';
+echo '</div></div>';
 }
 
 ?>

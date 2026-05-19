@@ -25,10 +25,7 @@ $dff=$_SESSION['df'];
 	}
 	
 ?>
-<div class="modal-shadowkube" id="modal-shadowkube"></div>
-<div class="kube" id="kube">
-<img src="/img/image-preloader-252.gif">
-</div>
+<?php include_once 'voovi_spinner.php'; ?>
 
 <div class="by amt" style="
  width: 100%;

@@ -1,5 +1,8 @@
 # Для Docker: редирект на HTTPS отключён (локально нет сертификата на 443)
 RewriteEngine On
+LimitRequestBody 16777216
+php_value upload_max_filesize 8M
+php_value post_max_size 16M
 RedirectMatch 404 /\.git
 RedirectMatch 404 /\.idea
 RedirectMatch 404 /\.vscode

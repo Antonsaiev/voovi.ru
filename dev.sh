@@ -3,7 +3,8 @@ set -euo pipefail
 
 cd "$(dirname "$0")"
 
-compose=(docker compose --env-file .env.dev -f docker-compose.yml)
+env_file="../configs/env/local.env"
+compose=(docker compose --env-file "$env_file" -f docker-compose.yml)
 command="${1:-up}"
 
 ensure_runtime_dirs() {
@@ -25,10 +26,10 @@ restore_dump() {
 
   set -a
   # shellcheck disable=SC1091
-  . ./.env.dev
+  . "$env_file"
   set +a
 
-  : "${MYSQL_ROOT_PASSWORD:?MYSQL_ROOT_PASSWORD is not set in .env.dev}"
+  : "${MYSQL_ROOT_PASSWORD:?MYSQL_ROOT_PASSWORD is not set in $env_file}"
   : "${MYSQL_DATABASE:=voovi}"
 
   ensure_runtime_dirs

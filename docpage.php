@@ -302,7 +302,7 @@ echo '<a href="' . htmlspecialchars($syncUrl, ENT_QUOTES, 'UTF-8') . '"
         <span class="glyphicon glyphicon-refresh" style="cursor:pointer;"></span>
       </a>';
 echo '</td>';
-// Печать (href = реальный URL, чтобы в статусной строке при наведении показывался s.voovi.ru; клик обрабатывает JS — открывает в новой вкладке)
+// Печать (href = реальный URL, чтобы в статусной строке при наведении показывался analitic; клик обрабатывает JS — открывает в новой вкладке)
 echo '<td>';
 echo '<a href="' . htmlspecialchars($newPdfUrl, ENT_QUOTES, 'UTF-8') . '" '
     . 'class="js-bill-print" '

@@ -20,6 +20,7 @@ else
   setcookie('errors', '2', time() + 60*24*30*12, '/');
   header('Location: index.php'); exit(); 
 }
+header('X-Accel-Buffering: no');
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "https://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="https://www.w3.org/1999/xhtml" xml:lang="ru" lang="ru">
@@ -38,7 +39,24 @@ else
 <body>
 <?php
 # шапка
+$vooviLoadingVisible = true;
+$vooviLoadingTitle = 'Загружаем таблицу';
 include 'header.php';
+?>
+<script type="text/javascript">
+    window.addEventListener('load', function() {
+        window.setTimeout(function() {
+            if (window.vooviHideSpinner) {
+                window.vooviHideSpinner();
+            }
+        }, 120);
+    });
+</script>
+<?php
+if (function_exists('ob_flush')) {
+    @ob_flush();
+}
+@flush();
 ?>
 
 <div class="container" style="margin-top: 60px;">
@@ -521,6 +539,12 @@ echo '
     </div>
 </div>
 <script type="text/javascript">
+    function showTohaSpinner(title) {
+        if (window.vooviShowSpinner) {
+            window.vooviShowSpinner(title || 'Загружаем таблицу');
+        }
+    }
+
     function runTohaTopSearch() {
         var searchValue = $.trim($('#texts').val());
         var currentParams = window.location.search ? window.location.search.substring(1).split('&') : [];
@@ -537,6 +561,7 @@ echo '
         if (searchValue !== '') {
             nextParams.push('inn=' + encodeURIComponent(searchValue));
         }
+        showTohaSpinner('Ищем счета');
         window.location.href = window.location.pathname + (nextParams.length ? '?' + nextParams.join('&') : '');
     }
 
@@ -554,6 +579,9 @@ echo '
                 runTohaTopSearch();
             }
         });
+        $('.toha-action-form').off('submit.tohaSpinner').on('submit.tohaSpinner', function() {
+            showTohaSpinner('Применяем изменения');
+        });
         setTimeout(syncTohaTableOffset, 250);
     });
 
@@ -565,13 +593,30 @@ echo '
 <div id="status" class="toha-status-line"></div>
 <?php 
 
+$tohaSearchValue = isset($_GET['inn']) ? trim($_GET['inn']) : '';
+$tohaSearchWhere = "";
 if(isset($_GET['groupi'])){
 if($_GET['groupi']==0){
 $groupi="";
 }else{
-$groupi="gr != '$_GET[groupi]'";
+$groupi="schet.gr != '".mysql_real_escape_string($_GET['groupi'])."'";
 }}else{
-$groupi="inn != '$_GET[inn]'";
+$groupi=$tohaSearchValue === "" ? "schet.inn != ''" : "1=1";
+}
+if($tohaSearchValue !== ""){
+    $tohaSearchEscaped = mysql_real_escape_string($tohaSearchValue);
+    $tohaSearchCompact = mysql_real_escape_string(preg_replace('/\s+/', '', $tohaSearchValue));
+    $tohaSearchWhere = "AND (
+        schet.inn LIKE '%".$tohaSearchEscaped."%'
+        OR schet.name LIKE '%".$tohaSearchEscaped."%'
+        OR schet.ns LIKE '%".$tohaSearchEscaped."%'
+        OR schet.nomerschet LIKE '%".$tohaSearchEscaped."%'
+        OR schet.nomerschetks LIKE '%".$tohaSearchEscaped."%'
+        OR schet.ogrn LIKE '%".$tohaSearchEscaped."%'
+        OR schet.kpp LIKE '%".$tohaSearchEscaped."%'
+        OR schet.rand LIKE '%".$tohaSearchEscaped."%'
+        OR CONCAT(schet.god, schet.kto, schet.otdel, schet.kolichschet) LIKE '%".$tohaSearchCompact."%'
+    )";
 }
 if(isset($_GET['akt'])){
 $getakt=" AND schet.akt = '$_GET[akt]'";
@@ -719,6 +764,14 @@ if(isset($_GET['noprice'])){
 $noprice="AND noprice = '$_GET[noprice]'";
 }
 
+$tohaAccessJoin = "INNER JOIN produkti toha_produkti ON toha_produkti.id = schet.produkt";
+$tohaAccessWhere = "";
+if($userdata['inogrn'] != 89097565645){
+    $tohaAccessWhere = "AND toha_produkti.parent = '".mysql_real_escape_string($userdata['inogrn'])."'";
+}else{
+    $tohaAccessJoin .= " INNER JOIN users_access toha_access ON toha_access.uslugi = toha_produkti.parent AND toha_access.users = '".mysql_real_escape_string($userdata['users_id'])."'";
+}
+
 ?>
 <div class="toha-table-shell">
 <table class="table tablehover rowclick toha-schet-table" id="rowclick2">
@@ -750,40 +803,26 @@ $noprice="AND noprice = '$_GET[noprice]'";
 <?php $iz = 1;
 $query = mysql_query("SELECT DISTINCT 
 
-schet.ns,schet.status,kolichschet,d,m,y,nomerschet,otl3,nomerschetks,ogrn,prodlen,generac,name,lico,doljenop,rand,otdel,filial,god,nomerdog,schet.data,produkt,price,schet.kto,inn,kpp,idkli,goroddd,akt_date,otk,cher,ust_sert,krossprod,
+schet.ns,schet.status,kolichschet,d,m,y,nomerschet,otl3,nomerschetks,ogrn,prodlen,generac,schet.name,lico,doljenop,rand,otdel,filial,god,nomerdog,schet.data,produkt,price,schet.kto,inn,kpp,idkli,goroddd,akt_date,otk,cher,ust_sert,krossprod,
 prodplus,incoming,postprod,koment,oplachen,
-oplachenks,priceks,doljen,gotov,akt,url,groupi,install,gr,agent,data_napom,b.data
+oplachenks,priceks,doljen,gotov,akt,url,groupi,install,gr,agent,data_napom,b.data,toha_produkti.parent AS produkt_parent
 
 FROM schet 
-LEFT JOIN (
-    SELECT c.*
-    FROM schet_status c
-    INNER JOIN (
-        SELECT schet_status.schet, MAX(id) AS max_id
-        FROM schet_status
-        GROUP BY schet_status.schet
-    ) d ON c.schet = d.schet AND c.id = d.max_id
-) b ON schet.rand = b.schet
+$tohaAccessJoin
+LEFT JOIN schet_status b
+    ON b.id = (
+        SELECT MAX(ss.id)
+        FROM schet_status ss
+        WHERE ss.schet = schet.rand
+    )
 
-WHERE del = '0' AND $groupi $getakt $turbo $gotov $status $goroddd $akt_date $gen_date $postavka $generac $oplachenks $doljenop $oplachen $neoplachen $doljen $otk $cher $ust_sert $krossprod $prodplus $incoming $postprod $moy $y $m $d ORDER BY STR_TO_DATE(b.data, '%d.%m.%Y; %H:%i'), CAST(CONCAT(y, '-', m, '-', d) AS DATE) asc ");
+WHERE schet.del = '0' AND $groupi $tohaSearchWhere $getakt $turbo $gotov $status $goroddd $akt_date $gen_date $postavka $generac $oplachenks $doljenop $oplachen $neoplachen $doljen $otk $cher $ust_sert $krossprod $prodplus $incoming $postprod $moy $y $m $d $tohaAccessWhere ORDER BY STR_TO_DATE(b.data, '%d.%m.%Y; %H:%i'), CAST(CONCAT(y, '-', m, '-', d) AS DATE) asc ");
 
 while($row = mysql_fetch_array($query)) {
 //    echo "<script>console.log('Row:', " . json_encode($row) . ");</script>";
 
-		$udosrpod = "SELECT * FROM produkti WHERE id =".$row['produkt'];
-	$udosresultrpod = mysql_query($udosrpod);
-	$udospersonrpod = mysql_fetch_array($udosresultrpod);
-	
-if($userdata['inogrn'] != 89097565645){
-	if($udospersonrpod['parent'] == $userdata['inogrn']) {
-		include 'inctoha.php'; 
-	}
-}else{
-	$udos = mysql_query("SELECT * FROM users_access WHERE users = '".$userdata['users_id']."' AND uslugi = '".$udospersonrpod['parent']."'");
-	while($udostup = mysql_fetch_array($udos)) {
-		include 'inctoha.php'; 
-	}
-}
+    $udospersonrpod = array('parent' => $row['produkt_parent']);
+    include 'inctoha.php';
 	 
 
 }

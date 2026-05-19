@@ -32,7 +32,7 @@ border: 1px solid #545454;
 <?php } ?>
 <div id="details">
 </div>
-<form  action="<?php $_SERVER['PHP_SELF']?>" method="post" >
+<form class="toha-action-form" action="<?php $_SERVER['PHP_SELF']?>" method="post" >
 <?php if (empty($render_toha_search_in_top_nav)) { ?>
 <table class="table rowclick" id="rowclick2" <?php
 if (isset($_GET['inn'])){

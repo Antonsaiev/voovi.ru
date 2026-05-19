@@ -18,10 +18,16 @@ if (!defined('VOOVI_MAIN_URL')) {
     define('VOOVI_MAIN_URL', (getenv('VOOVI_MAIN_SCHEME') ?: 'https').'://'.VOOVI_MAIN_HOST);
 }
 if (!defined('VOOVI_DOC_HOST')) {
-    define('VOOVI_DOC_HOST', getenv('VOOVI_DOC_HOST') ?: 's.voovi.ru');
+    define('VOOVI_DOC_HOST', getenv('VOOVI_DOC_HOST') ?: 'analitic.voovi.ru');
 }
 if (!defined('VOOVI_DOC_URL')) {
     define('VOOVI_DOC_URL', (getenv('VOOVI_DOC_SCHEME') ?: 'https').'://'.VOOVI_DOC_HOST);
+}
+if (!defined('VOOVI_ANALITIC_HOST')) {
+    define('VOOVI_ANALITIC_HOST', getenv('VOOVI_ANALITIC_HOST') ?: 'analitic.voovi.ru');
+}
+if (!defined('VOOVI_ANALITIC_URL')) {
+    define('VOOVI_ANALITIC_URL', (getenv('VOOVI_ANALITIC_SCHEME') ?: 'https').'://'.VOOVI_ANALITIC_HOST);
 }
 if (!defined('VOOVI_COOKIE_DOMAIN')) {
     $vooviCookieDomain = getenv('VOOVI_COOKIE_DOMAIN');

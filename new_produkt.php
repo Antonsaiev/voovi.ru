@@ -22,6 +22,84 @@ else
 }
 $showProductSite = false;
 $showProductTel = false;
+$productAlert = '';
+$productError = '';
+
+function product_h($value)
+{
+    return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
+}
+
+function product_icon_url($value)
+{
+    $value = trim((string)$value);
+    if ($value === '' || $value === '0' || $value === '1') {
+        return '/img/product_icons_20x20.png';
+    }
+    if (preg_match('/^url\((["\']?)(.*?)\1\)$/', $value, $matches)) {
+        $value = trim($matches[2]);
+    }
+    if ($value === '') {
+        return '/img/product_icons_20x20.png';
+    }
+    if ($value[0] !== '/') {
+        $value = '/'.ltrim($value, '/');
+    }
+    if (strpos($value, '/img/') !== 0) {
+        return '/img/product_icons_20x20.png';
+    }
+
+    return $value;
+}
+
+function product_icon_is_sprite($url)
+{
+    return $url === '/img/product_icons_20x20.png';
+}
+
+function product_save_uploaded_icon($productId, $fieldName, &$error)
+{
+    if (!isset($_FILES[$fieldName]) || $_FILES[$fieldName]['error'] == UPLOAD_ERR_NO_FILE) {
+        return '';
+    }
+    if ($_FILES[$fieldName]['error'] != UPLOAD_ERR_OK) {
+        $error = 'Не удалось загрузить иконку.';
+        return false;
+    }
+    if ($_FILES[$fieldName]['size'] > 1024 * 1024) {
+        $error = 'Иконка должна быть не больше 1 МБ.';
+        return false;
+    }
+
+    $extension = strtolower(pathinfo($_FILES[$fieldName]['name'], PATHINFO_EXTENSION));
+    $allowedExtensions = array('png', 'jpg', 'jpeg', 'gif');
+    if (!in_array($extension, $allowedExtensions)) {
+        $error = 'Можно загрузить только PNG, JPG или GIF.';
+        return false;
+    }
+
+    $imageInfo = @getimagesize($_FILES[$fieldName]['tmp_name']);
+    $allowedTypes = array(IMAGETYPE_PNG, IMAGETYPE_JPEG, IMAGETYPE_GIF);
+    if (!$imageInfo || !in_array($imageInfo[2], $allowedTypes)) {
+        $error = 'Файл не похож на корректную картинку.';
+        return false;
+    }
+
+    $uploadDir = __DIR__.'/img/product-icons';
+    if (!is_dir($uploadDir) && !mkdir($uploadDir, 0755, true)) {
+        $error = 'Не удалось создать папку для иконок.';
+        return false;
+    }
+
+    $fileName = 'product-'.intval($productId).'-'.date('YmdHis').'-'.substr(md5(uniqid('', true)), 0, 8).'.'.$extension;
+    $target = $uploadDir.'/'.$fileName;
+    if (!move_uploaded_file($_FILES[$fieldName]['tmp_name'], $target)) {
+        $error = 'Не удалось сохранить иконку.';
+        return false;
+    }
+
+    return '/img/product-icons/'.$fileName;
+}
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="ru" lang="ru">
@@ -98,10 +176,10 @@ $showProductTel = false;
 
         .product-create-grid {
             display: grid;
-            grid-template-columns: minmax(320px, 1fr) 132px 140px;
+            grid-template-columns: minmax(280px, 1fr) minmax(190px, 240px) 132px 140px;
             gap: 12px;
             align-items: end;
-            max-width: 840px;
+            max-width: 1040px;
         }
 
         .product-create-description {
@@ -141,7 +219,7 @@ $showProductTel = false;
 
         .product-list-head {
             display: grid;
-            grid-template-columns: minmax(320px, 1fr) 120px 220px;
+            grid-template-columns: 54px minmax(260px, 1fr) 100px minmax(260px, 0.75fr) 220px;
             gap: 14px;
             align-items: center;
             padding: 11px 16px;
@@ -164,7 +242,7 @@ $showProductTel = false;
 
         .product-card-main {
             display: grid;
-            grid-template-columns: minmax(320px, 1fr) 120px 220px;
+            grid-template-columns: 54px minmax(260px, 1fr) 100px minmax(260px, 0.75fr) 220px;
             gap: 14px;
             align-items: center;
             padding: 15px 16px;
@@ -173,17 +251,17 @@ $showProductTel = false;
 
         .product-list.has-site .product-list-head,
         .product-list.has-site .product-card-main {
-            grid-template-columns: minmax(320px, 1fr) minmax(220px, 0.7fr) 120px 220px;
+            grid-template-columns: 54px minmax(240px, 1fr) minmax(200px, 0.65fr) 100px minmax(240px, 0.75fr) 220px;
         }
 
         .product-list.has-tel .product-list-head,
         .product-list.has-tel .product-card-main {
-            grid-template-columns: minmax(320px, 1fr) 120px 80px 220px;
+            grid-template-columns: 54px minmax(240px, 1fr) 100px 80px minmax(240px, 0.75fr) 220px;
         }
 
         .product-list.has-site.has-tel .product-list-head,
         .product-list.has-site.has-tel .product-card-main {
-            grid-template-columns: minmax(320px, 1fr) minmax(220px, 0.7fr) 120px 80px 220px;
+            grid-template-columns: 54px minmax(220px, 1fr) minmax(180px, 0.65fr) 100px 80px minmax(220px, 0.75fr) 220px;
         }
 
         .product-card-main:hover {
@@ -196,6 +274,42 @@ $showProductTel = false;
             font-weight: 700;
             line-height: 1.35;
             word-break: break-word;
+        }
+
+        .product-icon-preview {
+            display: inline-block;
+            width: 38px;
+            height: 38px;
+            border: 1px solid #dbe2ea;
+            border-radius: 8px;
+            background-color: #fff;
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: contain;
+            vertical-align: middle;
+        }
+
+        .product-icon-preview.is-sprite {
+            background-size: auto;
+        }
+
+        .product-icon-upload {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 0;
+        }
+
+        .product-icon-input {
+            height: auto;
+            min-height: 34px;
+            padding: 6px 8px;
+            font-size: 13px;
+        }
+
+        .product-icon-upload .btn {
+            flex: 0 0 auto;
+            margin: 0;
         }
 
         .product-site {
@@ -300,8 +414,12 @@ $showProductTel = false;
             }
 
             .product-card-main {
-                grid-template-columns: 1fr 1fr;
+                grid-template-columns: 54px 1fr;
                 align-items: start;
+            }
+
+            .product-icon-upload {
+                flex-wrap: wrap;
             }
 
             .product-actions {
@@ -350,19 +468,50 @@ include 'header.php';
 
 
 <?php
+if(isset($_POST['upload_icon'])){
+    $productId = isset($_POST['product_id']) ? intval($_POST['product_id']) : 0;
+    if ($productId > 0) {
+        $iconPath = product_save_uploaded_icon($productId, 'product_icon', $productError);
+        if ($iconPath !== false && $iconPath !== '') {
+            $iconValue = mysql_real_escape_string('url('.$iconPath.')');
+            mysql_query("UPDATE `produkti` SET `icon`='".$iconValue."' WHERE id='".$productId."' AND parent='".intval($_GET['parent'])."'") or die(mysql_error($link));
+            $productAlert = 'Иконка продукта обновлена.';
+        } elseif ($iconPath === '') {
+            $productError = 'Выберите файл иконки.';
+        }
+    }
+}
+
 if(isset($_POST['submit'])){
-$u = "INSERT INTO `produkti` (`name`,`value`,`parent`,`sites`) VALUES ('$_POST[name]','$_POST[value]','$_GET[parent]','$_POST[sites]')";
+$productName = mysql_real_escape_string($_POST['name']);
+$productValue = mysql_real_escape_string($_POST['value']);
+$productSites = mysql_real_escape_string($_POST['sites']);
+$u = "INSERT INTO `produkti` (`name`,`value`,`parent`,`sites`) VALUES ('".$productName."','".$productValue."','".intval($_GET['parent'])."','".$productSites."')";
 $aktivn = "INSERT INTO `aktivn` (`data`,`deistvie`,`users`) VALUES ('". date("d.t.Y; H:i:s") ."','Новый продукт','".$userdata['users_id']."')";
 mysql_query($aktivn) or die(mysql_error($link));
 mysql_query($u) or die(mysql_error($link));
-echo '<div class="alert alert-success">
-  <strong>Удачно!</strong> Новый продукт успешно добавлена.
-</div>';
+$newProductId = mysql_insert_id();
+$iconPath = product_save_uploaded_icon($newProductId, 'product_icon', $productError);
+if ($iconPath !== false && $iconPath !== '') {
+    $iconValue = mysql_real_escape_string('url('.$iconPath.')');
+    mysql_query("UPDATE `produkti` SET `icon`='".$iconValue."' WHERE id='".$newProductId."'") or die(mysql_error($link));
+}
+$productAlert = 'Новый продукт успешно добавлен.';
 $body=file_get_contents("http://sms.ru/sms/send?api_id=513439c3-5ece-a954-e5b2-31b36fe77cbf&to=79097565645&text=".urlencode(iconv("utf-8","utf-8","Новый продукт: Манаджар: ".$userdata['users_id']."")));}
 ?>
+<?php if ($productAlert !== '') { ?>
+<div class="alert alert-success">
+  <strong>Удачно!</strong> <?php echo product_h($productAlert); ?>
+</div>
+<?php } ?>
+<?php if ($productError !== '') { ?>
+<div class="alert alert-danger">
+  <strong>Ошибка!</strong> <?php echo product_h($productError); ?>
+</div>
+<?php } ?>
 <div class="product-panel">
 <div class="product-panel-title">Добавить продукт</div>
-<form method="post">
+<form method="post" enctype="multipart/form-data">
 <div class="product-create-grid">
 <div>
 <label>Название продукта</label>
@@ -376,6 +525,10 @@ $body=file_get_contents("http://sms.ru/sms/send?api_id=513439c3-5ece-a954-e5b2-3
 <?php else : ?>
 <input type="hidden" name="sites" value="">
 <?php endif; ?>
+<div>
+<label>Иконка</label>
+<input class="form-control product-icon-input" type="file" name="product_icon" accept="image/png,image/jpeg,image/gif">
+</div>
 <button type="button" class="btn btn-default product-description-toggle js-product-description-toggle" data-target="#product-create-description">Описание</button>
 <button type="submit" name="submit" id="submitSuggestion" class="btn btn-success product-add-button"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span>Добавить</button>
 </div>
@@ -390,6 +543,7 @@ $body=file_get_contents("http://sms.ru/sms/send?api_id=513439c3-5ece-a954-e5b2-3
 
 <div class="product-list tabli<?php if ($showProductSite) { echo ' has-site'; } ?><?php if ($showProductTel) { echo ' has-tel'; } ?>">
     <div class="product-list-head">
+        <div>Иконка</div>
         <div>Продукт</div>
         <?php if ($showProductSite) : ?>
             <div>Сайт</div>
@@ -398,6 +552,7 @@ $body=file_get_contents("http://sms.ru/sms/send?api_id=513439c3-5ece-a954-e5b2-3
         <?php if ($showProductTel) : ?>
             <div>Тел.</div>
         <?php endif; ?>
+        <div>Загрузка</div>
         <div></div>
     </div>
 					<?php
@@ -414,13 +569,19 @@ $body=file_get_contents("http://sms.ru/sms/send?api_id=513439c3-5ece-a954-e5b2-3
 						if($page > $total) $page = $total;
 						$start = $page * $num - $num;		
 					
-						$query = mysql_query("SELECT * from produkti WHERE parent = '$_GET[parent]' AND del = '0' ORDER BY name LIMIT $start, $num");	
-							while($row = mysql_fetch_array($query)) {
-								echo '<div class="product-card"><div class="product-card-main"><div>';
-								echo '<div class="product-name">'.$row['name'].'</div>';
-								echo '</div>';
-                                if ($showProductSite) {
-								echo '<div><a class="product-site" href="http://'.$row['sites'].'">';
+							$query = mysql_query("SELECT * from produkti WHERE parent = '$_GET[parent]' AND del = '0' ORDER BY name LIMIT $start, $num");
+								while($row = mysql_fetch_array($query)) {
+                                    $iconValue = isset($row['icon']) && $row['icon'] !== '' ? $row['icon'] : $row['tel'];
+                                    $iconUrl = product_icon_url($iconValue);
+                                    $iconIsSprite = product_icon_is_sprite($iconUrl);
+                                    $iconPosition = $iconIsSprite ? '7px -300px' : 'center';
+									echo '<div class="product-card"><div class="product-card-main">';
+                                    echo '<div><span class="product-icon-preview'; if ($iconIsSprite) { echo ' is-sprite'; } echo '" style="background-image: url(\''.product_h($iconUrl).'\'); background-position: '.product_h($iconPosition).';"></span></div>';
+                                    echo '<div>';
+									echo '<div class="product-name">'.$row['name'].'</div>';
+									echo '</div>';
+	                                if ($showProductSite) {
+									echo '<div><a class="product-site" href="http://'.$row['sites'].'">';
 								echo $row['sites'];
 								echo '</a></div>';
                                 }
@@ -430,11 +591,16 @@ $body=file_get_contents("http://sms.ru/sms/send?api_id=513439c3-5ece-a954-e5b2-3
 								echo '</span></div>';
                                 if ($showProductTel) {
 								echo '<div class="product-tel-cell';if ($row['tel'] == 1) {echo ' highlight_success';}echo'">';
-								echo '<input type="checkbox" value="'.$row['id'].'"'; if ($row['tel'] == 1) { echo 'checked';}echo'>';
-								echo '</div>';
-                                }
-								echo '<div class="product-actions">';
-								echo '<a class="btn btn-primary btn-sm" href="new_tarif.php?parent='.$row['id'].'">Тарифы</a>';
+									echo '<input type="checkbox" value="'.$row['id'].'"'; if ($row['tel'] == 1) { echo 'checked';}echo'>';
+									echo '</div>';
+	                                }
+                                    echo '<div><form class="product-icon-upload" method="post" enctype="multipart/form-data">';
+                                    echo '<input type="hidden" name="product_id" value="'.intval($row['id']).'">';
+                                    echo '<input class="form-control product-icon-input" type="file" name="product_icon" accept="image/png,image/jpeg,image/gif">';
+                                    echo '<button type="submit" name="upload_icon" class="btn btn-default btn-sm" title="Загрузить иконку"><span class="glyphicon glyphicon-upload" aria-hidden="true"></span></button>';
+                                    echo '</form></div>';
+									echo '<div class="product-actions">';
+									echo '<a class="btn btn-primary btn-sm" href="new_tarif.php?parent='.$row['id'].'">Тарифы</a>';
 								echo '<button type="button" onclick="send_old'.$row['id'].'()" class="btn btn-default btn-sm" value="Отправить в архив"><span class="glyphicon glyphicon-trash" aria-hidden="true"></span>В архив</button>';
 								echo '<div id="issetdiv'.$row['id'].'" class="contai product-archive-popup" style="display:none;">Вы точно хотите отправить в архив?<br>
 								<a href="old_tarif.php?id='.$row['id'].'&old=1&tip=p" value="" class="btn btn-default  btn-xs">Да</a>
