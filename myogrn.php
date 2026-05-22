@@ -329,7 +329,41 @@ body.newschet-modern {
     overflow-x: auto;
 }
 .newschet-card #tab {
-    min-width: 620px;
+    min-width: 560px;
+    font-size: 13px;
+}
+.newschet-card #tab > tbody > tr > td,
+.newschet-card #tab > thead > tr > th {
+    padding: 5px 7px !important;
+    line-height: 1.2;
+}
+.newschet-card #tab > thead > tr > th {
+    font-size: 11px;
+}
+.newschet-card #tab .newschet-tarif-check {
+    width: 28px;
+    text-align: center;
+}
+.newschet-card #tab .newschet-tarif-price,
+.newschet-card #tab .newschet-tarif-sum {
+    width: 84px;
+}
+.newschet-card #tab .newschet-tarif-qty {
+    width: 62px;
+}
+.newschet-card #tab input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+}
+.newschet-card #tab .newschet-qty-input {
+    width: 56px !important;
+    min-height: 28px;
+    height: 28px;
+    padding: 2px 5px;
+    font-size: 13px;
+}
+.newschet-card #tab .newschet-total-sum {
+    font-size: 14px;
 }
 .newschet-card #oldns {
     float: none !important;
