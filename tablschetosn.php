@@ -752,22 +752,32 @@ $m=date('m');
     user-select: none;
 }
 .schet-table {
-    min-width: 1650px;
+    width: max-content !important;
+    min-width: max-content !important;
+    max-width: none;
     border-collapse: collapse;
+    table-layout: auto;
 }
 .schet-table th,
 .schet-table td {
+    width: auto !important;
     padding: 3px 5px;
     font-size: 11px;
     line-height: 1.15;
     white-space: nowrap;
     vertical-align: middle;
 }
+.schet-table th[style*="width"],
+.schet-table td[style*="width"] {
+    width: auto !important;
+    min-width: 0;
+    max-width: none;
+}
 .schet-table td[style*="width: 30%"] {
-    width: 240px !important;
-    min-width: 220px;
-    max-width: 300px;
-    white-space: normal;
+    width: auto !important;
+    min-width: 0;
+    max-width: none;
+    white-space: nowrap;
 }
 .schet-table p {
     margin: 1px 0;
@@ -783,7 +793,7 @@ $m=date('m');
 }
 </style>
 <div class="schet-table-scroll">
-<table style="width:100%;"id="myTable1" class="tablesorter schet-table">
+<table id="myTable1" class="tablesorter schet-table">
 <thead style="
     background: white;
 ">
