@@ -28,6 +28,16 @@ else
 //        }*/
 //}
 ?>
+<style>
+.period-table-scroll {
+    cursor: grab;
+    -webkit-overflow-scrolling: touch;
+}
+.period-table-scroll.is-dragging {
+    cursor: grabbing;
+    user-select: none;
+}
+</style>
 <div class="by amt" style="float: left;
  width: 100%;
  padding-left: 0px;
@@ -176,7 +186,7 @@ for ($m=1; $m <= $colmonf; $m++) { ?>
 		 
 		  ?>
         <?}?>
-		<div id="periodtabl<?echo $arYears[$i];?>" style="display:none;float: left;width: 100%;">
+		<div class="period-table-scroll" id="periodtabl<?echo $arYears[$i];?>" style="display:none;float: left;clear: both;width: 100%;min-width: 100%;grid-column: 1 / -1;overflow-x: auto;box-sizing: border-box;">
 		</div>
 		<script>
 		/*var year=<?echo $yearc;?>;
@@ -216,6 +226,9 @@ for ($m=1; $m <= $colmonf; $m++) { ?>
 				data: "id=<?echo $_GET['id'];?>&orgn=<?echo $_GET['orgn'];?>&y=<?echo $arYears[$i];?>",
 				success: function(html){
 					 $("#periodtabl<?echo $arYears[$i];?>").html(html);
+                     if (window.initPeriodTableDragScroll) {
+                         window.initPeriodTableDragScroll();
+                     }
 					 document.getElementById('modal-shadowkube').style.display="none";	
                      document.getElementById('kube').style.display="none";
 				}
@@ -232,3 +245,76 @@ for ($m=1; $m <= $colmonf; $m++) { ?>
 ?>
 
 </div>
+<script>
+(function() {
+    if (!window.initPeriodTableDragScroll) {
+        window.initPeriodTableDragScroll = function() {
+            function isInteractive(node) {
+                while (node && node !== document && node.nodeType === 1) {
+                    var tag = node.tagName ? node.tagName.toLowerCase() : '';
+                    if (tag === 'a' || tag === 'input' || tag === 'textarea' || tag === 'select' || tag === 'button' || tag === 'label') {
+                        return true;
+                    }
+                    node = node.parentNode;
+                }
+                return false;
+            }
+
+            var scrolls = document.querySelectorAll('.period-table-scroll');
+            for (var i = 0; i < scrolls.length; i++) {
+                (function(scroll) {
+                    if (scroll.getAttribute('data-drag-scroll-ready') === '1') {
+                        return;
+                    }
+                    scroll.setAttribute('data-drag-scroll-ready', '1');
+
+                    var isDown = false;
+                    var wasDragged = false;
+                    var startX = 0;
+                    var scrollLeft = 0;
+
+                    scroll.addEventListener('mousedown', function(e) {
+                        if (e.button !== 0 || isInteractive(e.target)) {
+                            return;
+                        }
+                        isDown = true;
+                        wasDragged = false;
+                        startX = e.pageX;
+                        scrollLeft = scroll.scrollLeft;
+                        scroll.className += ' is-dragging';
+                    });
+
+                    function stopDrag() {
+                        isDown = false;
+                        scroll.className = scroll.className.replace(' is-dragging', '');
+                    }
+
+                    scroll.addEventListener('mouseleave', stopDrag);
+                    scroll.addEventListener('mouseup', stopDrag);
+                    scroll.addEventListener('mousemove', function(e) {
+                        if (!isDown) {
+                            return;
+                        }
+                        var walk = e.pageX - startX;
+                        if (Math.abs(walk) > 3) {
+                            wasDragged = true;
+                            e.preventDefault();
+                            scroll.scrollLeft = scrollLeft - walk;
+                        }
+                    });
+                    scroll.addEventListener('click', function(e) {
+                        if (!wasDragged) {
+                            return;
+                        }
+                        e.preventDefault();
+                        e.stopPropagation();
+                        wasDragged = false;
+                    }, true);
+                })(scrolls[i]);
+            }
+        };
+    }
+
+    window.initPeriodTableDragScroll();
+})();
+</script>

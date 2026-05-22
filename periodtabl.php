@@ -40,10 +40,11 @@ width: 100%;
         <? echo "Таблица движения счетов за " . $_GET['y'] . " год"; ?>
     </div>
 </div>
-<div style="
+<div class="period-table-scroll" style="
 width: 100%;
 margin-top: 20px;
 margin-bottom: 20px;
+overflow-x: auto;
 ">
     <?
     $m = date(F);
@@ -58,8 +59,10 @@ margin-bottom: 20px;
     if ($_GET['y'] != date('Y')) {
         $colmonf = 12;
     } ?>
-    <? if ($_GET['orgn'] != "12") {
-        $argin = "margin:0 auto;";
+    <?
+    $argin = "width:100%;min-width:100%;border-collapse:collapse;";
+    if ($_GET['orgn'] != "12") {
+        $argin .= "margin:0 auto;";
     } ?>
     <table style="<? echo $argin; ?>">
         <thead>

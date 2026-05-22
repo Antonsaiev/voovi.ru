@@ -1,5 +1,126 @@
 <?
 include 'conf.php';
+if (!function_exists('schet_tip_text')) {
+    function schet_tip_from_tipprod($row) {
+        $tip = isset($row['tipprod']) ? trim($row['tipprod']) : '';
+
+        if ($tip == '' || $tip == 'Нет') {
+            return '';
+        }
+        if ($tip == 'Сер/Пос') {
+            return 'Сертификат';
+        }
+
+        return $tip;
+    }
+
+    function schet_tip_fallback_text($row) {
+        if (isset($_GET['tip']) && $_GET['tip'] == 'postavka') {
+            return 'Поставка';
+        }
+        if (isset($row['status']) && $row['status'] == '5') {
+            return 'Поставка';
+        }
+        if (isset($row['postprod']) && $row['postprod'] == '1') {
+            return 'Поставка';
+        }
+        if (isset($row['generac']) && $row['generac'] == '546321564') {
+            return 'Поставка';
+        }
+        if (isset($row['ust_sert']) && $row['ust_sert'] == '1') {
+            return 'Сертификат';
+        }
+
+        return '';
+    }
+
+    function schet_tip_load($where) {
+        static $cache = array();
+        if (isset($cache[$where])) {
+            return $cache[$where];
+        }
+
+        $q = mysql_query("SELECT ns,tipprod,status,dataprod,datasert,prodlenks,prodlens,postprod,ust_sert,shetold,generac,produkt FROM schet WHERE " . $where . " LIMIT 1");
+        if ($q) {
+            $cache[$where] = mysql_fetch_assoc($q);
+            return $cache[$where];
+        }
+        $cache[$where] = false;
+        return false;
+    }
+
+    function schet_tip_load_old($shetold, $produkt) {
+        static $cache = array();
+        if ($shetold == '') {
+            return false;
+        }
+
+        $cacheKey = $shetold . '|' . $produkt;
+        if (isset($cache[$cacheKey])) {
+            return $cache[$cacheKey];
+        }
+
+        $shetold = mysql_real_escape_string($shetold);
+        $where = "ns='" . $shetold . "'";
+        if ($produkt != '') {
+            $where .= " AND produkt='" . mysql_real_escape_string($produkt) . "'";
+        }
+
+        $old = schet_tip_load($where . " AND tipprod!='' AND tipprod!='Нет'");
+        if ($old) {
+            $cache[$cacheKey] = $old;
+            return $cache[$cacheKey];
+        }
+
+        $where = "ns LIKE '" . $shetold . "%'";
+        if ($produkt != '') {
+            $where .= " AND produkt='" . mysql_real_escape_string($produkt) . "'";
+        }
+
+        $old = schet_tip_load($where . " AND tipprod!='' AND tipprod!='Нет'");
+        if ($old) {
+            $cache[$cacheKey] = $old;
+            return $cache[$cacheKey];
+        }
+
+        $cache[$cacheKey] = schet_tip_load("ns LIKE '" . $shetold . "%' AND tipprod!='' AND tipprod!='Нет'");
+        return $cache[$cacheKey];
+    }
+
+    function schet_tip_text($row) {
+        $text = schet_tip_from_tipprod($row);
+        if ($text != '') {
+            return $text;
+        }
+
+        $full = false;
+        if (!empty($row['id'])) {
+            $full = schet_tip_load("id='" . mysql_real_escape_string($row['id']) . "'");
+        }
+        if (!$full && !empty($row['rand'])) {
+            $full = schet_tip_load("rand='" . mysql_real_escape_string($row['rand']) . "'");
+        }
+        if ($full) {
+            $row = array_merge($row, $full);
+            $text = schet_tip_from_tipprod($row);
+            if ($text != '') {
+                return $text;
+            }
+        }
+
+        if (!empty($row['shetold'])) {
+            $old = schet_tip_load_old($row['shetold'], isset($row['produkt']) ? $row['produkt'] : '');
+            if ($old) {
+                $text = schet_tip_from_tipprod($old);
+                if ($text != '') {
+                    return $text;
+                }
+            }
+        }
+
+        return schet_tip_fallback_text($row);
+    }
+}
 if($_GET['tip']=="prod")
 {
 	$tipsh="продления";
@@ -615,10 +736,54 @@ $m=date('m');
                 </script>
             </div>
         </div>!-->
-    <?}?>
+<?}?>
 <?}?>
 
-<table style="width:100%;"id="myTable1" class="tablesorter">
+<style>
+.schet-table-scroll {
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: visible;
+    cursor: grab;
+    -webkit-overflow-scrolling: touch;
+}
+.schet-table-scroll.is-dragging {
+    cursor: grabbing;
+    user-select: none;
+}
+.schet-table {
+    min-width: 1650px;
+    border-collapse: collapse;
+}
+.schet-table th,
+.schet-table td {
+    padding: 3px 5px;
+    font-size: 11px;
+    line-height: 1.15;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+.schet-table td[style*="width: 30%"] {
+    width: 240px !important;
+    min-width: 220px;
+    max-width: 300px;
+    white-space: normal;
+}
+.schet-table p {
+    margin: 1px 0;
+}
+.schet-table ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+.schet-table img {
+    max-width: 18px;
+    height: auto;
+}
+</style>
+<div class="schet-table-scroll">
+<table style="width:100%;"id="myTable1" class="tablesorter schet-table">
 <thead style="
     background: white;
 ">
@@ -690,7 +855,7 @@ if( $res['tipprod']!='Сер/Пос'){?>
 <td><?echo $res['kpp'];?></td>
 <td style="width: 30%;"><?echo $res['ogrn'];?></td>
 <td><?echo $res['name'];?></td>
-<td><?echo $res['tipprod'];?></td>
+<td><?echo schet_tip_text($res);?></td>
 <td><?echo $res['priceks'];?></td>
 <td><?echo $res['price'];?></td>
 <td style="width: 4%;"><?if($res['dataprod']!=''){echo $res['dataprod'];}if($res['datasert']!=''){echo '<p>';echo $res['datasert'];}echo'</p>';?></td>
@@ -1444,7 +1609,7 @@ while($res = mysql_fetch_assoc($r))  : ?>
 <td><?echo $res['kpp'];?></td>
 <td style="width: 30%;"><?echo $res['ogrn'];?></td>
 <td><?echo $res['name'];?></td>
-<td><?if( $res['tipprod']=='Сер/Пос'){echo "Сертификат";}if( $res['tipprod']!='Сер/Пос'){echo $res['tipprod'];}?></td>
+<td><?echo schet_tip_text($res);?></td>
 <td><?echo $res['price'];?></td>
 <td><?echo $res['priceks'];?></td>
 <td style="width: 4%;"> <?echo $res['prodschet'];?></td>
@@ -1771,7 +1936,7 @@ document.getElementById('datasch<?echo $ress['rand'];?>').innerHTML=dat.split('.
 <td><?echo $ress['kpp'];?></td>
 <td style="width: 30%;"><?echo $ress['ogrn'];?></td>
 <td><?echo $ress['name'];?></td>
-<td><?echo $ress['tipprod'];?></td>
+<td><?echo schet_tip_text($ress);?></td>
 <td style="background:#C1E5FB;"><?echo $ress['priceks'];?></td>
 <td style="<?echo $color;?>"><?echo $ress['price'];?></td>
     <td><?$userdatas = mysql_fetch_assoc(mysql_query("SELECT DATE_FORMAT(schet.datasert,'%d.%m.%Y') as sert,DATE_FORMAT(schet.dataprod,'%d.%m.%Y') as prod,dataprod,prodlens,prodlenks,datasert FROM schet WHERE ns = '".$ress['shetold']."' "));
@@ -2027,7 +2192,7 @@ document.getElementById('datasch<?echo $ress['rand'];?>').innerHTML=dat.split('.
 <td><?echo $ress['kpp'];?></td>
 <td style="width: 30%;"><?echo $ress['ogrn'];?></td>
 <td><?echo $ress['name'];?></td>
-<td><?echo $ress['tipprod'];?></td>
+<td><?echo schet_tip_text($ress);?></td>
 <td style="background:#C1E5FB;"><?echo $ress['priceks'];?></td>
 <td style="<?echo $color;?>"><?echo $ress['price'];?></td>
 <td ><p id="datpr<?echo $ress['rand'];?>"><?$userdatas = mysql_fetch_assoc(mysql_query("SELECT DATE_FORMAT(schet.datasert,'%Y.%m.%d') as sert,DATE_FORMAT(schet.dataprod,'%Y.%m.%d') as prod,dataprod,prodlens,prodlenks,datasert FROM schet WHERE ns = '".$ress['shetold']."' "));
@@ -2298,7 +2463,7 @@ else
 <td><?echo $reso['kpp'];?></td>
 <td style="width: 30%;"><?echo $reso['ogrn'];?></td>
 <td><?echo $reso['name'];?></td>
-<td><?echo $reso['tipprod'];?></td>
+<td><?echo schet_tip_text($reso);?></td>
 <td style="background:#FFF850;"><?echo $reso['priceks'];?></td>
 <td style="<?echo $color;?>"><?echo $reso['price'];?></td>
 <td><?echo $reso['dataprod'];?></td>
@@ -2627,7 +2792,7 @@ else
 <td><?echo $reso['kpp'];?></td>
 <td style="width: 30%;"><?echo $reso['ogrn'];?></td>
 <td><?echo $reso['name'];?></td>
-<td><?echo $reso['tipprod'];?></td>
+<td><?echo schet_tip_text($reso);?></td>
 <td style="background:#FFF850;"><?echo $reso['priceks'];?></td>
 <td style="<?echo $color;?>"><?echo $reso['price'];?></td>
 <td><?echo $reso['dataprod'];?></td>
@@ -2931,7 +3096,7 @@ while($respos = mysql_fetch_assoc($rpos))  : ?>
 <td><?echo $respos['kpp'];?></td>
 <td style="width: 30%;"><?echo $respos['ogrn'];?></td>
 <td><?echo $respos['name'];?></td>
-<td><?echo $respos['tipprod'];?></td>
+<td><?echo schet_tip_text($respos);?></td>
 <td style="background:#E9C3FB;"><?echo $respos['priceks'];?></td>
 <td style="background:#E9C3FB;"><?echo $respos['price'];?></td>
 <td><?echo $respos['dataprod'];?></td>
@@ -3166,7 +3331,7 @@ while($respos = mysql_fetch_assoc($rpos))  : ?>
 <td><?echo $respos['kpp'];?></td>
 <td style="width: 30%;"><?echo $respos['ogrn'];?></td>
 <td><?echo $respos['name'];?></td>
-<td><?echo $respos['tipprod'];?></td>
+<td><?echo schet_tip_text($respos);?></td>
 <td style="background:#E9C3FB;"><?echo $respos['priceks'];?></td>
 <td style="background:#E9C3FB;"><?echo $respos['price'];?></td>
 <td><?echo $respos['dataprod'];?></td>
@@ -3414,7 +3579,7 @@ while($resyv = mysql_fetch_assoc($ryv))  : ?>
 <td><?echo $resyv['kpp'];?></td>
 <td style="width: 30%;"><?echo $resyv['ogrn'];?></td>
 <td><?echo $resyv['name'];?></td>
-<td><?echo $resyv['tipprod'];?></td>
+<td><?echo schet_tip_text($resyv);?></td>
 <td style="background:#FFB366;"><?echo $resyv['priceks'];?></td>
 <td style="background:#FFB366;"><?echo $resyv['price'];?></td>
 <td><?echo $resyv['dataprod'];?></td>
@@ -3679,7 +3844,7 @@ while($resyv = mysql_fetch_assoc($ryv))  : ?>
 <td><?echo $resyv['kpp'];?></td>
 <td style="width: 30%;"><?echo $resyv['ogrn'];?></td>
 <td><?echo $resyv['name'];?></td>
-<td><?echo $resyv['tipprod'];?></td>
+<td><?echo schet_tip_text($resyv);?></td>
 <td style="background:#FFB366;"><?echo $resyv['priceks'];?></td>
 <td style="background:#FFB366;"><?echo $resyv['price'];?></td>
 <td><?echo $resyv['dataprod'];?></td>
@@ -3944,7 +4109,7 @@ while($resrna = mysql_fetch_assoc($rna))  : ?>
 <td><?echo $resrna['kpp'];?></td>
 <td style="width: 30%;"><?echo $resrna['ogrn'];?></td>
 <td><?echo $resrna['name'];?></td>
-<td><?echo $resrna['tipprod'];?></td>
+<td><?echo schet_tip_text($resrna);?></td>
 <td style="background:#85D6D1;"><?echo $resrna['priceks'];?></td>
 <td style="background:#85D6D1;"><?echo $resrna['price'];?></td>
 <td><?echo $resrna['dataprod'];?></td>
@@ -4209,7 +4374,7 @@ while($resrna = mysql_fetch_assoc($rna))  : ?>
 <td><?echo $resrna['kpp'];?></td>
 <td style="width: 30%;"><?echo $resrna['ogrn'];?></td>
 <td><?echo $resrna['name'];?></td>
-<td><?echo $resrna['tipprod'];?></td>
+<td><?echo schet_tip_text($resrna);?></td>
 <td style="background:#85D6D1;"><?echo $resrna['priceks'];?></td>
 <td style="background:#85D6D1;"><?echo $resrna['price'];?></td>
 <td><?echo $resrna['dataprod'];?></td>
@@ -4463,7 +4628,7 @@ while($resatk = mysql_fetch_assoc($ratk))  : ?>
 <td><?echo $resatk['kpp'];?></td>
 <td style="width: 30%;"><?echo $resatk['ogrn'];?></td>
 <td><?echo $resatk['name'];?></td>
-<td><?echo $resatk['tipprod'];?></td>
+<td><?echo schet_tip_text($resatk);?></td>
 <td style="background:#85D6A7;"><?echo $resatk['priceks'];?></td>
 <td style="background:#85D6A7;"><?echo $resatk['price'];?></td>
 <td><?echo $resatk['dataprod'];?></td>
@@ -4698,7 +4863,7 @@ while($resatk = mysql_fetch_assoc($ratk))  : ?>
 <td><?echo $resatk['kpp'];?></td>
 <td style="width: 30%;"><?echo $resatk['ogrn'];?></td>
 <td><?echo $resatk['name'];?></td>
-<td><?echo $resatk['tipprod'];?></td>
+<td><?echo schet_tip_text($resatk);?></td>
 <td style="background:#85D6A7;"><?echo $resatk['priceks'];?></td>
 <td style="background:#85D6A7;"><?echo $resatk['price'];?></td>
 <td><?echo $resatk['dataprod'];?></td>
@@ -4933,7 +5098,7 @@ while($resotk = mysql_fetch_assoc($rotk))  : ?>
 <td><?echo $resotk['kpp'];?></td>
 <td style="width: 30%;"><?echo $resotk['ogrn'];?></td>
 <td><?echo $resotk['name'];?></td>
-<td><?echo $resotk['tipprod'];?></td>
+<td><?echo schet_tip_text($resotk);?></td>
 <td style="background:#FB9C9C;"><?echo $resotk['priceks'];?></td>
 <td style="background:#FB9C9C;"><?echo round($resotk['price'], 1);?></td>
 <td><?echo $resotk['dataprod'];?></td>
@@ -5169,7 +5334,7 @@ while($resotk = mysql_fetch_assoc($rotk))  : ?>
 <td><?echo $resotk['kpp'];?></td>
 <td style="width: 30%;"><?echo $resotk['ogrn'];?></td>
 <td><?echo $resotk['name'];?></td>
-<td><?echo $resotk['tipprod'];?></td>
+<td><?echo schet_tip_text($resotk);?></td>
 <td style="background:#FB9C9C;"><?echo $resotk['priceks'];?></td>
 <td style="background:#FB9C9C;"><?echo round($resotk['price'], 1);?></td>
 <td><?echo $resotk['dataprod'];?></td>
@@ -5404,7 +5569,7 @@ while($rescher = mysql_fetch_assoc($rcher))  : ?>
 <td><?echo $rescher['kpp'];?></td>
 <td style="width: 30%;"><?echo $rescher['ogrn'];?></td>
 <td><?echo $rescher['name'];?></td>
-<td><?echo $rescher['tipprod'];?></td>
+<td><?echo schet_tip_text($rescher);?></td>
 <td style="background:#BC9B79;"><?echo $rescher['priceks'];?></td>
 <td style="background:#BC9B79;"><?echo $rescher['price'];?></td>
 <td><?echo $rescher['dataprod'];?></td>
@@ -5640,7 +5805,7 @@ while($rescher = mysql_fetch_assoc($rcher))  : ?>
 <td><?echo $rescher['kpp'];?></td>
 <td style="width: 30%;"><?echo $rescher['ogrn'];?></td>
 <td><?echo $rescher['name'];?></td>
-<td><?echo $rescher['tipprod'];?></td>
+<td><?echo schet_tip_text($rescher);?></td>
 <td style="background:#BC9B79;"><?echo $rescher['priceks'];?></td>
 <td style="background:#BC9B79;"><?echo $rescher['price'];?></td>
 <td><?echo $rescher['dataprod'];?></td>
@@ -5884,7 +6049,7 @@ while($resvoz = mysql_fetch_assoc($rvoz))  : ?>
 <td><?echo $resvoz['kpp'];?></td>
 <td style="width: 30%;"><?echo $resvoz['ogrn'];?></td>
 <td><?echo $resvoz['name'];?></td>
-<td><?echo $resvoz['tipprod'];?></td>
+<td><?echo schet_tip_text($resvoz);?></td>
 <td style="background:#E45A51;"><?echo $resvoz['priceks'];?></td>
 <td style="background:#E45A51;"><?echo $resvoz['price'];?></td>
 <td><?echo $resvoz['dataprod'];?></td>
@@ -6127,7 +6292,7 @@ while($resvoz = mysql_fetch_assoc($rvoz))  : ?>
 <td><?echo $resvoz['kpp'];?></td>
 <td style="width: 30%;"><?echo $resvoz['ogrn'];?></td>
 <td><?echo $resvoz['name'];?></td>
-<td><?echo $resvoz['tipprod'];?></td>
+<td><?echo schet_tip_text($resvoz);?></td>
 <td style="background:#E45A51;"><?echo $resvoz['priceks'];?></td>
 <td style="background:#E45A51;"><?echo $resvoz['price'];?></td>
 <td><?echo $resvoz['dataprod'];?></td>
@@ -6371,7 +6536,7 @@ while($respere = mysql_fetch_assoc($rpere))  : ?>
 <td><?echo $respere['kpp'];?></td>
 <td style="width: 30%;"><?echo $respere['ogrn'];?></td>
 <td><?echo $respere['name'];?></td>
-<td><?echo $respere['tipprod'];?></td>
+<td><?echo schet_tip_text($respere);?></td>
 <td style="background:#DCF541;"><?echo $respere['priceks'];?></td>
 <td style="background:#DCF541;"><?echo $respere['price'];?></td>
 <td><?echo $respere['dataprod'];?></td>
@@ -6615,7 +6780,7 @@ while($respere = mysql_fetch_assoc($rpere))  : ?>
 <td><?echo $respere['kpp'];?></td>
 <td style="width: 30%;"><?echo $respere['ogrn'];?></td>
 <td><?echo $respere['name'];?></td>
-<td><?echo $respere['tipprod'];?></td>
+<td><?echo schet_tip_text($respere);?></td>
 <td style="background:#DCF541;"><?echo $respere['priceks'];?></td>
 <td style="background:#DCF541;"><?echo $respere['price'];?></td>
 <td><?echo $respere['dataprod'];?></td>
@@ -7028,7 +7193,7 @@ if ($_GET['tipi']=="1") {
             <td><?echo $resschetall['kpp'];?></td>
             <td style="width: 30%;"><?echo $resschetall['ogrn'];?></td>
             <td><?echo $resschetall['name'];?></td>
-            <td><?echo $resschetall['tipprod'];?></td>
+            <td><?echo schet_tip_text($resschetall);?></td>
             <td style="<? echo $color;?>"><?echo $resschetall['priceks'];?></td>
             <td style="<? echo $color;?>"><?echo $resschetall['price'];?></td>
             <td><?echo $resschetall['dataprod'];?></td>
@@ -7443,7 +7608,7 @@ if ($_GET['tipi']=="1") {
             <td><?echo $resschetall['kpp'];?></td>
             <td style="width: 30%;"><?echo $resschetall['ogrn'];?></td>
             <td><?echo $resschetall['name'];?></td>
-            <td><?echo $resschetall['tipprod'];?></td>
+            <td><?echo schet_tip_text($resschetall);?></td>
             <td style="<? echo $color;?>"><?echo $resschetall['priceks'];?></td>
             <td style="<? echo $color;?>"><?echo $resschetall['price'];?></td>
             <?if($resschetall['shetold']!=''){?>
@@ -8150,6 +8315,7 @@ if ($_GET['tipi']=="1") {
 <?}}?>
 </tbody>
 </table>
+</div>
 
 <?
 if ($_GET['na']!='10'||$_GET['nay']!='2020')
@@ -8200,13 +8366,13 @@ else {
 }
 
 ?>
-     <div style="
+     <div class="schet-table-scroll" style="
     background: #78AFD8;
     font-size: 14pt;
     width: 100%;
     color: #626262;margin-top: 10px;
 "><?echo $_monthsList[$mons]." ".$yesrvis;?>
-         <table style="
+         <table class="schet-table" style="
     background: white;
 ">
         <thead>
@@ -8258,7 +8424,7 @@ else {
                         <td><?echo $res['kpp'];?></td>
                         <td style="width: 30%;"><?echo $res['ogrn'];?></td>
                         <td><?echo $res['name'];?></td>
-                        <td><?echo $res['tipprod'];?></td>
+                        <td><?echo schet_tip_text($res);?></td>
                         <td><?echo $res['priceks'];?></td>
                         <td><?echo $res['price'];?></td>
                         <td style="width: 4%;"><?if($res['dataprod']!=''){echo $res['dataprod'];}if($res['datasert']!=''){echo '<p>';echo $res['datasert'];}echo'</p>';?></td>
@@ -8443,7 +8609,7 @@ else {
                         <td><?echo $res['kpp'];?></td>
                         <td style="width: 30%;"><?echo $res['ogrn'];?></td>
                         <td><?echo $res['name'];?></td>
-                        <td><?echo $res['tipprod'];?></td>
+                        <td><?echo schet_tip_text($res);?></td>
                         <td><?echo $res['priceks'];?></td>
                         <td><?echo $res['price'];?></td>
                         <td style="width: 4%;"><?if($res['dataprod']!=''){echo $res['dataprod'];}if($res['datasert']!=''){echo '<p>';echo $res['datasert'];}echo'</p>';?></td>
@@ -8502,7 +8668,7 @@ else {
                         <td><?echo $res['kpp'];?></td>
                         <td style="width: 30%;"><?echo $res['ogrn'];?></td>
                         <td><?echo $res['name'];?></td>
-                        <td><?echo $res['tipprod'];?></td>
+                        <td><?echo schet_tip_text($res);?></td>
                         <td><?echo $res['priceks'];?></td>
                         <td><?echo $res['price'];?></td>
                         <td style="width: 4%;"><?echo $res['dataprod'];?></td>
@@ -8520,7 +8686,7 @@ else {
                     <td><?echo $res['kpp'];?></td>
                     <td style="width: 30%;"><?echo $res['ogrn'];?></td>
                     <td><?echo $res['name'];?></td>
-                    <td><?echo $res['tipprod'];?></td>
+                    <td><?echo schet_tip_text($res);?></td>
                     <td><?echo $res['priceks'];?></td>
                     <td><?echo $res['price'];?></td>
                     <td style="width: 4%;"><?echo $res['datasert'];?></td>
@@ -8565,7 +8731,7 @@ else {
                     <td><?echo $ress['kpp'];?></td>
                     <td style="width: 30%;"><?echo $ress['ogrn'];?></td>
                     <td><?echo $ress['name'];?></td>
-                    <td><?echo $ress['tipprod'];?></td>
+                    <td><?echo schet_tip_text($ress);?></td>
                     <td style="background:#C1E5FB;"><?echo $ress['priceks'];?></td>
                     <td style="<?echo $color;?>"><?echo $ress['price'];?></td>
                     <td><?$userdatas = mysql_fetch_assoc(mysql_query("SELECT DATE_FORMAT(schet.datasert,'%d.%m.%Y') as sert,DATE_FORMAT(schet.dataprod,'%d.%m.%Y') as prod,dataprod,prodlens,prodlenks,datasert FROM schet WHERE ns = '".$ress['shetold']."' "));
@@ -8744,7 +8910,7 @@ else {
                     <td><?echo $ress['kpp'];?></td>
                     <td style="width: 30%;"><?echo $ress['ogrn'];?></td>
                     <td><?echo $ress['name'];?></td>
-                    <td><?echo $ress['tipprod'];?></td>
+                    <td><?echo schet_tip_text($ress);?></td>
                     <td style="background:#C1E5FB;"><?echo $ress['priceks'];?></td>
                     <td style="<?echo $color;?>"><?echo $ress['price'];?></td>
                     <td ><p id="datpr<?echo $ress['rand'];?>"><?$userdatas = mysql_fetch_assoc(mysql_query("SELECT DATE_FORMAT(schet.datasert,'%Y.%m.%d') as sert,DATE_FORMAT(schet.dataprod,'%Y.%m.%d') as prod,dataprod,prodlens,prodlenks,datasert FROM schet WHERE ns = '".$ress['shetold']."' "));
@@ -8935,7 +9101,7 @@ else {
                     <td><?echo $reso['kpp'];?></td>
                     <td style="width: 30%;"><?echo $reso['ogrn'];?></td>
                     <td><?echo $reso['name'];?></td>
-                    <td><?echo $reso['tipprod'];?></td>
+                    <td><?echo schet_tip_text($reso);?></td>
                     <td style="background:#FFF850;"><?echo $reso['priceks'];?></td>
                     <td style="<?echo $color;?>"><?echo $reso['price'];?></td>
                     <td><?echo $reso['dataprod'];?></td>
@@ -9182,7 +9348,7 @@ else {
                     <td><?echo $reso['kpp'];?></td>
                     <td style="width: 30%;"><?echo $reso['ogrn'];?></td>
                     <td><?echo $reso['name'];?></td>
-                    <td><?echo $reso['tipprod'];?></td>
+                    <td><?echo schet_tip_text($reso);?></td>
                     <td style="background:#FFF850;"><?echo $reso['priceks'];?></td>
                     <td style="<?echo $color;?>"><?echo $reso['price'];?></td>
                     <td><?echo $reso['dataprod'];?></td>
@@ -9406,7 +9572,7 @@ else {
                     <td><?echo $respos['kpp'];?></td>
                     <td style="width: 30%;"><?echo $respos['ogrn'];?></td>
                     <td><?echo $respos['name'];?></td>
-                    <td><?echo $respos['tipprod'];?></td>
+                    <td><?echo schet_tip_text($respos);?></td>
                     <td style="background:#E9C3FB;"><?echo $respos['priceks'];?></td>
                     <td style="background:#E9C3FB;"><?echo $respos['price'];?></td>
                     <td><?echo $respos['dataprod'];?></td>
@@ -9561,7 +9727,7 @@ else {
                     <td><?echo $respos['kpp'];?></td>
                     <td style="width: 30%;"><?echo $respos['ogrn'];?></td>
                     <td><?echo $respos['name'];?></td>
-                    <td><?echo $respos['tipprod'];?></td>
+                    <td><?echo schet_tip_text($respos);?></td>
                     <td style="background:#E9C3FB;"><?echo $respos['priceks'];?></td>
                     <td style="background:#E9C3FB;"><?echo $respos['price'];?></td>
                     <td><?echo $respos['dataprod'];?></td>
@@ -9729,7 +9895,7 @@ else {
                     <td><?echo $resyv['kpp'];?></td>
                     <td style="width: 30%;"><?echo $resyv['ogrn'];?></td>
                     <td><?echo $resyv['name'];?></td>
-                    <td><?echo $resyv['tipprod'];?></td>
+                    <td><?echo schet_tip_text($resyv);?></td>
                     <td style="background:#FFB366;"><?echo $resyv['priceks'];?></td>
                     <td style="background:#FFB366;"><?echo $resyv['price'];?></td>
                     <td><?echo $resyv['dataprod'];?></td>
@@ -9913,7 +10079,7 @@ else {
                     <td><?echo $resyv['kpp'];?></td>
                     <td style="width: 30%;"><?echo $resyv['ogrn'];?></td>
                     <td><?echo $resyv['name'];?></td>
-                    <td><?echo $resyv['tipprod'];?></td>
+                    <td><?echo schet_tip_text($resyv);?></td>
                     <td style="background:#FFB366;"><?echo $resyv['priceks'];?></td>
                     <td style="background:#FFB366;"><?echo $resyv['price'];?></td>
                     <td><?echo $resyv['dataprod'];?></td>
@@ -10098,7 +10264,7 @@ else {
                     <td><?echo $resrna['kpp'];?></td>
                     <td style="width: 30%;"><?echo $resrna['ogrn'];?></td>
                     <td><?echo $resrna['name'];?></td>
-                    <td><?echo $resrna['tipprod'];?></td>
+                    <td><?echo schet_tip_text($resrna);?></td>
                     <td style="background:#85D6D1;"><?echo $resrna['priceks'];?></td>
                     <td style="background:#85D6D1;"><?echo $resrna['price'];?></td>
                     <td><?echo $resrna['dataprod'];?></td>
@@ -10283,7 +10449,7 @@ else {
                     <td><?echo $resrna['kpp'];?></td>
                     <td style="width: 30%;"><?echo $resrna['ogrn'];?></td>
                     <td><?echo $resrna['name'];?></td>
-                    <td><?echo $resrna['tipprod'];?></td>
+                    <td><?echo schet_tip_text($resrna);?></td>
                     <td style="background:#85D6D1;"><?echo $resrna['priceks'];?></td>
                     <td style="background:#85D6D1;"><?echo $resrna['price'];?></td>
                     <td><?echo $resrna['dataprod'];?></td>
@@ -10457,7 +10623,7 @@ else {
                     <td><?echo $resatk['kpp'];?></td>
                     <td style="width: 30%;"><?echo $resatk['ogrn'];?></td>
                     <td><?echo $resatk['name'];?></td>
-                    <td><?echo $resatk['tipprod'];?></td>
+                    <td><?echo schet_tip_text($resatk);?></td>
                     <td style="background:#85D6A7;"><?echo $resatk['priceks'];?></td>
                     <td style="background:#85D6A7;"><?echo $resatk['price'];?></td>
                     <td><?echo $resatk['dataprod'];?></td>
@@ -10612,7 +10778,7 @@ else {
                     <td><?echo $resatk['kpp'];?></td>
                     <td style="width: 30%;"><?echo $resatk['ogrn'];?></td>
                     <td><?echo $resatk['name'];?></td>
-                    <td><?echo $resatk['tipprod'];?></td>
+                    <td><?echo schet_tip_text($resatk);?></td>
                     <td style="background:#85D6A7;"><?echo $resatk['priceks'];?></td>
                     <td style="background:#85D6A7;"><?echo $resatk['price'];?></td>
                     <td><?echo $resatk['dataprod'];?></td>
@@ -10767,7 +10933,7 @@ else {
                     <td><?echo $resotk['kpp'];?></td>
                     <td style="width: 30%;"><?echo $resotk['ogrn'];?></td>
                     <td><?echo $resotk['name'];?></td>
-                    <td><?echo $resotk['tipprod'];?></td>
+                    <td><?echo schet_tip_text($resotk);?></td>
                     <td style="background:#FB9C9C;"><?echo $resotk['priceks'];?></td>
                     <td style="background:#FB9C9C;"><?echo $resotk['price'];?></td>
                     <td><?echo $resotk['dataprod'];?></td>
@@ -10922,7 +11088,7 @@ else {
                     <td><?echo $resotk['kpp'];?></td>
                     <td style="width: 30%;"><?echo $resotk['ogrn'];?></td>
                     <td><?echo $resotk['name'];?></td>
-                    <td><?echo $resotk['tipprod'];?></td>
+                    <td><?echo schet_tip_text($resotk);?></td>
                     <td style="background:#FB9C9C;"><?echo $resotk['priceks'];?></td>
                     <td style="background:#FB9C9C;"><?echo $resotk['price'];?></td>
                     <td><?echo $resotk['dataprod'];?></td>
@@ -11077,7 +11243,7 @@ else {
                     <td><?echo $rescher['kpp'];?></td>
                     <td style="width: 30%;"><?echo $rescher['ogrn'];?></td>
                     <td><?echo $rescher['name'];?></td>
-                    <td><?echo $rescher['tipprod'];?></td>
+                    <td><?echo schet_tip_text($rescher);?></td>
                     <td style="background:#BC9B79;"><?echo $rescher['priceks'];?></td>
                     <td style="background:#BC9B79;"><?echo $rescher['price'];?></td>
                     <td><?echo $rescher['dataprod'];?></td>
@@ -11233,7 +11399,7 @@ else {
                     <td><?echo $rescher['kpp'];?></td>
                     <td style="width: 30%;"><?echo $rescher['ogrn'];?></td>
                     <td><?echo $rescher['name'];?></td>
-                    <td><?echo $rescher['tipprod'];?></td>
+                    <td><?echo schet_tip_text($rescher);?></td>
                     <td style="background:#BC9B79;"><?echo $rescher['priceks'];?></td>
                     <td style="background:#BC9B79;"><?echo $rescher['price'];?></td>
                     <td><?echo $rescher['dataprod'];?></td>
@@ -11397,7 +11563,7 @@ else {
                     <td><?echo $resvoz['kpp'];?></td>
                     <td style="width: 30%;"><?echo $resvoz['ogrn'];?></td>
                     <td><?echo $resvoz['name'];?></td>
-                    <td><?echo $resvoz['tipprod'];?></td>
+                    <td><?echo schet_tip_text($resvoz);?></td>
                     <td style="background:#E45A51;"><?echo $resvoz['priceks'];?></td>
                     <td style="background:#E45A51;"><?echo $resvoz['price'];?></td>
                     <td><?echo $resvoz['dataprod'];?></td>
@@ -11560,7 +11726,7 @@ else {
                     <td><?echo $resvoz['kpp'];?></td>
                     <td style="width: 30%;"><?echo $resvoz['ogrn'];?></td>
                     <td><?echo $resvoz['name'];?></td>
-                    <td><?echo $resvoz['tipprod'];?></td>
+                    <td><?echo schet_tip_text($resvoz);?></td>
                     <td style="background:#E45A51;"><?echo $resvoz['priceks'];?></td>
                     <td style="background:#E45A51;"><?echo $resvoz['price'];?></td>
                     <td><?echo $resvoz['dataprod'];?></td>
@@ -11724,7 +11890,7 @@ else {
                     <td><?echo $respere['kpp'];?></td>
                     <td style="width: 30%;"><?echo $respere['ogrn'];?></td>
                     <td><?echo $respere['name'];?></td>
-                    <td><?echo $respere['tipprod'];?></td>
+                    <td><?echo schet_tip_text($respere);?></td>
                     <td style="background:#DCF541;"><?echo $respere['priceks'];?></td>
                     <td style="background:#DCF541;"><?echo $respere['price'];?></td>
                     <td><?echo $respere['dataprod'];?></td>
@@ -11888,7 +12054,7 @@ else {
                     <td><?echo $respere['kpp'];?></td>
                     <td style="width: 30%;"><?echo $respere['ogrn'];?></td>
                     <td><?echo $respere['name'];?></td>
-                    <td><?echo $respere['tipprod'];?></td>
+                    <td><?echo schet_tip_text($respere);?></td>
                     <td style="background:#DCF541;"><?echo $respere['priceks'];?></td>
                     <td style="background:#DCF541;"><?echo $respere['price'];?></td>
                     <td><?echo $respere['dataprod'];?></td>
@@ -12221,7 +12387,7 @@ else {
             <td><?echo $resschetall['kpp'];?></td>
             <td style="width: 30%;"><?echo $resschetall['ogrn'];?></td>
             <td><?echo $resschetall['name'];?></td>
-            <td><?echo $resschetall['tipprod'];?></td>
+            <td><?echo schet_tip_text($resschetall);?></td>
             <td style="<? echo $color;?>"><?echo $resschetall['priceks'];?></td>
             <td style="<? echo $color;?>"><?echo $resschetall['price'];?></td>
             <td><?echo $resschetall['dataprod'];?></td>
@@ -12636,7 +12802,7 @@ else {
         <td><?echo $resschetall['kpp'];?></td>
         <td style="width: 30%;"><?echo $resschetall['ogrn'];?></td>
         <td><?echo $resschetall['name'];?></td>
-        <td><?echo $resschetall['tipprod'];?></td>
+        <td><?echo schet_tip_text($resschetall);?></td>
         <td style="<? echo $color;?>"><?echo $resschetall['priceks'];?></td>
         <td style="<? echo $color;?>"><?echo $resschetall['price'];?></td>
         <?if($resschetall['shetold']!=''){?>
@@ -13338,6 +13504,81 @@ $(document).ready(function() {
 $(function() {
   $("#myTable2").tablesorter();
 });</script>
+<script>
+(function() {
+  function isInteractive(node) {
+    while (node && node !== document && node.nodeType === 1) {
+      var tag = node.tagName ? node.tagName.toLowerCase() : '';
+      if (tag === 'a' || tag === 'input' || tag === 'textarea' || tag === 'select' || tag === 'button' || tag === 'label') {
+        return true;
+      }
+      node = node.parentNode;
+    }
+    return false;
+  }
+
+  function initSchetTableScroll() {
+    var scrolls = document.querySelectorAll('.schet-table-scroll');
+    for (var i = 0; i < scrolls.length; i++) {
+      (function(scroll) {
+        if (scroll.getAttribute('data-drag-scroll-ready') === '1') {
+          return;
+        }
+        scroll.setAttribute('data-drag-scroll-ready', '1');
+
+        var isDown = false;
+        var wasDragged = false;
+        var startX = 0;
+        var scrollLeft = 0;
+
+        scroll.addEventListener('mousedown', function(e) {
+          if (e.button !== 0 || isInteractive(e.target)) {
+            return;
+          }
+          isDown = true;
+          wasDragged = false;
+          startX = e.pageX;
+          scrollLeft = scroll.scrollLeft;
+          scroll.className += ' is-dragging';
+        });
+
+        function stopDrag() {
+          isDown = false;
+          scroll.className = scroll.className.replace(' is-dragging', '');
+        }
+
+        scroll.addEventListener('mouseleave', stopDrag);
+        scroll.addEventListener('mouseup', stopDrag);
+        scroll.addEventListener('mousemove', function(e) {
+          if (!isDown) {
+            return;
+          }
+          var walk = e.pageX - startX;
+          if (Math.abs(walk) > 3) {
+            wasDragged = true;
+            e.preventDefault();
+            scroll.scrollLeft = scrollLeft - walk;
+          }
+        });
+        scroll.addEventListener('click', function(e) {
+          if (!wasDragged) {
+            return;
+          }
+          e.preventDefault();
+          e.stopPropagation();
+          wasDragged = false;
+        }, true);
+      })(scrolls[i]);
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initSchetTableScroll);
+  } else {
+    initSchetTableScroll();
+  }
+})();
+</script>
 <script>
 
 /*$( "#datestart" ).change(function () {
