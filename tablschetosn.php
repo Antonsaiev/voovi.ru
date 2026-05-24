@@ -752,11 +752,11 @@ $m=date('m');
     user-select: none;
 }
 .schet-table {
-    width: max-content !important;
-    min-width: max-content !important;
-    max-width: none;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100%;
     border-collapse: collapse;
-    table-layout: auto;
+    table-layout: fixed;
 }
 .schet-table th,
 .schet-table td {
@@ -764,8 +764,14 @@ $m=date('m');
     padding: 3px 5px;
     font-size: 11px;
     line-height: 1.15;
-    white-space: nowrap;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
     vertical-align: middle;
+}
+.schet-table th.schet-name-col,
+.schet-table td[style*="width: 30%"] {
+    width: 16% !important;
 }
 .schet-table th[style*="width"],
 .schet-table td[style*="width"] {
@@ -774,10 +780,17 @@ $m=date('m');
     max-width: none;
 }
 .schet-table td[style*="width: 30%"] {
-    width: auto !important;
+    width: 16% !important;
     min-width: 0;
     max-width: none;
-    white-space: nowrap;
+    white-space: normal;
+}
+.schet-table th:nth-last-child(-n+4),
+.schet-table td:nth-last-child(-n+4),
+.schet-table th:first-child,
+.schet-table td:first-child {
+    width: 30px !important;
+    text-align: center;
 }
 .schet-table p {
     margin: 1px 0;
@@ -790,6 +803,13 @@ $m=date('m');
 .schet-table img {
     max-width: 18px;
     height: auto;
+}
+@media (max-width: 1199px) {
+    .schet-table {
+        width: 1180px !important;
+        min-width: 1180px !important;
+        max-width: none;
+    }
 }
 </style>
 <div class="schet-table-scroll">
@@ -811,7 +831,7 @@ $m=date('m');
 <th>№ счета</th>
 <th>инн</th>
 <th>кпп</th>
-<th>наименование</th>
+<th class="schet-name-col">наименование</th>
 <th>продукт</th>
 <th>тип</th>
 <th>К</th>
@@ -8396,7 +8416,7 @@ else {
             <th>№счета</th>
             <th>инн</th>
             <th>кпп</th>
-            <th>наименование</th>
+            <th class="schet-name-col">наименование</th>
             <th>продукт</th>
             <th>тип</th>
             <th>К</th>

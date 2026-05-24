@@ -376,6 +376,38 @@ $fullName = short_name($userdata);
             max-width: 24px;
             height: auto;
         }
+        .company-table-pane #tablosn,
+        .company-table-pane .schet-table-scroll {
+            width: 100% !important;
+            max-width: 100%;
+            overflow-x: auto;
+        }
+        .company-table-pane .schet-table {
+            width: 100% !important;
+            min-width: 0 !important;
+            max-width: 100% !important;
+            table-layout: fixed;
+        }
+        .company-table-pane .schet-table th,
+        .company-table-pane .schet-table td {
+            width: auto !important;
+            min-width: 0;
+            max-width: none;
+            white-space: normal !important;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+        }
+        .company-table-pane .schet-table th.schet-name-col,
+        .company-table-pane .schet-table td[style*="width: 30%"] {
+            width: 16% !important;
+        }
+        .company-table-pane .schet-table th:nth-last-child(-n+4),
+        .company-table-pane .schet-table td:nth-last-child(-n+4),
+        .company-table-pane .schet-table th:first-child,
+        .company-table-pane .schet-table td:first-child {
+            width: 30px !important;
+            text-align: center;
+        }
         .company-tab-loading {
             margin: 0;
             padding: 24px;
@@ -547,6 +579,13 @@ $fullName = short_name($userdata);
             }
             .company-summary {
                 grid-template-columns: 1fr;
+            }
+        }
+        @media (max-width: 1199px) {
+            .company-table-pane .schet-table {
+                width: 1180px !important;
+                min-width: 1180px !important;
+                max-width: none !important;
             }
         }
         @media (max-width: 640px) {
