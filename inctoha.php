@@ -18,8 +18,12 @@ if(substr_count($userdata['dotdel'], $row['otdel']) == 1){
         echo 'class="alert alert-info" role="alert"';
     }
 
-    $qdsafesd = mysql_query("SELECT SUM(turbo) FROM schet WHERE del = '0' AND turbo = '1' AND rand ='".$row['rand']."' GROUP BY rand");
-    $pedfsbfedb = mysql_result($qdsafesd, 0);
+    if (isset($kartSchetTurboSum[$row['rand']])) {
+        $pedfsbfedb = $kartSchetTurboSum[$row['rand']];
+    } else {
+        $qdsafesd = mysql_query("SELECT SUM(turbo) FROM schet WHERE del = '0' AND turbo = '1' AND rand ='".$row['rand']."' GROUP BY rand");
+        $pedfsbfedb = mysql_result($qdsafesd, 0);
+    }
     if ($pedfsbfedb >= 1){
         echo ' style="border: 2px solid red; font-size: 14px;"';
     }
@@ -55,7 +59,11 @@ if(substr_count($userdata['dotdel'], $row['otdel']) == 1){
     }
     echo '</td>';
     echo '<td id="date'.$row['rand'].'" style="text-align: center; width: 4%; font-size: 14px;">';
-    $date = new DateTime(getDateDocuments($row['rand'])['d_bill']);
+    if (isset($kartSchetDocumentDataMap[$row['rand']]) && !empty($kartSchetDocumentDataMap[$row['rand']]['d_bill'])) {
+        $date = new DateTime($kartSchetDocumentDataMap[$row['rand']]['d_bill']);
+    } else {
+        $date = new DateTime(getDateDocuments($row['rand'])['d_bill']);
+    }
 //echo $row['d'].'.'.$row['m'].'.'.$row['y'];
     echo $date->format('d.m.Y');
 
@@ -116,9 +124,13 @@ $(document).ready(function(){
 
     echo '</td>';
     echo '<td style="text-align: center; font-size: 14px;"><div id="none-containame'.$row['rand'].'"></div>';
-    $rpod = "SELECT * FROM produkti WHERE id =".$row['produkt'];
-    $resultrpod = mysql_query($rpod);
-    $personrpod = mysql_fetch_array($resultrpod);
+    if (isset($kartSchetProductMap[$row['produkt']])) {
+        $personrpod = $kartSchetProductMap[$row['produkt']];
+    } else {
+        $rpod = "SELECT * FROM produkti WHERE id =".$row['produkt'];
+        $resultrpod = mysql_query($rpod);
+        $personrpod = mysql_fetch_array($resultrpod);
+    }
 
 //echo $personrpod['name'];
     echo '<a style="font-size: 14px;" href="' . VOOVI_DOC_URL . '/payments/EditTarifSchet?n_schet=' . $ns_for_link . '">' . $personrpod['name'] . '</a>';
@@ -131,11 +143,16 @@ $(document).ready(function(){
 
     echo '<td id="komment'.$row['rand'].'"';
 
-    $rpissetkomment = "SELECT * FROM schetoldkomment WHERE schet ='".$row['rand']."' ORDER BY id DESC";
-    $reissetkomment = mysql_query($rpissetkomment);
-    $peissetkomment = mysql_fetch_array($reissetkomment);
-    $issetkomment = mysql_query("SELECT COUNT(*) FROM schetoldkomment WHERE schet ='".$row['rand']."'");
-    $yesisset = mysql_result($issetkomment, 0);
+    if (isset($kartSchetLatestComments[$row['rand']]) || isset($kartSchetCommentCounts[$row['rand']])) {
+        $peissetkomment = isset($kartSchetLatestComments[$row['rand']]) ? $kartSchetLatestComments[$row['rand']] : array();
+        $yesisset = isset($kartSchetCommentCounts[$row['rand']]) ? $kartSchetCommentCounts[$row['rand']] : 0;
+    } else {
+        $rpissetkomment = "SELECT * FROM schetoldkomment WHERE schet ='".$row['rand']."' ORDER BY id DESC";
+        $reissetkomment = mysql_query($rpissetkomment);
+        $peissetkomment = mysql_fetch_array($reissetkomment);
+        $issetkomment = mysql_query("SELECT COUNT(*) FROM schetoldkomment WHERE schet ='".$row['rand']."'");
+        $yesisset = mysql_result($issetkomment, 0);
+    }
     if ($row['doljen'] == 1 && $row['postprod'] == 0){echo 'class="alert alert-danger" role="alert"';}
     if ($row['postprod'] == 1 && $row['doljen'] == 0 && $row['doljenop'] == 0 ){echo 'class="alert alert-prod" role="alert"';}
     if ($row['ust_sert'] == 1 && $row['doljen'] == 0 && $row['doljenop'] == 0 ){echo 'class="alert alert-danger" style="background:lightseagreen"';}
@@ -149,9 +166,13 @@ $(document).ready(function(){
     padding: 3px 4px;
     margin: 0 -3px;
     margin-bottom: 3px;">';
-    $lgeneracq = "SELECT f_name, l_name FROM users WHERE users_id =".$row['generac'];
-    $rgeneracq = mysql_query($lgeneracq);
-    $pgeneracq = mysql_fetch_array($rgeneracq);
+    if (isset($kartSchetUserMap[$row['generac']])) {
+        $pgeneracq = $kartSchetUserMap[$row['generac']];
+    } else {
+        $lgeneracq = "SELECT f_name, l_name FROM users WHERE users_id =".$row['generac'];
+        $rgeneracq = mysql_query($lgeneracq);
+        $pgeneracq = mysql_fetch_array($rgeneracq);
+    }
     if($row['generac']!=546321564){
 
         if($row['generac']>=1){
@@ -166,8 +187,12 @@ $(document).ready(function(){
 
 
         }else{
-            $qdsafsdq = mysql_query("SELECT SUM(kvo) FROM schet WHERE del = '0' AND gen = '1' AND rand ='".$row['rand']."'  GROUP BY rand");
-            $pedfsbfdbq = mysql_result($qdsafsdq, 0);
+            if (isset($kartSchetGenSum[$row['rand']])) {
+                $pedfsbfdbq = $kartSchetGenSum[$row['rand']];
+            } else {
+                $qdsafsdq = mysql_query("SELECT SUM(kvo) FROM schet WHERE del = '0' AND gen = '1' AND rand ='".$row['rand']."'  GROUP BY rand");
+                $pedfsbfdbq = mysql_result($qdsafsdq, 0);
+            }
             if ($pedfsbfdbq >= 1){
                 echo '<b style="color: #D20000;">';
                 echo "Ген. ".$pedfsbfdbq."";
@@ -232,12 +257,17 @@ $(document).ready(function(){
         echo ' | Выезд: '.$row221['datacar'];
     }
 
-    $result42 = "SELECT * from schet_status WHERE schet='$row[rand]' ORDER BY id DESC ";
-    $results2 = mysql_query($result42);
-    $persons2 = mysql_fetch_array($results2);
-    $lis3 = "SELECT * FROM status WHERE id ='".$persons2['status']."' ";
-    $resultlis3 = mysql_query($lis3);
-    $personlis3 = mysql_fetch_array($resultlis3);
+    if (isset($kartSchetLatestStatuses[$row['rand']])) {
+        $persons2 = $kartSchetLatestStatuses[$row['rand']];
+        $personlis3 = isset($kartSchetStatusMap[$persons2['status']]) ? $kartSchetStatusMap[$persons2['status']] : array();
+    } else {
+        $result42 = "SELECT * from schet_status WHERE schet='$row[rand]' ORDER BY id DESC ";
+        $results2 = mysql_query($result42);
+        $persons2 = mysql_fetch_array($results2);
+        $lis3 = "SELECT * FROM status WHERE id ='".$persons2['status']."' ";
+        $resultlis3 = mysql_query($lis3);
+        $personlis3 = mysql_fetch_array($resultlis3);
+    }
 
     if(!empty($personlis3['name'])){
         echo " | ".$personlis3['name']." c ".$persons2['data'];
@@ -270,8 +300,12 @@ $(document).ready(function(){
 
 
 
-    $qdsafsd = mysql_query("SELECT SUM(turbo) FROM schet WHERE del = '0' AND turbo = '1' AND rand ='".$row['rand']."' GROUP BY rand");
-    $pedfsbfdb = mysql_result($qdsafsd, 0);
+    if (isset($kartSchetTurboSum[$row['rand']])) {
+        $pedfsbfdb = $kartSchetTurboSum[$row['rand']];
+    } else {
+        $qdsafsd = mysql_query("SELECT SUM(turbo) FROM schet WHERE del = '0' AND turbo = '1' AND rand ='".$row['rand']."' GROUP BY rand");
+        $pedfsbfdb = mysql_result($qdsafsd, 0);
+    }
     if ($pedfsbfdb >= 1){
         echo ' | Ускоренный выпуск<img src="/upload/image/acceleratedbig.png">';
     }
@@ -320,9 +354,13 @@ $(document).ready(function(){
 //-----------------------------------
 
     echo '<div id="refresh'.$row['rand'].'" style="text-align: left; font-size: 14px;" title=" ' . strip_tags($peissetkomment['komment']) . '" >';
-    $zktolgenerac = "SELECT * FROM users WHERE users_id =".$row['kto'];
-    $zktorgenerac = mysql_query($zktolgenerac);
-    $zktopgenerac = mysql_fetch_array($zktorgenerac);
+    if (isset($kartSchetUserMap[$row['kto']])) {
+        $zktopgenerac = $kartSchetUserMap[$row['kto']];
+    } else {
+        $zktolgenerac = "SELECT * FROM users WHERE users_id =".$row['kto'];
+        $zktorgenerac = mysql_query($zktolgenerac);
+        $zktopgenerac = mysql_fetch_array($zktorgenerac);
+    }
     $zkto = $zktopgenerac['f_name'];
 
     if($yesisset > 0){
@@ -436,16 +474,24 @@ $(document).ready(function(){
     mysql_query($aktivn) or die(mysql_error($link));
     }*/
     if($row['cher']!='0') {
-        $zktolgeneraci = "SELECT * FROM  prichotk WHERE id ='" . $row['prichotk'] . "'";
-        $zktorgeneracii = mysql_query($zktolgeneraci);
-        $zktopgeneraciii = mysql_fetch_array($zktorgeneracii);
+        if (isset($kartSchetPrichotkMap[$row['prichotk']])) {
+            $zktopgeneraciii = $kartSchetPrichotkMap[$row['prichotk']];
+        } else {
+            $zktolgeneraci = "SELECT * FROM  prichotk WHERE id ='" . $row['prichotk'] . "'";
+            $zktorgeneracii = mysql_query($zktolgeneraci);
+            $zktopgeneraciii = mysql_fetch_array($zktorgeneracii);
+        }
         echo '<p style="color:maroon ;font-size: 14pt;">' .$row['koment']." .Причина:" . $zktopgeneraciii['value'] . '</p>';
     }
 
     echo '</td>';
     echo '<td>';
-    $result = mysql_query("SELECT count(*) FROM schetizbran WHERE kto = '".$userdata['users_id']."' AND schet =".$row['rand']);
-    $class = mysql_result($result, 0);
+    if (isset($kartSchetFavoriteMap)) {
+        $class = isset($kartSchetFavoriteMap[$row['rand']]) ? 1 : 0;
+    } else {
+        $result = mysql_query("SELECT count(*) FROM schetizbran WHERE kto = '".$userdata['users_id']."' AND schet =".$row['rand']);
+        $class = mysql_result($result, 0);
+    }
     if($class == 0){
         echo '<a title="В избранные" href="./schetizbran.php?tip=1&id='.$row['rand'].'"><span class="glyphicon glyphicon-star"></span></a>';
     }else{
@@ -456,11 +502,15 @@ $(document).ready(function(){
         echo '<td style="text-align: center; font-size: 14px; padding: 0;">';
         echo '</td>';
     }else{
-        $rpod2345 = "SELECT * FROM kvobop WHERE schet = '".$row['rand']."'";
-        $result57657 = mysql_query($rpod2345);
-        $row134 = mysql_fetch_array($result57657);
-        $query544 = mysql_query("SELECT SUM(summa) FROM kvobop WHERE schet =".$row134['schet']);
-        $person426 = mysql_result($query544, 0);
+        if (isset($kartSchetKvobopSum[$row['rand']])) {
+            $person426 = $kartSchetKvobopSum[$row['rand']];
+        } else {
+            $rpod2345 = "SELECT * FROM kvobop WHERE schet = '".$row['rand']."'";
+            $result57657 = mysql_query($rpod2345);
+            $row134 = mysql_fetch_array($result57657);
+            $query544 = mysql_query("SELECT SUM(summa) FROM kvobop WHERE schet =".$row134['schet']);
+            $person426 = mysql_result($query544, 0);
+        }
         if ($person426 <= $row['price'] && $person426 != 0) {
             if($row['cher']=='0') {
                 echo '<td style="text-align: center;font-size: 14px;padding: 0;background:green;text-align:center;color:#fff;">';
@@ -591,12 +641,16 @@ $(document).ready(function(){
 
     echo '<td style="width: 8px; text-align: center; font-size: 14px;"';
 
-    $rpod2345 = "SELECT * FROM kvobop WHERE schet = '".$row['rand']."'";
-    $result57657 = mysql_query($rpod2345);
-    $row134 = mysql_fetch_array($result57657);
+    if (isset($kartSchetKvobopSum[$row['rand']])) {
+        $person426 = $kartSchetKvobopSum[$row['rand']];
+    } else {
+        $rpod2345 = "SELECT * FROM kvobop WHERE schet = '".$row['rand']."'";
+        $result57657 = mysql_query($rpod2345);
+        $row134 = mysql_fetch_array($result57657);
 
-    $query544 = mysql_query("SELECT SUM(summa) FROM kvobop WHERE schet =".$row134['schet']);
-    $person426 = mysql_result($query544, 0);
+        $query544 = mysql_query("SELECT SUM(summa) FROM kvobop WHERE schet =".$row134['schet']);
+        $person426 = mysql_result($query544, 0);
+    }
 
 
     if ($person426 <= $row['price'] && $person426 != 0&&$row['cher']=='0') {
@@ -656,28 +710,44 @@ $.ajax({type: "GET",url: "prodlen.php",data: "prodlen="+str+"&rand='.$row['rand'
     echo '</td>';
     echo '<td id="proddlen'.$row['rand'].'" style="text-align: center; font-size: 14px;">';
 
-    $ktolgenerac = "SELECT * FROM users WHERE users_id =".$row['kto'];
-    $ktorgenerac = mysql_query($ktolgenerac);
-    $ktopgenerac = mysql_fetch_array($ktorgenerac);
+    if (isset($kartSchetUserMap[$row['kto']])) {
+        $ktopgenerac = $kartSchetUserMap[$row['kto']];
+    } else {
+        $ktolgenerac = "SELECT * FROM users WHERE users_id =".$row['kto'];
+        $ktorgenerac = mysql_query($ktolgenerac);
+        $ktopgenerac = mysql_fetch_array($ktorgenerac);
+    }
     $kto = $ktopgenerac['f_name'];
     echo mb_substr($kto,0,1,'UTF-8'),'. ';
     echo $ktopgenerac['l_name'];
     echo '</td>';
     echo'<td style="text-align: center; font-size: 14px;">';
-    $ktolgeneraci = "SELECT * FROM agent WHERE id =".$row['agent'];
-    $ktorgeneraci = mysql_query($ktolgeneraci);
-    $ktopgeneraci = mysql_fetch_array($ktorgeneraci);
+    if (isset($kartSchetAgentMap[$row['agent']])) {
+        $ktopgeneraci = $kartSchetAgentMap[$row['agent']];
+    } else {
+        $ktolgeneraci = "SELECT * FROM agent WHERE id =".$row['agent'];
+        $ktorgeneraci = mysql_query($ktolgeneraci);
+        $ktopgeneraci = mysql_fetch_array($ktorgeneraci);
+    }
     echo $kto = $ktopgeneraci['name'];
     echo'</td>';
     echo '<td id="generac'.$row['rand'].'">';
-    $qdsafsd = mysql_query("SELECT SUM(kvo) FROM schet WHERE del = '0' AND gen = '1' AND rand ='".$row['rand']."'  GROUP BY rand");
-    $pedfsbfdb = mysql_result($qdsafsd, 0);
+    if (isset($kartSchetGenSum[$row['rand']])) {
+        $pedfsbfdb = $kartSchetGenSum[$row['rand']];
+    } else {
+        $qdsafsd = mysql_query("SELECT SUM(kvo) FROM schet WHERE del = '0' AND gen = '1' AND rand ='".$row['rand']."'  GROUP BY rand");
+        $pedfsbfdb = mysql_result($qdsafsd, 0);
+    }
     if ($pedfsbfdb >= 1){
         echo "Генераций ".$pedfsbfdb;
     }
-    $lgenerac = "SELECT * FROM users WHERE users_id =".$row['generac'];
-    $rgenerac = mysql_query($lgenerac);
-    $pgenerac = mysql_fetch_array($rgenerac);
+    if (isset($kartSchetUserMap[$row['generac']])) {
+        $pgenerac = $kartSchetUserMap[$row['generac']];
+    } else {
+        $lgenerac = "SELECT * FROM users WHERE users_id =".$row['generac'];
+        $rgenerac = mysql_query($lgenerac);
+        $pgenerac = mysql_fetch_array($rgenerac);
+    }
     echo '<div style="font-size: 14px; id="generacinfo'.$row['rand'].'">';
     if($row['generac']!=546321564){
         $gen = $pgenerac['f_name'];
@@ -688,10 +758,18 @@ $.ajax({type: "GET",url: "prodlen.php",data: "prodlen="+str+"&rand='.$row['rand'
     }
     echo ' </div>';
     echo '<select id="generaci'.$row['rand'].'" name="generaci'.$row['rand'].'" onchange="generaciTakti'.$row['rand'].'(this.value)"  style="display:none;" >';
-    $query21 = mysql_query("SELECT * from users WHERE  del_users = 0 and show_executor = 1 ORDER BY users_id DESC");
     echo '<option value="0"></option>';
 //echo '<option value="546321564">Поставка</option>';
-    while($row21 = mysql_fetch_array($query21)) {
+    if (isset($kartSchetExecutors)) {
+        $executorRows = $kartSchetExecutors;
+    } else {
+        $executorRows = array();
+        $query21 = mysql_query("SELECT * from users WHERE  del_users = 0 and show_executor = 1 ORDER BY users_id DESC");
+        while($row21 = mysql_fetch_array($query21)) {
+            $executorRows[] = $row21;
+        }
+    }
+    foreach($executorRows as $row21) {
         echo '<option  value="'.$row21['users_id'].'">',$row21['f_name']," ",$row21['l_name'],'</option>';
     }
 //echo '<option value="0"></option>';

@@ -584,7 +584,9 @@ if ($komneteInvoiceQuery) {
         min-width: 0;
     }
     .komnete-doc-row-wide {
-        grid-template-columns: minmax(0, 1fr) minmax(120px, auto);
+        grid-template-columns: minmax(0, 1fr);
+        align-items: flex-start;
+        gap: 8px;
     }
     .komnete-doc-control {
         display: inline-flex;
@@ -603,7 +605,8 @@ if ($komneteInvoiceQuery) {
     }
     .komnete-doc-label {
         min-width: 0;
-        overflow-wrap: anywhere;
+        white-space: nowrap;
+        overflow-wrap: normal;
     }
     .komnete-doc-control select,
     .komnete-doc-control input[type="date"] {
@@ -611,7 +614,10 @@ if ($komneteInvoiceQuery) {
         max-width: 100%;
         min-height: 34px;
         margin: 0 !important;
+        padding: 5px 10px !important;
         font-size: 13px !important;
+        line-height: 1.25;
+        box-sizing: border-box;
     }
     .komnete-doc-control input[type="checkbox"] {
         flex: 0 0 auto;
@@ -637,6 +643,7 @@ if ($komneteInvoiceQuery) {
         display: inline-flex;
         align-items: center;
         gap: 8px;
+        width: 100%;
         min-width: 0;
         max-width: 100%;
         font-size: 13px;
@@ -649,11 +656,14 @@ if ($komneteInvoiceQuery) {
         font-weight: 700;
     }
     .komnete-page > .col-md-3 .htext-add,
-    .komnete-page > .col-md-3 input,
+    .komnete-page > .col-md-3 input:not([type="checkbox"]),
     .komnete-page > .col-md-3 select {
         min-height: 34px;
         margin-top: 5px;
+        padding: 5px 10px !important;
         font-size: 13px !important;
+        line-height: 1.25;
+        box-sizing: border-box;
     }
     .komnete-sidebar-contact {
         margin-bottom: 16px;
@@ -903,13 +913,14 @@ if ($komneteInvoiceQuery) {
         width: 100%;
         margin-top: 8px;
     }
-    .komnete-page > #zv,
-    .komnete-page > #vs {
-        padding: 18px !important;
-        border: 1px solid #dfe6ec;
-        border-radius: 8px;
-        background: #fff;
-        box-shadow: 0 8px 22px rgba(31, 45, 58, 0.06);
+	    .komnete-page > #zv,
+	    .komnete-page > #vs,
+	    .komnete-page > .komnete-extra-column {
+	        padding: 18px !important;
+	        border: 1px solid #dfe6ec;
+	        border-radius: 8px;
+	        background: #fff;
+	        box-shadow: 0 8px 22px rgba(31, 45, 58, 0.06);
     }
     .komnete-page > #zv form {
         margin: 0;
@@ -936,27 +947,31 @@ if ($komneteInvoiceQuery) {
 	        float: none !important;
 	        clear: both;
 	        width: 100% !important;
-	        padding-right: 0 !important;
-	        padding-left: 0 !important;
 	    }
 	    .komnete-page > #zv > .komnete-current-comment,
 	    .komnete-page > #zv > .komnete-comments-history,
-	    .komnete-page > #zv > .komnete-extra-column {
+	    .komnete-page > #zv > .komnete-extra-column,
+	    .komnete-page > .komnete-extra-column {
 	        margin: 0 !important;
 	    }
-	    .komnete-page > #zv > .komnete-extra-column {
+	    .komnete-page > #zv > .komnete-extra-column,
+	    .komnete-page > .komnete-extra-column {
 	        margin-top: 8px !important;
 	    }
-	    .komnete-page > #zv > .komnete-extra-column > br {
+	    .komnete-page > #zv > .komnete-extra-column > br,
+	    .komnete-page > .komnete-extra-column > br {
 	        display: none;
 	    }
-	    .komnete-page > #zv > .komnete-extra-column > div#vladelec {
+	    .komnete-page > #zv > .komnete-extra-column > div#vladelec,
+	    .komnete-page > .komnete-extra-column > div#vladelec {
 	        margin-top: 0 !important;
 	    }
-	    .komnete-page > #zv > .komnete-extra-column > div#vladelec + div {
+	    .komnete-page > #zv > .komnete-extra-column > div#vladelec + div,
+	    .komnete-page > .komnete-extra-column > div#vladelec + div {
 	        margin-bottom: 18px !important;
 	    }
-	    .komnete-page > #zv > .komnete-extra-column > div#vladelec + div:last-child {
+	    .komnete-page > #zv > .komnete-extra-column > div#vladelec + div:last-child,
+	    .komnete-page > .komnete-extra-column > div#vladelec + div:last-child {
 	        margin-bottom: 0 !important;
 	    }
 	    .komnete-page > .col-md-6 {
@@ -1835,9 +1850,9 @@ if ($komneteInvoiceQuery) {
                 $currentStatusName = !empty($personlis['name']) ? $personlis['name'] : 'Не задан';
                 echo '<select id="status" name="status" onchange="staTus(this.value)">';
                 echo '<option value="0">'.$currentStatusName.'</option>';
-                $query3 = mysql_query("SELECT * from status WHERE del = '0' AND uslugi = '$savoir1[parent]' ORDER BY id ASC");
+                $query3 = mysql_query("SELECT * from status WHERE inv = '0' AND del = '0' AND uslugi = '$savoir1[parent]' ORDER BY id ASC");
                 while($row3 = mysql_fetch_array($query3)) {
-                    echo '<option value="'.$row3['id'].'">';
+                    echo '<option value="'.$row3['id'].'" data-savoir-status-id="'.$row3['id'].'">';
                     echo $row3['name'];
                     echo '</option>';
                 }
@@ -1933,9 +1948,53 @@ if ($komneteInvoiceQuery) {
                         }});
                 }
             }
-            $(function(){
-                $(".komnete-status-toggle").off("click.komneteStatus").on("click.komneteStatus", function(){
-                    var history = $("#komnete-status-history");
+	            $(function(){
+	                var hiddenStatusStorageKeys = [
+	                    <?php echo json_encode('savoirBottomTilesHidden:' . (string)$userdata['users_id'] . ':' . (string)$savoir1['parent']); ?>,
+	                    <?php echo json_encode('savoirBottomTilesHidden:' . (string)$userdata['users_id'] . ':' . (string)$userdata['inogrn']); ?>,
+	                    'savoirBottomTilesHidden'
+	                ].filter(function(storageKey, index, keys) {
+	                    return storageKey && keys.indexOf(storageKey) === index;
+	                });
+
+	                function readHiddenStatusTiles(storageKey) {
+	                    try {
+	                        var value = window.localStorage.getItem(storageKey);
+	                        var items = value ? JSON.parse(value) : [];
+	                        return Array.isArray(items) ? items : [];
+	                    } catch (e) {
+	                        return [];
+	                    }
+	                }
+
+	                function hideStoredStatusOptions() {
+	                    var hidden = [];
+
+	                    hiddenStatusStorageKeys.forEach(function(storageKey) {
+	                        hidden = hidden.concat(readHiddenStatusTiles(storageKey));
+	                    });
+
+	                    if (!hidden.length) {
+	                        return;
+	                    }
+
+	                    $("#status option[data-savoir-status-id]").each(function(){
+	                        var statusId = $(this).attr("data-savoir-status-id");
+	                        var tileId = "/toha.php?status=" + statusId;
+	                        var isHidden = hidden.some(function(hiddenTileId) {
+	                            return hiddenTileId === tileId || hiddenTileId.indexOf(tileId + "#") === 0;
+	                        });
+
+	                        if (isHidden) {
+	                            $(this).remove();
+	                        }
+	                    });
+	                }
+
+	                hideStoredStatusOptions();
+
+	                $(".komnete-status-toggle").off("click.komneteStatus").on("click.komneteStatus", function(){
+	                    var history = $("#komnete-status-history");
                     var willOpen = history.hasClass("is-collapsed");
                     history.toggleClass("is-collapsed", !willOpen);
                     $(this)

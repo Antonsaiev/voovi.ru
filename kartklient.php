@@ -169,7 +169,7 @@ $type_company = array(
 	<meta http-equiv="Content-Style-Type" content="text/css" />
 	<meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="css/bootstrap.min.css" rel="stylesheet">
-	<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js" ></script>
+		<script type="text/javascript" src="/js/jquery-1.11.0.min.js?v=kartklient-local"></script>
 	<script type="text/javascript"src="js/script.js" defer></script>
 <link rel="shortcut icon" href="/favicon.ico">
 
@@ -1150,6 +1150,11 @@ echo "</div>";
 </div>
 </div>
 
+<div class="col-md-12 kartklient-card kartklient-primechan-card">
+<h3 class="headerh3">Дополнительная информация</h3>
+<div class="kartklient-primechan-text"><?php echo nl2br(kartklient_h($person['primechan'])); ?></div>
+</div>
+
 
 
 
@@ -1647,7 +1652,7 @@ include 'footer.php';
         <br>
         <br>
 
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+    <script src="/js/jquery-1.11.0.min.js?v=kartklient-local"></script>
     <script src="js/bootstrap.min.js" async></script>
 	
 	

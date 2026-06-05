@@ -144,18 +144,22 @@ incoming
 FROM schet WHERE
 del = '0'  and akt='0' and cher=0 and otk='0' and idkli = '".$_GET['id']."' group by rand ORDER BY id desc ");
 
-while($row = mysql_fetch_array($query )) {
-		$udosrpod = "SELECT * FROM produkti WHERE id =".$row['produkt'];
-	$udosresultrpod = mysql_query($udosrpod);
-	$udospersonrpod = mysql_fetch_array($udosresultrpod);
+$kartSchetRows = array();
+while($row = mysql_fetch_array($query)) {
+    $kartSchetRows[] = $row;
+}
+include_once 'kart_schet_preload.php';
+kart_schet_preload($kartSchetRows, $userdata);
+
+foreach($kartSchetRows as $row) {
+	$udospersonrpod = isset($kartSchetProductMap[$row['produkt']]) ? $kartSchetProductMap[$row['produkt']] : array();
 
 if($userdata['inogrn'] != 89097565645){
-	if($udospersonrpod['parent'] == $userdata['inogrn']) {
+	if(isset($udospersonrpod['parent']) && $udospersonrpod['parent'] == $userdata['inogrn']) {
 		include 'inctoha.php';
 	}
 }else{
-	$udos = mysql_query("SELECT * FROM users_access WHERE users = '".$userdata['users_id']."' AND uslugi = '".$udospersonrpod['parent']."'");
-	while($udostup = mysql_fetch_array($udos)) {
+	if(isset($udospersonrpod['parent']) && isset($kartSchetUserAccess[$udospersonrpod['parent']])) {
 		include 'inctoha.php';
 	}
 }

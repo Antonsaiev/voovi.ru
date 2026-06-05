@@ -24,7 +24,61 @@ while ($row = mysql_fetch_assoc($products_query)) {
 // Преобразуем массив id в строку для использования в запросе с IN
 $id_list = implode(',', $product_ids);
 // echo "<script>console.log('product_ids: " . $id_list . "');</script>";
+
+function period_price_value($value)
+{
+    $value = trim(str_replace(array(' ', "\xc2\xa0"), '', $value));
+    $value = str_replace(',', '.', $value);
+
+    return is_numeric($value) ? (float)$value : 0;
+}
+
+function period_money($value)
+{
+    $value = (float)$value;
+    $formatted = number_format($value, 2, '.', ' ');
+
+    return rtrim(rtrim($formatted, '0'), '.');
+}
 ?>
+
+<style>
+.period-summary-chart-wrap {
+    width: 100%;
+    max-width: 1100px;
+    margin: 20px auto;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 28px;
+    clear: both;
+}
+.period-summary-chart-wrap table {
+    position: static;
+    float: none;
+    flex: 0 0 auto;
+}
+.period-summary-chart-diag {
+    width: 440px;
+    max-width: 45%;
+    min-width: 320px;
+    position: static;
+    float: none;
+}
+.period-summary-chart-diag canvas {
+    width: 100% !important;
+    height: auto !important;
+}
+@media (max-width: 900px) {
+    .period-summary-chart-wrap {
+        flex-direction: column;
+        align-items: center;
+    }
+    .period-summary-chart-diag {
+        max-width: 100%;
+    }
+}
+</style>
 
 <div class="by amt" style="
  width: 100%;
@@ -906,95 +960,97 @@ overflow-x: auto;
             $resproui = mysql_num_rows($rproui);
             $rperei = mysql_query("SELECT 1 FROM `schet` WHERE produkt IN ($id_list) and schet.del!='1'and schet.y='" . $_GET['y'] . "' and  schet.del = '0' and $statusperei   schet.akt = '0'  AND schet.otk = '0' AND schet.cher = '0' group by schet.rand");
             $resperei = mysql_num_rows($rperei);
-            $rsumm = mysql_query("SELECT schet.id,schet.ns,schet.rand,schet.shetold,schet.oplachenks,schet.url,schet.oplachen,schet.nomerschetks,DATE_FORMAT(schet.datezvon,'%d.%m.%Y') as date_zvon,schet.idkli,schet.gr,schet.ogrn,schet.lico,schet.datebron,schet.datezvon,schet.inn,schet.d,schet.m,schet.y,schet.kpp,schet.name as ogrn,produkti.name,schet.tipprod,schet.price,schet.priceks,users.f_name,users.l_name,users.o_name,kvobop.tip as yes,schet.status,schet.akt,schet.otk,schet.cher FROM `schet` WHERE produkt IN ($id_list) and  schet.del!='1'and schet.y='" . $_GET['y'] . "' group by schet.rand");
+            $rsumm = mysql_query("SELECT schet.rand,schet.oplachenks,schet.oplachen,schet.price,schet.priceks,schet.status,schet.akt,schet.otk,schet.cher,schet.doljen,schet.doljenop FROM `schet` WHERE schet.produkt IN ($id_list) and schet.del!='1'and schet.y='" . $_GET['y'] . "' group by schet.rand");
             while ($ressumm = mysql_fetch_assoc($rsumm))  :
-                $summobs += $ressumm['price'];
-                $summobks += $ressumm['priceks'];
+                $schet_price = period_price_value($ressumm['price']);
+                $schet_priceks = period_price_value($ressumm['priceks']);
+                $summobs += $schet_price;
+                $summobks += $schet_priceks;
                 if ($ressumm['akt'] == "0" && $ressumm['cher'] == "0" && $ressumm['otk'] == "0") {
 
                     if ($ressumm['status'] == "" && $ressumm['oplachenks'] != "1") {
-                        $summdols += $ressumm['price'];
-                        $summdolks += $ressumm['priceks'];
+                        $summdols += $schet_price;
+                        $summdolks += $schet_priceks;
                     }
                     if ($ressumm['status'] == "" && $ressumm['oplachenks'] == "1") {
-                        $summops += $ressumm['price'];
-                        $summopks += $ressumm['priceks'];
+                        $summops += $schet_price;
+                        $summopks += $schet_priceks;
                     }
                     if ($ressumm['status'] == "1" || $ressumm['status'] == "44" || $ressumm['status'] == "35") {
 
-                        $summgds += $ressumm['price'];
-                        $summgdks += $ressumm['priceks'];
+                        $summgds += $schet_price;
+                        $summgdks += $schet_priceks;
                     }
                     if ($ressumm['status'] == "2" || $ressumm['status'] == "45" || $ressumm['status'] == "36") {
 
-                        $summnaps += $ressumm['price'];
-                        $summnapks += $ressumm['priceks'];
+                        $summnaps += $schet_price;
+                        $summnapks += $schet_priceks;
                     }
                     if ($ressumm['status'] == "3" || $ressumm['status'] == "47" || $ressumm['status'] == "37") {
 
-                        $summotkls += $ressumm['price'];
-                        $summotklks += $ressumm['priceks'];
+                        $summotkls += $schet_price;
+                        $summotklks += $schet_priceks;
                     }
                     if ($ressumm['status'] == "4" || $ressumm['status'] == "48" || $ressumm['status'] == "38") {
 
-                        $summprovs += $ressumm['price'];
-                        $summprovks += $ressumm['priceks'];
+                        $summprovs += $schet_price;
+                        $summprovks += $schet_priceks;
                     }
                     if ($ressumm['status'] == "5" || $ressumm['status'] == "49" || $ressumm['status'] == "39") {
 
-                        $summposs += $ressumm['price'];
-                        $summposks += $ressumm['priceks'];
+                        $summposs += $schet_price;
+                        $summposks += $schet_priceks;
                     }
                     if ($ressumm['status'] == "6" || $ressumm['status'] == "50" || $ressumm['status'] == "40") {
 
-                        $summkkts += $ressumm['price'];
-                        $summkktvks += $ressumm['priceks'];
+                        $summkkts += $schet_price;
+                        $summkktvks += $schet_priceks;
                     }
                     if ($ressumm['status'] == "7" || $ressumm['status'] == "51" || $ressumm['status'] == "41") {
 
-                        $summkktks += $ressumm['price'];
-                        $summvkktkks += $ressumm['priceks'];
+                        $summkktks += $schet_price;
+                        $summvkktkks += $schet_priceks;
                     }
                     if ($ressumm['status'] == "16" || $ressumm['status'] == "52" || $ressumm['status'] == "42") {
-                        $summvies += $ressumm['price'];
-                        $summvieks += $ressumm['priceks'];
+                        $summvies += $schet_price;
+                        $summvieks += $schet_priceks;
                     }
                     if ($ressumm['status'] == "17" || $ressumm['status'] == "43" || $ressumm['status'] == "53") {
 
-                        $summusts += $ressumm['price'];
-                        $summustks += $ressumm['priceks'];
+                        $summusts += $schet_price;
+                        $summustks += $schet_priceks;
                     }
                     if ($ressumm['status'] == "18") {
-                        $summvusts += $ressumm['price'];
-                        $summvustks += $ressumm['priceks'];
+                        $summvusts += $schet_price;
+                        $summvustks += $schet_priceks;
                     }
                     if ($ressumm['status'] == "19") {
-                        $summpols += $ressumm['price'];
-                        $summpolks += $ressumm['priceks'];
+                        $summpols += $schet_price;
+                        $summpolks += $schet_priceks;
                     }
                     if ($ressumm['status'] == "20") {
-                        $summpolos += $ressumm['price'];
-                        $summpoloks += $ressumm['priceks'];
+                        $summpolos += $schet_price;
+                        $summpoloks += $schet_priceks;
                     }
                     if ($ressumm['status'] == "23" || $ressumm['status'] == "12356") {
-                        $summvozs += $ressumm['price'];
-                        $summvozks += $ressumm['priceks'];
+                        $summvozs += $schet_price;
+                        $summvozks += $schet_priceks;
                     }
                     if ($ressumm['status'] == "21") {
-                        $summchas += $ressumm['price'];
-                        $summchaks += $ressumm['priceks'];
+                        $summchas += $schet_price;
+                        $summchaks += $schet_priceks;
                     }
                     if ($ressumm['status'] == "65" || $ressumm['status'] == "60" || $ressumm['status'] == "77") {
-                        $summnaas += $ressumm['price'];
-                        $summnaaks += $ressumm['priceks'];
+                        $summnaas += $schet_price;
+                        $summnaaks += $schet_priceks;
                     }
                     if ($ressumm['status'] == "161") {
-                        $summpusts += $ressumm['price'];
-                        $summpustks += $ressumm['priceks'];
+                        $summpusts += $schet_price;
+                        $summpustks += $schet_priceks;
                     }
-                    if ($ressumm['status'] == "12354" || $rescher['status'] == "12355") {
-                        $summperes += $ressumm['price'];
-                        $summpereks += $ressumm['priceks'];
+                    if ($ressumm['status'] == "12354" || $ressumm['status'] == "12355") {
+                        $summperes += $schet_price;
+                        $summpereks += $schet_priceks;
                     }
                     if ($_GET['orgn'] == "12") {
                         $summvrabs = $summops + $summgds + $summnaps + $summotkls + $summprovs + $summposs + $summkkts + $summkktks + $summvies + $summusts + $summvusts + $summpols + $summpolos + $summchas + $summnaas + $summpusts;
@@ -1010,24 +1066,24 @@ overflow-x: auto;
                     }
                 }
                 if ($ressumm['akt'] == '1') {
-                    $summakts += $ressumm['price'];
-                    $summaktks += $ressumm['priceks'];
+                    $summakts += $schet_price;
+                    $summaktks += $schet_priceks;
                 }
                 if ($ressumm['akt'] == '1' && $ressumm['doljen'] == '1') {
-                    $summdoljens += $ressumm['price'];
-                    $summdoljenks += $ressumm['priceks'];
+                    $summdoljens += $schet_price;
+                    $summdoljenks += $schet_priceks;
                 }
                 if ($ressumm['akt'] == '1' && $ressumm['doljenop'] == '1') {
-                    $summdoljenops += $ressumm['price'];
-                    $summdoljenopks += $ressumm['priceks'];
+                    $summdoljenops += $schet_price;
+                    $summdoljenopks += $schet_priceks;
                 }
                 if ($ressumm['otk'] == '1' && $ressumm['cher'] == '0') {
-                    $summchers += $ressumm['price'];
-                    $summcherks += $ressumm['priceks'];
+                    $summchers += $schet_price;
+                    $summcherks += $schet_priceks;
                 }
                 if ($ressumm['otk'] == '0' && $ressumm['cher'] == '1') {
-                    $summotks += $ressumm['price'];
-                    $summaotkks += $ressumm['priceks'];
+                    $summotks += $schet_price;
+                    $summaotkks += $schet_priceks;
                 }
             endwhile;
             ?>
@@ -1180,152 +1236,6 @@ overflow-x: auto;
                 <? echo $resdoljenopi; ?>
             </td>
         </tr>
-        <tr>
-            <? if ($_GET['orgn'] == "12") { ?>
-                <td class="tdperiod" style="background-color:white;border:none;">
-                </td>
-                <td class="tdperiod" style="background-color:white;border:none;">
-                </td>
-                <td class="tdperiod" style="background-color:#78AFD8;">
-                    Аня
-                </td>
-                <td class="tdperiod" style="background-color:#FFF850;" colspan="5">
-                    Антон
-                </td>
-                <td class="tdperiod" style="background-color:#E9C3FB;">
-                    Кристина
-                </td>
-                <td class="tdperiod" style="background-color:#85D6D1;" colspan="2">
-                    Иван
-                </td>
-                <td class="tdperiod" style="background-color:#FFF850;">
-                    Антон
-                </td>
-                <td class="tdperiod" style="background-color:#FFB366;" colspan="2">
-                    Сергей Л
-                </td>
-                <td class="tdperiod" style="background-color:#FFF850;" colspan="2">
-                    Антон
-                </td>
-                <td class="tdperiod" style="background-color:#E76D74;">
-                    Аня
-                </td>
-                <td class="tdperiod" style="background-color:#E9C3FB;" colspan="2">
-                    Кристина
-                </td>
-                <td class="tdperiod" style="background-color:#FFB366;">
-                    Сергей Л
-                </td>
-                <td class="tdperiod" style="background-color:#90BEA3;">
-                </td>
-                <td class="tdperiod" style="background-color:#A0D7FF;">
-                    Аня
-                </td>
-                <td class="tdperiod" style="background-color:#FB9C9C;">
-                </td>
-                <td class="tdperiod" style="background-color:#BC9B79;">
-                </td>
-                <td class="tdperiod" style="background-color:#85D6A7;">
-                </td>
-                <td class="tdperiod" style="background-color:#E9C3FB;" colspan="2">
-                    Кристина
-                </td>
-            <? } ?>
-            <? if ($_GET['orgn'] == "24") { ?>
-                <td class="tdperiod" style="background-color:white;border:none;">
-                </td>
-                <td class="tdperiod" style="background-color:white;border:none;">
-                </td>
-                <td class="tdperiod" style="background-color:#78AFD8;">
-                    Иван
-                </td>
-                <td class="tdperiod" style="background-color:#FFF850;" colspan="2">
-                    Иван
-                </td>
-                <td class="tdperiod" style="background-color:#E9C3FB;">
-                    Иван
-                </td>
-                <td class="tdperiod" style="background-color:#85D6D1;" colspan="2">
-                    Иван
-                </td>
-                <td class="tdperiod" style="background-color:#FFF850;">
-                    Иван
-                </td>
-                <td class="tdperiod" style="background-color:#FFB366;" colspan="2">
-                    Сергей Л
-                </td>
-                <td class="tdperiod" style="background-color:#FFF850;" colspan="2">
-                    Иван
-                </td>
-                <td class="tdperiod" style="background-color:#E76D74;">
-                    Иван
-                </td>
-                <td class="tdperiod" style="background-color:#E9C3FB;">
-                    Иван
-                </td>
-                <td class="tdperiod" style="background-color:#90BEA3;">
-                    Иван
-                </td>
-                <td class="tdperiod" style="background-color:#A0D7FF;">
-                    Иван
-                </td>
-                <td class="tdperiod" style="background-color:#FB9C9C;">
-                    Иван
-                </td>
-                <td class="tdperiod" style="background-color:#BC9B79;">
-                    Иван
-                </td>
-                <td class="tdperiod" style="background-color:#85D6A7;">
-                </td>
-                <td class="tdperiod" style="background-color:#E9C3FB;" colspan="2">
-                    Иван
-                </td>
-            <? } ?>
-            <? if ($_GET['orgn'] == "22") { ?>
-                <td class="tdperiod" style="background-color:white;border:none;">
-                </td>
-                <td class="tdperiod" style="background-color:white;border:none;">
-                </td>
-                <td class="tdperiod" style="background-color:#78AFD8;">
-                    Роман
-                </td>
-                <td class="tdperiod" style="background-color:#FFF850;" colspan="2">
-                    Роман
-                </td>
-                <td class="tdperiod" style="background-color:#E9C3FB;">
-                    Роман
-                </td>
-                <td class="tdperiod" style="background-color:#85D6D1;" colspan="2">
-                    Роман
-                </td>
-                <td class="tdperiod" style="background-color:#FFF850;">
-                    Роман
-                </td>
-                <td class="tdperiod" style="background-color:#FFB366;" colspan="2">
-                    Роман
-                </td>
-                <td class="tdperiod" style="background-color:#85D6D1;" colspan="2">
-                    Роман
-                </td>
-                <td class="tdperiod" style="background-color:#E9C3FB;">
-                    Роман
-                </td>
-                <td class="tdperiod" style="background-color:#90BEA3;">
-                    Роман
-                </td>
-                <td class="tdperiod" style="background-color:#FB9C9C;">
-                    Роман
-                </td>
-                <td class="tdperiod" style="background-color:#BC9B79;">
-                    Роман
-                </td>
-                <td class="tdperiod" style="background-color:#85D6A7;">
-                </td>
-                <td class="tdperiod" style="background-color:#E9C3FB;" colspan="2">
-                    Роман
-                </td>
-            <? } ?>
-        </tr>
         </tbody>
     </table>
 </div>
@@ -1337,16 +1247,8 @@ width: 100%;
 margin-bottom: 20px;
 ">
     <? echo "Общий график за " . $_GET['y'] . " год"; ?>
-    <div style="
-    width: 1000px;
-    margin: 0 auto;
-    margin-top: 20px;
-    margin-bottom: 20px;
-	height: 400px;
-">
-        <table style="
-    float: left;position: absolute;
-">
+    <div class="period-summary-chart-wrap">
+        <table>
             <thead>
             <tr>
                 <th class="thobsh"><? echo $_GET['y']; ?></th>
@@ -1362,8 +1264,8 @@ margin-bottom: 20px;
                 <td class="tdobsh"><? echo $resdoli; ?></td>
                 <td class="tdobsh" id="procdol"><? $procdol = ($resdoli * 100) / $resi;
                     echo round($procdol, 1) . "%" ?></td>
-                <td class="tdobsh"><? echo $summdols; ?> руб</td>
-                <td class="tdobsh"><? echo $summdolks; ?> руб</td>
+                <td class="tdobsh"><? echo period_money($summdols); ?> руб</td>
+                <td class="tdobsh"><? echo period_money($summdolks); ?> руб</td>
             </tr>
             <tr>
                 <td class="tdobsh" style="background-color:#FFF850;">в работе</td>
@@ -1383,32 +1285,32 @@ margin-bottom: 20px;
                 </td>
                 <td class="tdobsh"><? $procvrab = ($vrab * 100) / $resi;
                     echo round($procvrab, 1) . "%" ?></td>
-                <td class="tdobsh"><? echo $summvrabs; ?> руб</td>
-                <td class="tdobsh"><? echo $summvrabks; ?> руб</td>
+                <td class="tdobsh"><? echo period_money($summvrabs); ?> руб</td>
+                <td class="tdobsh"><? echo period_money($summvrabks); ?> руб</td>
             </tr>
             <tr>
                 <td class="tdobsh" style="background-color:#85D6A7;">отгружен</td>
                 <td class="tdobsh"><? echo $kolot; ?></td>
                 <td class="tdobsh"><? $prockolot = ($kolot * 100) / $resi;
                     echo round($prockolot, 1) . "%" ?></td>
-                <td class="tdobsh"><? echo $summakts; ?> руб</td>
-                <td class="tdobsh"><? echo $summaktks; ?> руб</td>
+                <td class="tdobsh"><? echo period_money($summakts); ?> руб</td>
+                <td class="tdobsh"><? echo period_money($summaktks); ?> руб</td>
             </tr>
             <tr>
                 <td class="tdobsh" style="background-color:#FB9C9C;">отказ</td>
                 <td class="tdobsh"><? echo $rescheri; ?></td>
                 <td class="tdobsh"><? $procotk = ($rescheri * 100) / $resi;
                     echo round($procotk, 1) . "%" ?></td>
-                <td class="tdobsh"><? echo $summotks ?> руб</td>
-                <td class="tdobsh"><? echo $summaotkks ?> руб</td>
+                <td class="tdobsh"><? echo period_money($summotks); ?> руб</td>
+                <td class="tdobsh"><? echo period_money($summaotkks); ?> руб</td>
             </tr>
             <tr>
                 <td class="tdobsh" style="background-color:#BC9B79;">черновик</td>
                 <td class="tdobsh"><? echo $resotki; ?></td>
                 <td class="tdobsh"><? $proccher = ($resotki * 100) / $resi;
                     echo round($proccher, 1) . "%" ?></td>
-                <td class="tdobsh"><? echo $summchers ?> руб</td>
-                <td class="tdobsh"><? echo $summcherks ?> руб</td>
+                <td class="tdobsh"><? echo period_money($summchers); ?> руб</td>
+                <td class="tdobsh"><? echo period_money($summcherks); ?> руб</td>
             </tr>
             <? if ($_GET['orgn'] != "22") {
                 ?>
@@ -1417,43 +1319,38 @@ margin-bottom: 20px;
                     <td class="tdobsh"><? echo $resvozi; ?></td>
                     <td class="tdobsh"><? $procvozi = ($resvozi * 100) / $resi;
                         echo round($procvozi, 1) . "%" ?></td>
-                    <td class="tdobsh">руб</td>
-                    <td class="tdobsh">руб</td>
+                    <td class="tdobsh"><? echo period_money($summvozs); ?> руб</td>
+                    <td class="tdobsh"><? echo period_money($summvozks); ?> руб</td>
                 </tr>
                 <tr>
                 <td class="tdobsh" style="background-color:#A0D7FF;">переплата</td>
                 <td class="tdobsh"><? echo $resperei; ?></td>
                 <td class="tdobsh"><? $procpere = ($resperei * 100) / $resi;
                     echo round($procpere, 1) . "%" ?></td>
-                <td class="tdobsh">руб</td>
-                <td class="tdobsh">руб</td>
+                <td class="tdobsh"><? echo period_money($summperes); ?> руб</td>
+                <td class="tdobsh"><? echo period_money($summpereks); ?> руб</td>
                 </tr><? } ?>
             <tr>
                 <td class="tdobsh" style="background-color:white;">итого</td>
                 <td class="tdobsh"><? echo $resi; ?></td>
                 <td class="tdobsh"><? $procob = ($resi * 100) / $resi;
                     echo round($procob, 1) . "%" ?></td>
-                <td class="tdobsh"><? echo $summobs; ?> руб</td>
-                <td class="tdobsh"><? echo $summobks; ?> руб</td>
+                <td class="tdobsh"><? echo period_money($summobs); ?> руб</td>
+                <td class="tdobsh"><? echo period_money($summobks); ?> руб</td>
             </tr>
             <tr>
                 <td class="tdobsh" style="background-color:#E9C3FB;">долги</td>
                 <td class="tdobsh">
                     <? echo $resdoljeni + $resdoljenopi; ?>
+                </td>
                 <td class="tdobsh"><? $procob = (($resdoljeni + $resdoljenopi) * 100) / $resi;
                     echo round($procob, 1) . "%" ?></td>
-                <td class="tdobsh"><? echo $summdoljens + $summdoljenks ?> руб</td>
-                <td class="tdobsh"><? echo $summdoljenops + $summdoljenopks ?> руб</td>
-                </td>
+                <td class="tdobsh"><? echo period_money($summdoljens + $summdoljenks); ?> руб</td>
+                <td class="tdobsh"><? echo period_money($summdoljenops + $summdoljenopks); ?> руб</td>
             </tr>
             </tbody>
         </table>
-        <div id="diag" style="
-    width: 60%;
-    float: right;
-	bottom: 50px;
-    position: relative;
-">
+        <div id="diag" class="period-summary-chart-diag">
             <canvas id="myChart<? echo $_GET['y']; ?>" width="60" height="40"></canvas>
         </div>
     </div>

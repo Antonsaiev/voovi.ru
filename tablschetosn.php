@@ -742,14 +742,15 @@ $m=date('m');
 <style>
 .schet-table-scroll {
     width: 100%;
-    overflow-x: auto;
+    max-width: 100%;
+    margin-left: 0;
+    box-sizing: border-box;
+    overflow-x: hidden;
     overflow-y: visible;
-    cursor: grab;
     -webkit-overflow-scrolling: touch;
 }
-.schet-table-scroll.is-dragging {
-    cursor: grabbing;
-    user-select: none;
+body > .schet-table-scroll {
+    width: calc(100vw - 16px);
 }
 .schet-table {
     width: 100% !important;
@@ -761,17 +762,22 @@ $m=date('m');
 .schet-table th,
 .schet-table td {
     width: auto !important;
-    padding: 3px 5px;
-    font-size: 11px;
-    line-height: 1.15;
+    height: auto !important;
+    min-height: 0 !important;
+    padding: 5px 5px !important;
+    font-size: 13px !important;
+    line-height: 1.2 !important;
     white-space: normal;
     overflow-wrap: anywhere;
     word-break: break-word;
     vertical-align: middle;
 }
+.schet-table th {
+    font-size: 13px !important;
+}
 .schet-table th.schet-name-col,
 .schet-table td[style*="width: 30%"] {
-    width: 16% !important;
+    width: 10.5% !important;
 }
 .schet-table th[style*="width"],
 .schet-table td[style*="width"] {
@@ -780,16 +786,140 @@ $m=date('m');
     max-width: none;
 }
 .schet-table td[style*="width: 30%"] {
-    width: 16% !important;
+    width: 10.5% !important;
     min-width: 0;
     max-width: none;
     white-space: normal;
+}
+.schet-table .schet-nowrap-col,
+.schet-table .schet-nowrap-col p {
+    white-space: nowrap !important;
+    overflow-wrap: normal !important;
+    word-break: normal !important;
+}
+.schet-table .schet-nowrap-col {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 13px !important;
+}
+.schet-table th.schet-nowrap-col {
+    white-space: normal !important;
+    overflow: visible;
+    text-overflow: clip;
+    overflow-wrap: anywhere !important;
+    word-break: break-word !important;
+    font-size: 12px !important;
+}
+.schet-table .schet-nowrap-col p {
+    display: inline !important;
+    margin: 0 0 0 2px !important;
+}
+.schet-table .schet-nowrap-col p:first-child {
+    margin-left: 0 !important;
+}
+.schet-table .schet-nowrap-col br {
+    display: none;
+}
+.schet-table .schet-invoice-date-col {
+    width: 68px !important;
+}
+.schet-table .schet-invoice-number-col {
+    width: 80px !important;
+    font-size: 13px !important;
+}
+.schet-table .schet-old-invoice-col {
+    width: 120px !important;
+    font-size: 13px !important;
+}
+.schet-table .schet-inn-col {
+    width: 104px !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+}
+.schet-table .schet-kpp-col {
+    width: 78px !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+}
+.schet-table .schet-prolong-date-col {
+    width: 64px !important;
+    font-size: 13px !important;
+}
+.schet-table .schet-type-col {
+    width: 36px !important;
+}
+.schet-table .schet-sum-col {
+    width: 36px !important;
+    font-size: 13px !important;
+}
+.schet-table .schet-status-col {
+    width: 46px !important;
+    font-size: 13px !important;
+}
+.schet-table .schet-manager-col {
+    width: 46px !important;
+    font-size: 13px !important;
+}
+.schet-table .schet-control-date-col {
+    width: 70px !important;
+    font-size: 13px !important;
+    position: relative;
+    overflow: hidden !important;
+    text-overflow: ellipsis;
+}
+.schet-table .schet-product-col {
+    width: 60px !important;
+    font-size: 13px !important;
+}
+.schet-table .schet-company-col {
+    width: 160px !important;
+    font-size: 14px !important;
+}
+.schet-table .schet-small-col {
+    width: 28px !important;
+    font-size: 13px !important;
+    text-align: center;
+}
+.schet-table .schet-compact-text {
+    display: inline-block;
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: middle;
+}
+.schet-table .schet-account-text {
+    display: block;
+}
+.schet-table .schet-account-line {
+    display: block;
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.12;
+}
+.schet-table .schet-old-invoice-col .schet-account-text,
+.schet-table .schet-old-invoice-col .schet-account-line {
+    max-width: none !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+}
+.schet-table .schet-type-short {
+    display: inline-block;
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: middle;
 }
 .schet-table th:nth-last-child(-n+4),
 .schet-table td:nth-last-child(-n+4),
 .schet-table th:first-child,
 .schet-table td:first-child {
-    width: 30px !important;
+    width: 28px !important;
+    padding-left: 2px !important;
+    padding-right: 2px !important;
     text-align: center;
 }
 .schet-table p {
@@ -800,16 +930,29 @@ $m=date('m');
     padding: 0;
     list-style: none;
 }
-.schet-table img {
-    max-width: 18px;
-    height: auto;
+.schet-table .schet-control-date-col ul {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    max-width: 100%;
+    min-width: 0;
+    overflow: hidden;
 }
-@media (max-width: 1199px) {
-    .schet-table {
-        width: 1180px !important;
-        min-width: 1180px !important;
-        max-width: none;
-    }
+.schet-table .schet-control-date-col li {
+    display: block;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.schet-table .schet-control-date-col img {
+    flex: 0 0 auto;
+    max-width: 14px;
+}
+.schet-table img {
+    max-width: 20px;
+    height: auto;
 }
 </style>
 <div class="schet-table-scroll">
@@ -823,10 +966,6 @@ $m=date('m');
 {?>
 <th>Старый № счета</th>
 <?}?>
-    <?if($_GET['tip']=="prod"&&$_GET['tipi']=="2")
-    {?>
-        <th>Продлений</th>
-    <?}?>
 <th>дата счета</th>
 <th>№ счета</th>
 <th>инн</th>
@@ -878,7 +1017,6 @@ if( $res['tipprod']!='Сер/Пос'){?>
 <?$h++;?>
 <td><?echo $h;?></td>
 <td style="background:#C1BBBB;"><?echo $res['ns'];?><p><?echo $res['nomerschetks'];?></p></td>
-<td></td>
 <td style="background:#C1BBBB;">Ожидаем</td>
 <td style="background:#C1BBBB;">Ожидаем</td>
 <td><?echo $res['inn'];?></td>
@@ -956,6 +1094,9 @@ $(function(){
 
 <script>
 $(function() {
+  if (window.savoirCompactSchetTables) {
+    window.savoirCompactSchetTables();
+  }
   $("#myTable1").tablesorter();
 });
 var dat=document.getElementById('schetkal<?echo $res['rand'];?>').innerHTML;
@@ -1140,7 +1281,6 @@ if( $res['tipprod']=='Сер/Пос'&& stristr($res['date_se'], $_GET['naf'])==t
 <?$h++;?>
 <td><?echo $h;?></td>
 <td style="background:#C1BBBB;"><?echo $res['ns'];?><p><?echo $res['nomerschetks'];?></p></td>
-    <td></td>
 <td style="background:#C1BBBB;">Ожидаем</td>
 <td style="background:#C1BBBB;">Ожидаем</td>
 <td><?echo $res['inn'];?></td>
@@ -1384,7 +1524,6 @@ document.getElementById('schetzvons<?echo $res['rand'];?>').innerHTML=dat.split(
 <tr value="<?php echo $res['id'];?>"class="schetprodlenie">
 <td><?echo $h;?></td>
 <td style="background:#C1BBBB;"><?echo $res['ns'];?><p><?echo $res['nomerschetks'];?></p></td>
-    <td></td>
 <td style="background:#C1BBBB;">Ожидаем</td>
 <td style="background:#C1BBBB;">Ожидаем</td>
 <td><?echo $res['inn'];?></td>
@@ -13536,80 +13675,346 @@ $(function() {
 });</script>
 <script>
 (function() {
-  function isInteractive(node) {
-    while (node && node !== document && node.nodeType === 1) {
-      var tag = node.tagName ? node.tagName.toLowerCase() : '';
-      if (tag === 'a' || tag === 'input' || tag === 'textarea' || tag === 'select' || tag === 'button' || tag === 'label') {
-        return true;
+  function addClass(node, className) {
+    if (!node || !className) {
+      return;
+    }
+    if ((' ' + node.className + ' ').indexOf(' ' + className + ' ') === -1) {
+      node.className = node.className ? node.className + ' ' + className : className;
+    }
+  }
+
+  function cleanText(value) {
+    return (value || '').replace(/\s+/g, ' ').replace(/^\s+|\s+$/g, '');
+  }
+
+  function markColumn(table, index, className) {
+    var rows = table.rows;
+    for (var i = 0; i < rows.length; i++) {
+      if (rows[i].cells && rows[i].cells[index]) {
+        addClass(rows[i].cells[index], className);
+        if (className.indexOf('schet-nowrap-col') !== -1) {
+          setCellTitle(rows[i].cells[index]);
+        }
       }
-      node = node.parentNode;
-    }
-    return false;
-  }
-
-  function initSchetTableScroll() {
-    var scrolls = document.querySelectorAll('.schet-table-scroll');
-    for (var i = 0; i < scrolls.length; i++) {
-      (function(scroll) {
-        if (scroll.getAttribute('data-drag-scroll-ready') === '1') {
-          return;
-        }
-        scroll.setAttribute('data-drag-scroll-ready', '1');
-
-        var isDown = false;
-        var wasDragged = false;
-        var startX = 0;
-        var scrollLeft = 0;
-
-        scroll.addEventListener('mousedown', function(e) {
-          if (e.button !== 0 || isInteractive(e.target)) {
-            return;
-          }
-          isDown = true;
-          wasDragged = false;
-          startX = e.pageX;
-          scrollLeft = scroll.scrollLeft;
-          scroll.className += ' is-dragging';
-        });
-
-        function stopDrag() {
-          isDown = false;
-          scroll.className = scroll.className.replace(' is-dragging', '');
-        }
-
-        scroll.addEventListener('mouseleave', stopDrag);
-        scroll.addEventListener('mouseup', stopDrag);
-        scroll.addEventListener('mousemove', function(e) {
-          if (!isDown) {
-            return;
-          }
-          var walk = e.pageX - startX;
-          if (Math.abs(walk) > 3) {
-            wasDragged = true;
-            e.preventDefault();
-            scroll.scrollLeft = scrollLeft - walk;
-          }
-        });
-        scroll.addEventListener('click', function(e) {
-          if (!wasDragged) {
-            return;
-          }
-          e.preventDefault();
-          e.stopPropagation();
-          wasDragged = false;
-        }, true);
-      })(scrolls[i]);
     }
   }
+
+  function setCellTitle(cell) {
+    var fullText = cleanText(cell.textContent || cell.innerText || '');
+    if (fullText && !cell.getAttribute('title')) {
+      cell.setAttribute('title', fullText);
+    }
+  }
+
+  function cellParts(cell) {
+    var parts = [];
+    if (!cell) {
+      return parts;
+    }
+
+    for (var i = 0; i < cell.childNodes.length; i++) {
+      var node = cell.childNodes[i];
+      var text = '';
+
+      if (node.nodeType === 3) {
+        text = cleanText(node.nodeValue);
+      } else if (node.nodeType === 1) {
+        text = cleanText(node.textContent || node.innerText || '');
+      }
+
+      if (text) {
+        parts.push(text);
+      }
+    }
+
+    if (!parts.length) {
+      var fallback = cleanText(cell.textContent || cell.innerText || '');
+      if (fallback) {
+        parts.push(fallback);
+      }
+    }
+
+    return parts;
+  }
+
+  function shortAccountPart(value, isSecondary) {
+    value = cleanText(value).replace(/\s+/g, '');
+    if (!value) {
+      return '';
+    }
+    if (isSecondary && value.length > 14) {
+      return value.substr(0, 10) + '...' + value.substr(value.length - 3);
+    }
+    if (!isSecondary && value.length > 12) {
+      return value.substr(0, 9) + '...' + value.substr(value.length - 3);
+    }
+    return value;
+  }
+
+  function compactAccountCell(cell, keepTitle, showFullParts) {
+    if (!cell || cell.getAttribute('data-schet-account-ready') === '1') {
+      return;
+    }
+
+    var parts = cellParts(cell);
+    if (!parts.length) {
+      return;
+    }
+
+    var fullText = parts.join(' / ');
+    var displayParts = [];
+    for (var i = 0; i < parts.length; i++) {
+      displayParts.push(showFullParts ? cleanText(parts[i]).replace(/\s+/g, '') : shortAccountPart(parts[i], i > 0));
+    }
+
+    cell.setAttribute('data-schet-account-ready', '1');
+    if (keepTitle && parts.length > 1) {
+      cell.setAttribute('title', fullText);
+    } else {
+      cell.removeAttribute('title');
+    }
+    cell.innerHTML = '';
+
+    var span = document.createElement('span');
+    span.className = 'schet-compact-text schet-account-text';
+    for (var p = 0; p < displayParts.length; p++) {
+      var line = document.createElement('span');
+      line.className = 'schet-account-line';
+      line.textContent = displayParts[p];
+      span.appendChild(line);
+    }
+    cell.appendChild(span);
+  }
+
+  function shortDateText(value) {
+    return cleanText(value).replace(/(\d{4})[.-](\d{2})[.-](\d{2})|(\d{2})[.-](\d{2})[.-](\d{4})/g, function(match, y1, m1, d1, d2, m2, y2) {
+      if (y1) {
+        return d1 + '.' + m1 + '.' + y1.substr(2, 2);
+      }
+      return d2 + '.' + m2 + '.' + y2.substr(2, 2);
+    });
+  }
+
+  function compactDateCell(cell) {
+    if (!cell || cell.getAttribute('data-schet-date-ready') === '1') {
+      return;
+    }
+
+    var fullText = cleanText(cell.textContent || cell.innerText || '');
+    if (!fullText) {
+      return;
+    }
+
+    var matches = fullText.match(/\d{4}[.-]\d{2}[.-]\d{2}|\d{2}[.-]\d{2}[.-]\d{4}/g);
+    var displayText = shortDateText(fullText);
+    if (matches && matches.length > 1) {
+      var unique = [];
+      for (var i = 0; i < matches.length; i++) {
+        if (unique.indexOf(matches[i]) === -1) {
+          unique.push(matches[i]);
+        }
+      }
+      displayText = [];
+      for (var u = 0; u < unique.length; u++) {
+        displayText.push(shortDateText(unique[u]));
+      }
+      displayText = displayText.join('/');
+    }
+
+    cell.setAttribute('data-schet-date-ready', '1');
+    cell.setAttribute('title', fullText);
+    cell.innerHTML = '';
+
+    var span = document.createElement('span');
+    span.className = 'schet-compact-text';
+    span.textContent = displayText;
+    cell.appendChild(span);
+  }
+
+  function compactInteractiveDateCell(cell) {
+    if (!cell || cell.getAttribute('data-schet-interactive-date-ready') === '1') {
+      return;
+    }
+
+    var fullText = cleanText(cell.textContent || cell.innerText || '');
+    if (!fullText) {
+      return;
+    }
+
+    cell.setAttribute('data-schet-interactive-date-ready', '1');
+    cell.setAttribute('title', fullText);
+
+    var target = cell.querySelector('li') || cell;
+    var shortText = shortDateText(cleanText(target.textContent || target.innerText || ''));
+    if (shortText) {
+      target.textContent = shortText;
+    }
+  }
+
+  function shortTypeText(fullText) {
+    var text = cleanText(fullText);
+    var key = text.toLowerCase();
+    var map = {
+      'сертификат': 'Серт',
+      'поставка': 'Пост',
+      'сер/пос': 'С/П',
+      'установка': 'Уст',
+      'установка в офисе': 'Уст. оф.',
+      'техническое сопровождение': 'Тех. сопр.',
+      'сопровождение': 'Сопр'
+    };
+
+    if (map[key]) {
+      return map[key];
+    }
+    if (text.length <= 7) {
+      return text;
+    }
+
+    var words = text.split(' ');
+    if (words.length > 1) {
+      var shortWords = [];
+      for (var i = 0; i < words.length; i++) {
+        if (words[i]) {
+          shortWords.push(words[i].charAt(0).toUpperCase());
+        }
+      }
+      if (shortWords.length > 1) {
+        return shortWords.join('.') + '.';
+      }
+    }
+
+    return text.substr(0, 5);
+  }
+
+  function abbreviateTypeCell(cell) {
+    if (!cell || cell.getAttribute('data-schet-type-ready') === '1') {
+      return;
+    }
+
+    var fullText = cleanText(cell.textContent || cell.innerText || '');
+    if (!fullText) {
+      return;
+    }
+
+    cell.setAttribute('data-schet-type-ready', '1');
+    cell.setAttribute('title', fullText);
+    cell.innerHTML = '';
+
+    var shortNode = document.createElement('span');
+    shortNode.className = 'schet-type-short';
+    shortNode.textContent = shortTypeText(fullText);
+    cell.appendChild(shortNode);
+  }
+
+  window.savoirCompactSchetTables = function(root) {
+    root = root || document;
+    var tables = root.querySelectorAll ? root.querySelectorAll('.schet-table') : [];
+
+    for (var t = 0; t < tables.length; t++) {
+      var table = tables[t];
+      var headers = table.querySelectorAll('thead th');
+      var typeColumn = -1;
+
+      for (var h = 0; h < headers.length; h++) {
+        var label = cleanText(headers[h].textContent || headers[h].innerText || '').toLowerCase();
+        var compact = label.replace(/\s+/g, '');
+
+        if (label === '№') {
+          markColumn(table, h, 'schet-index-col');
+        }
+        if (compact === 'датасчета') {
+          markColumn(table, h, 'schet-nowrap-col schet-invoice-date-col');
+          var dateRows = table.tBodies && table.tBodies.length ? table.tBodies[0].rows : [];
+          for (var dr = 0; dr < dateRows.length; dr++) {
+            if (dateRows[dr].cells && dateRows[dr].cells[h]) {
+              compactDateCell(dateRows[dr].cells[h]);
+            }
+          }
+        }
+        if (compact === '№счета') {
+          markColumn(table, h, 'schet-nowrap-col schet-invoice-number-col');
+          var invoiceRows = table.tBodies && table.tBodies.length ? table.tBodies[0].rows : [];
+          for (var ir = 0; ir < invoiceRows.length; ir++) {
+            if (invoiceRows[ir].cells && invoiceRows[ir].cells[h]) {
+              compactAccountCell(invoiceRows[ir].cells[h], false, false);
+            }
+          }
+        }
+        if (compact === 'старый№счета') {
+          markColumn(table, h, 'schet-nowrap-col schet-old-invoice-col');
+          var oldInvoiceRows = table.tBodies && table.tBodies.length ? table.tBodies[0].rows : [];
+          for (var oir = 0; oir < oldInvoiceRows.length; oir++) {
+            if (oldInvoiceRows[oir].cells && oldInvoiceRows[oir].cells[h]) {
+              compactAccountCell(oldInvoiceRows[oir].cells[h], true, true);
+            }
+          }
+        }
+        if (compact === 'инн') {
+          markColumn(table, h, 'schet-nowrap-col schet-inn-col');
+        }
+        if (compact === 'кпп') {
+          markColumn(table, h, 'schet-nowrap-col schet-kpp-col');
+        }
+        if (compact === 'продление') {
+          markColumn(table, h, 'schet-nowrap-col schet-prolong-date-col');
+          var prolongRows = table.tBodies && table.tBodies.length ? table.tBodies[0].rows : [];
+          for (var pr = 0; pr < prolongRows.length; pr++) {
+            if (prolongRows[pr].cells && prolongRows[pr].cells[h]) {
+              compactDateCell(prolongRows[pr].cells[h]);
+            }
+          }
+        }
+        if (compact === 'тип') {
+          typeColumn = h;
+          markColumn(table, h, 'schet-nowrap-col schet-type-col');
+        }
+        if (compact === 'к' || compact === 'с') {
+          markColumn(table, h, 'schet-sum-col');
+        }
+        if (compact === 'статус') {
+          markColumn(table, h, 'schet-status-col');
+        }
+        if (compact === 'менеджер') {
+          markColumn(table, h, 'schet-manager-col');
+        }
+        if (compact === 'контрольбронь' || compact === 'датазвонка') {
+          markColumn(table, h, 'schet-nowrap-col schet-control-date-col');
+          var controlRows = table.tBodies && table.tBodies.length ? table.tBodies[0].rows : [];
+          for (var cr = 0; cr < controlRows.length; cr++) {
+            if (controlRows[cr].cells && controlRows[cr].cells[h]) {
+              compactInteractiveDateCell(controlRows[cr].cells[h]);
+            }
+          }
+        }
+        if (compact === 'наименование') {
+          markColumn(table, h, 'schet-company-col');
+        }
+        if (compact === 'продукт') {
+          markColumn(table, h, 'schet-product-col');
+        }
+      }
+
+      if (typeColumn !== -1) {
+        var rows = table.tBodies && table.tBodies.length ? table.tBodies[0].rows : [];
+        for (var r = 0; r < rows.length; r++) {
+          if (rows[r].cells && rows[r].cells[typeColumn]) {
+            abbreviateTypeCell(rows[r].cells[typeColumn]);
+          }
+        }
+      }
+    }
+  };
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initSchetTableScroll);
+    document.addEventListener('DOMContentLoaded', function() {
+      window.savoirCompactSchetTables();
+    });
   } else {
-    initSchetTableScroll();
+    window.savoirCompactSchetTables();
   }
 })();
-</script>
-<script>
 
 /*$( "#datestart" ).change(function () {
 	document.getElementById('modal-shadowkube').style.display="block";

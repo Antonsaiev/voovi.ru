@@ -82,11 +82,18 @@ $added = 0;   // то же самое, оставляю как у тебя
 $seen_allowed = 0; // сколько "разрешённых" строк мы увидели (после dotdel-фильтра)
 
 if ($q) {
+    $otgrRows = array();
+    while ($row = mysql_fetch_assoc($q)) {
+        $otgrRows[] = $row;
+    }
+    include_once __DIR__ . '/kart_schet_preload.php';
+    kart_schet_preload($otgrRows, $userdata);
+
     // Нумерация: продолжаем после активных счетов (number_start) и учитываем offset по архивным.
     // Первая подгруженная строка в этой пачке = number_start + offset, далее $iz++ в inctoha.php.
     $iz = $number_start + $offset;
 
-    while ($row = mysql_fetch_assoc($q)) {
+    foreach ($otgrRows as $row) {
         // Проверка доступа как в inctoha.php:
         // там: if(substr_count($userdata['dotdel'], $row['otdel']) == 1) { echo <tr>... }
         // Значит: если dotdel пустой, то всё будет пропущено.

@@ -100,8 +100,8 @@ else
         .service-list-head,
         .service-card-main {
             display: grid;
-            grid-template-columns: minmax(320px, 1fr) 120px 240px;
-            gap: 14px;
+            grid-template-columns: minmax(320px, 1fr) 170px 150px;
+            gap: 16px;
             align-items: center;
         }
 
@@ -130,6 +130,7 @@ else
 
         .service-card-main {
             padding: 15px 16px;
+            cursor: pointer;
             transition: background 0.15s ease;
         }
 
@@ -160,20 +161,57 @@ else
             font-weight: 700;
         }
 
-        .service-count {
-            display: inline-block;
-            min-width: 42px;
-            padding: 4px 9px;
-            border-radius: 4px;
-            background: #eef7f4;
+        .service-products {
+            display: inline-flex;
+            align-items: center;
+            gap: 9px;
+            max-width: 100%;
+            padding: 7px 10px;
+            border: 1px solid #cfe7dd;
+            border-radius: 6px;
+            background: linear-gradient(180deg, #f9fffc 0%, #eef8f4 100%);
+            color: #334155;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
+        }
+
+        .service-products .glyphicon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            flex: 0 0 28px;
+            border-radius: 5px;
+            background: #dff3eb;
             color: #0f766e;
-            font-size: 13px;
+            font-size: 12px;
+        }
+
+        .service-products-text {
+            display: flex;
+            min-width: 0;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .service-count {
+            color: #0f5132;
+            font-size: 18px;
+            font-weight: 800;
+            line-height: 1;
+        }
+
+        .service-count-label {
+            color: #64748b;
+            font-size: 11px;
             font-weight: 700;
-            text-align: center;
+            line-height: 1;
+            text-transform: uppercase;
         }
 
         .service-actions {
             position: relative;
+            cursor: default;
             white-space: nowrap;
             text-align: right;
         }
@@ -296,11 +334,6 @@ echo '
 
 
 	<div class="service-list">
-    <div class="service-list-head">
-        <div>Компания</div>
-        <div>Продуктов</div>
-        <div></div>
-    </div>
 					<?php
 					
 						$num = 30;
@@ -324,7 +357,7 @@ echo '
 								if($row['del'] == 1){
 									echo ' is-archived';
 								}
-								echo '"><div class="service-card-main"><div>';
+								echo '"><div class="service-card-main" onclick="window.location.href=\'new_produkt.php?parent='.$row['id'].'\'"><div>';
                                 echo '<div class="service-name">';
 								echo $row['name'];
                                 echo '</div>';
@@ -332,16 +365,11 @@ echo '
 									echo '<span class="service-archived-label">Архив</span>';
 								}
 								echo '</div>';
-								echo '<div><span class="service-count">';
+								echo '<div class="service-products"><span class="glyphicon glyphicon-th-large" aria-hidden="true"></span><span class="service-products-text"><span class="service-count">';
 								$result = mysql_query("SELECT count(*) from produkti WHERE parent = '".$row['id']."' AND del = '0'");
 								echo mysql_result($result, 0);
-								echo '</span></div>';
-								echo '<div class="service-actions">';
-								if($row['del'] == 0){
-								echo '<a class="btn btn-primary btn-sm" href="new_produkt.php?parent='.$row['id'].'">Продукты</a>';
-								}
-								
-								
+								echo '</span><span class="service-count-label">продуктов</span></span></div>';
+								echo '<div class="service-actions" onclick="event.stopPropagation();">';
 								if($row['del'] == 0){
 								echo '<button type="button" onclick="send_old'.$row['id'].'()" class="btn btn-default btn-sm" value="Отправить в архив"><span class="glyphicon glyphicon-trash" aria-hidden="true"></span>В архив</button>';
 								echo '<div id="issetdiv'.$row['id'].'" class="contai service-archive-popup" style="display:none;">Вы точно хотите отправить в архив?<br>
@@ -369,7 +397,7 @@ echo '
 								if($row['del'] == 1){
 									echo ' is-archived';
 								}
-								echo '"><div class="service-card-main"><div>';
+								echo '"><div class="service-card-main" onclick="window.location.href=\'new_produkt.php?parent='.$row['id'].'\'"><div>';
                                 echo '<div class="service-name">';
 								echo $row['name'];
                                 echo '</div>';
@@ -377,16 +405,11 @@ echo '
 									echo '<span class="service-archived-label">Архив</span>';
 								}
 								echo '</div>';
-								echo '<div><span class="service-count">';
+								echo '<div class="service-products"><span class="glyphicon glyphicon-th-large" aria-hidden="true"></span><span class="service-products-text"><span class="service-count">';
 								$result = mysql_query("SELECT count(*) from produkti WHERE parent = '".$row['id']."' AND del = '0'");
 								echo mysql_result($result, 0);
-								echo '</span></div>';
-								echo '<div class="service-actions">';
-								if($row['del'] == 0){
-								echo '<a class="btn btn-primary btn-sm" href="new_produkt.php?parent='.$row['id'].'">Продукты</a>';
-								}
-								
-								
+								echo '</span><span class="service-count-label">продуктов</span></span></div>';
+								echo '<div class="service-actions" onclick="event.stopPropagation();">';
 								if($row['del'] == 0){
 								echo '<button type="button" onclick="send_old'.$row['id'].'()" class="btn btn-default btn-sm" value="Отправить в архив"><span class="glyphicon glyphicon-trash" aria-hidden="true"></span>В архив</button>';
 								echo '<div id="issetdiv'.$row['id'].'" class="contai service-archive-popup" style="display:none;">Вы точно хотите отправить в архив?<br>

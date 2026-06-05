@@ -399,7 +399,59 @@ $fullName = short_name($userdata);
         }
         .company-table-pane .schet-table th.schet-name-col,
         .company-table-pane .schet-table td[style*="width: 30%"] {
-            width: 16% !important;
+            width: 10.5% !important;
+        }
+        .company-table-pane .schet-table .schet-nowrap-col {
+            white-space: nowrap !important;
+            overflow-wrap: normal !important;
+            word-break: normal !important;
+        }
+        .company-table-pane .schet-table .schet-inn-col {
+            width: 112px !important;
+            min-width: 112px !important;
+            overflow: visible !important;
+            text-overflow: clip !important;
+        }
+        .company-table-pane .schet-table .schet-kpp-col {
+            width: 84px !important;
+            min-width: 84px !important;
+            overflow: visible !important;
+            text-overflow: clip !important;
+        }
+        .company-table-pane .schet-table .schet-old-invoice-col {
+            width: 150px !important;
+            min-width: 150px !important;
+        }
+        .company-table-pane .schet-table .schet-old-invoice-col .schet-account-text,
+        .company-table-pane .schet-table .schet-old-invoice-col .schet-account-line {
+            max-width: none !important;
+            white-space: nowrap !important;
+            overflow: visible !important;
+            text-overflow: clip !important;
+        }
+        .company-table-pane .schet-table .schet-control-date-col {
+            overflow: hidden !important;
+            text-overflow: ellipsis;
+        }
+        .company-table-pane .schet-table .schet-control-date-col ul {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            max-width: 100%;
+            min-width: 0;
+            overflow: hidden;
+        }
+        .company-table-pane .schet-table .schet-control-date-col li {
+            display: block;
+            min-width: 0;
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .company-table-pane .schet-table .schet-control-date-col img {
+            flex: 0 0 auto;
+            max-width: 14px;
         }
         .company-table-pane .schet-table th:nth-last-child(-n+4),
         .company-table-pane .schet-table td:nth-last-child(-n+4),

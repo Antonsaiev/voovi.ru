@@ -1,0 +1,80 @@
+-- Индексы для ускорения kartklient.php, нижних счетчиков header_counts_ajax.php
+-- и построчного рендера счетов через tabl.php / inctoha.php.
+--
+-- В старых MariaDB не везде доступен CREATE INDEX IF NOT EXISTS,
+-- поэтому если часть индексов уже есть, запускайте только отсутствующие команды.
+
+CREATE INDEX idx_schet_rand
+    ON schet (`rand`(32));
+
+CREATE INDEX idx_schet_kart_client_active
+    ON schet (`idkli`, `del`, `akt`, `cher`, `otk`, `id`, `rand`(32));
+
+CREATE INDEX idx_schet_header_status
+    ON schet (`del`, `status`(32), `otk`, `akt`, `cher`, `produkt`(32), `rand`(32));
+
+CREATE INDEX idx_schet_header_paid
+    ON schet (`del`, `status`(32), `oplachenks`, `gotov`, `akt`, `otk`, `cher`, `produkt`(32), `rand`(32));
+
+CREATE INDEX idx_schet_header_my_unpaid
+    ON schet (`kto`(32), `del`, `gotov`, `akt`, `otk`, `cher`, `oplachenks`, `oplachen`, `produkt`(32), `rand`(32));
+
+CREATE INDEX idx_schet_header_doljenop
+    ON schet (`del`, `doljenop`, `cher`, `produkt`(32), `rand`(32));
+
+CREATE INDEX idx_schet_header_doljen
+    ON schet (`del`, `doljen`, `cher`, `produkt`(32), `rand`(32));
+
+CREATE INDEX idx_schet_header_postprod
+    ON schet (`del`, `postprod`, `cher`, `otk`, `produkt`(32), `rand`(32));
+
+CREATE INDEX idx_schet_header_turbo
+    ON schet (`del`, `turbo`, `akt`, `otk`, `cher`, `produkt`(32), `rand`(32));
+
+CREATE INDEX idx_schet_header_shipped
+    ON schet (`del`, `akt_date`(8), `akt`, `cher`, `produkt`(32), `rand`(32));
+
+CREATE INDEX idx_schet_ns_dateotkaz
+    ON schet (`ns`, `dateotkaz`);
+
+CREATE INDEX idx_schet_produkt
+    ON schet (`produkt`(32));
+
+CREATE INDEX idx_schet_status_schet_id
+    ON schet_status (`schet`(32), `id`);
+
+CREATE INDEX idx_schetoldkomment_schet_id
+    ON schetoldkomment (`schet`(32), `id`);
+
+CREATE INDEX idx_schetizbran_kto_schet
+    ON schetizbran (`kto`, `schet`(32));
+
+CREATE INDEX idx_kvobop_schet
+    ON kvobop (`schet`(32));
+
+CREATE INDEX idx_dokstamp_ogrn_schet
+    ON dokstamp (`ogrn`(32), `schet`(32));
+
+CREATE INDEX idx_document_availability_rand
+    ON document_availability (`rand`);
+
+CREATE INDEX idx_document_data_rand
+    ON document_data (`rand`);
+
+CREATE INDEX idx_klient_ogrn_idkli_id
+    ON klient_ogrn (`idkli`(32), `id`);
+
+CREATE INDEX idx_ogrn_svyaz_id
+    ON ogrn (`svyaz`(32), `id`);
+
+CREATE INDEX idx_call_center_idogrn_ns_date
+    ON call_center (`idogrn`, `ns`, `date`(8));
+
+CREATE INDEX idx_users_access_user_uslugi
+    ON users_access (`users`(32), `uslugi`(32));
+
+CREATE INDEX idx_produkti_parent
+    ON produkti (`parent`(32));
+
+CREATE INDEX idx_status_uslugi_inv_del
+    ON status (`uslugi`(32), `inv`, `del`, `id`);

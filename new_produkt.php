@@ -246,6 +246,7 @@ function product_save_uploaded_icon($productId, $fieldName, &$error)
             gap: 14px;
             align-items: center;
             padding: 15px 16px;
+            cursor: pointer;
             transition: background 0.15s ease;
         }
 
@@ -298,6 +299,7 @@ function product_save_uploaded_icon($productId, $fieldName, &$error)
             align-items: center;
             gap: 8px;
             margin: 0;
+            cursor: default;
         }
 
         .product-icon-input {
@@ -334,6 +336,7 @@ function product_save_uploaded_icon($productId, $fieldName, &$error)
         }
 
         .product-tel-cell {
+            cursor: default;
             text-align: center;
         }
 
@@ -343,6 +346,7 @@ function product_save_uploaded_icon($productId, $fieldName, &$error)
 
         .product-actions {
             position: relative;
+            cursor: default;
             white-space: nowrap;
             text-align: right;
         }
@@ -575,7 +579,7 @@ $body=file_get_contents("http://sms.ru/sms/send?api_id=513439c3-5ece-a954-e5b2-3
                                     $iconUrl = product_icon_url($iconValue);
                                     $iconIsSprite = product_icon_is_sprite($iconUrl);
                                     $iconPosition = $iconIsSprite ? '7px -300px' : 'center';
-									echo '<div class="product-card"><div class="product-card-main">';
+									echo '<div class="product-card"><div class="product-card-main js-product-row" data-tarif-url="new_tarif.php?parent='.intval($row['id']).'">';
                                     echo '<div><span class="product-icon-preview'; if ($iconIsSprite) { echo ' is-sprite'; } echo '" style="background-image: url(\''.product_h($iconUrl).'\'); background-position: '.product_h($iconPosition).';"></span></div>';
                                     echo '<div>';
 									echo '<div class="product-name">'.$row['name'].'</div>';
@@ -618,6 +622,17 @@ $body=file_get_contents("http://sms.ru/sms/send?api_id=513439c3-5ece-a954-e5b2-3
 </div>
 				 <script>
 $(document).ready(function () {
+    $(".js-product-row").on("dblclick", function (e) {
+        if ($(e.target).closest("a, button, input, form, label, .product-actions, .product-icon-upload, .product-tel-cell").length) {
+            return;
+        }
+
+        var url = $(this).data("tarif-url");
+        if (url) {
+            window.location.href = url;
+        }
+    });
+
     $(".js-product-description-toggle").click(function () {
         var button = $(this);
         var target = $(button.data("target"));

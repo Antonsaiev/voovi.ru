@@ -1836,6 +1836,7 @@
 .savoir-bottom-navbar .savoir-status-nav>li{
 	display:flex;
 	align-items:center;
+	flex-direction:row-reverse;
 	flex:0 0 auto;
 	float:none;
 	gap:6px;
@@ -2619,17 +2620,24 @@
 	border-radius:0;
 	box-shadow:none;
 }
+.kartklient-info-column>.kartklient-card:not(:last-child){
+	border-bottom:8px solid #d4e0ea;
+	box-shadow:inset 0 -1px 0 #9fb3c6;
+}
 .kartklient-info-column>.kartklient-card+.kartklient-card{
 	margin-top:0!important;
-	border-top:1px solid #e7eef5;
+	border-top:0;
 }
 .kartklient-info-column>.kartklient-card>h3.headerh3,
 .kartklient-info-column>.kartklient-card>h3.headerbl{
 	margin:0!important;
-	padding:9px 12px!important;
+	padding:12px 12px!important;
 	border-bottom:1px solid #e7eef5!important;
 	border-radius:0!important;
 	background:#f7fafc!important;
+}
+.kartklient-info-column>.kartklient-collapsible-card>h3.headerh3.collapsed{
+	border-bottom:0!important;
 }
 .kartklient-info-column>.kartklient-card:first-child>h3.headerh3,
 .kartklient-info-column>.kartklient-card:first-child>h3.headerbl{
@@ -2665,9 +2673,6 @@
 	font-size:11px;
 	transition:transform .18s ease;
 }
-.kartklient-collapse-toggle:not(.collapsed) .glyphicon{
-	transform:rotate(180deg);
-}
 .kartklient-collapse-heading:not(.collapsed) .kartklient-collapse-toggle .glyphicon{
 	transform:rotate(180deg);
 }
@@ -2698,7 +2703,8 @@
 	background:#fff;
 }
 .kartklient-info-column>.kartklient-card:not(:last-child) .table{
-	border-bottom:1px solid #edf2f7;
+	border-bottom:0;
+	box-shadow:none;
 }
 .kartklient-info-column .table>thead>tr>th,
 .kartklient-info-column .table>tbody>tr>td,
@@ -2755,6 +2761,10 @@
 	background:#fff;
 	border-collapse:separate;
 	border-spacing:0;
+}
+.kartklient-info-column>.kartklient-card .table{
+	margin:0!important;
+	border-collapse:collapse;
 }
 .kartklient-card .table>thead>tr>th{
 	padding:8px 9px!important;
@@ -2835,6 +2845,15 @@
 		border-color:#8bb7d6;
 		box-shadow:0 0 0 2px rgba(51,122,183,.12);
 	}
+.kartklient-primechan-text{
+	min-height:80px;
+	padding:4px 2px;
+	color:#263746;
+	font-size:14px;
+	line-height:1.55;
+	white-space:normal;
+	overflow-wrap:anywhere;
+}
 	.kartklient-contact-picker{
 		padding:0 0 2px;
 	}
