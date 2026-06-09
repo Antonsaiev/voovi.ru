@@ -73,7 +73,17 @@ $schet = mysql_fetch_array($schetresult);
 $kli = "SELECT * FROM ogrn WHERE id =".$_GET['kli'];
 $kliresult = mysql_query($kli);
 $klient = mysql_fetch_array($kliresult);
-$sav1 = "SELECT * FROM produkti WHERE id = '".$schet['produkt']."' ORDER BY id DESC";
+$komneteRandSql = mysql_real_escape_string(isset($_GET['rand']) ? $_GET['rand'] : '');
+$komneteRequestedProductId = isset($_GET['produkt']) ? intval($_GET['produkt']) : 0;
+$komneteCurrentProductId = isset($schet['produkt']) ? intval($schet['produkt']) : 0;
+$komneteProductId = $komneteCurrentProductId;
+if ($komneteRequestedProductId > 0 && $komneteRandSql !== '') {
+    $komneteProductInInvoiceResult = mysql_query("SELECT id FROM schet WHERE del = '0' AND rand = '".$komneteRandSql."' AND produkt = '".$komneteRequestedProductId."' LIMIT 1");
+    if ($komneteProductInInvoiceResult && mysql_fetch_array($komneteProductInInvoiceResult)) {
+        $komneteProductId = $komneteRequestedProductId;
+    }
+}
+$sav1 = "SELECT * FROM produkti WHERE id = '".$komneteProductId."' ORDER BY id DESC";
 $savresult1 = mysql_query($sav1);
 $savoir1 = mysql_fetch_array($savresult1);
 $sav = "SELECT * FROM uslugi WHERE id = '".$savoir1['parent']."' ORDER BY id DESC";
