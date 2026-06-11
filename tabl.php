@@ -77,7 +77,6 @@
 <th style="width: 80px; text-align: center;">Выставил</th>
 <th style="width: 80px; text-align: center;">Агент</th>
 <th style="width: 1px;">Исполнитель</th>
-<th style="width: 1px;">Открыть</th>
 </tr>
 </thead>
 
@@ -86,6 +85,7 @@
 if(isset($_GET['gotov'])){
 $gotov = $_GET['gotov'];
 }
+$render_kartklient_schet_table = true;
 $iz = 1;
 $otgr_number_start = 0; // после цикла сюда запишем следующий номер для нумерации архивных строк
 $query = mysql_query("SELECT DISTINCT

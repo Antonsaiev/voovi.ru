@@ -53,7 +53,13 @@ if(substr_count($userdata['dotdel'], $row['otdel']) == 1){
     if(!empty($row['nomerschetks'])){
         //echo $row['nomerschetks'];
         $nomerschetks = array("№", " ", "С", "ч", "е", "т");
-        echo str_replace($nomerschetks, "", $row['nomerschetks']);
+        $nomerschetksText = str_replace($nomerschetks, "", $row['nomerschetks']);
+        $schetExternalUrl = isset($row['url']) ? trim((string)$row['url']) : '';
+        if (!empty($render_kartklient_schet_table) && $schetExternalUrl !== '' && $schetExternalUrl !== '0') {
+            echo '<a target="_blank" href="'.htmlspecialchars($schetExternalUrl, ENT_QUOTES, 'UTF-8').'">'.htmlspecialchars($nomerschetksText, ENT_QUOTES, 'UTF-8').'</a>';
+        } else {
+            echo $nomerschetksText;
+        }
     }else{
         echo '&mdash;';
     }
@@ -801,13 +807,18 @@ $("#generacinfo'.$row['rand'].'").load(" #generacinfo'.$row['rand'].'");
 }});}}
 </script>';
     echo '</td>';
-    echo '<td>';
-    echo "<a href='kartklient.php?id=".$row['idkli']."'><span class='glyphicon glyphicon-folder-open' aria-hidden='true'></span></a>";
-    if($row['url'] == "0"){
-    }else{
-        echo "&nbsp;&nbsp;<a target='_blank' href='".$row['url']."'><span class='glyphicon glyphicon-share' aria-hidden='true'></span></a>";
+    if (empty($render_kartklient_schet_table)) {
+        echo '<td>';
+        echo "<a href='kartklient.php?id=".$row['idkli']."'><span class='glyphicon glyphicon-folder-open' aria-hidden='true'></span></a>";
+        if($row['url'] == "0"){
+        }else{
+            echo "&nbsp;&nbsp;<a target='_blank' href='".$row['url']."'><span class='glyphicon glyphicon-share' aria-hidden='true'></span></a>";
+        }
+        echo '</td>';
     }
-    echo '</td>';
-    echo '<td class="lab"  onclick="f(this)" id='.$row['god'].$row['kto'].$row['otdel'].$row['kolichschet'].'>'.$row['data_napom'];
-    echo'</td></tr>';
+    if (empty($render_kartklient_schet_table)) {
+        echo '<td class="lab"  onclick="f(this)" id='.$row['god'].$row['kto'].$row['otdel'].$row['kolichschet'].'>'.$row['data_napom'];
+        echo'</td>';
+    }
+    echo'</tr>';
 }

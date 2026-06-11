@@ -124,6 +124,7 @@ if ($q) {
         // 3) Генерим TR ровно твоим inctoha.php
         ob_start();
         // ВАЖНО: inctoha.php использует $row, $userdata, $iz (и еще много глобальных функций/includes)
+        $render_kartklient_schet_table = true;
         include __DIR__ . '/inctoha.php';
         $chunk = ob_get_clean();
 
