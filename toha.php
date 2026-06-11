@@ -805,18 +805,12 @@ $query = mysql_query("SELECT DISTINCT
 
 schet.ns,schet.status,kolichschet,d,m,y,nomerschet,otl3,nomerschetks,ogrn,prodlen,generac,schet.name,lico,doljenop,rand,otdel,filial,god,nomerdog,schet.data,produkt,price,schet.kto,inn,kpp,idkli,goroddd,akt_date,otk,cher,ust_sert,krossprod,
 prodplus,incoming,postprod,koment,oplachen,
-oplachenks,priceks,doljen,gotov,akt,url,groupi,install,gr,agent,data_napom,b.data,toha_produkti.parent AS produkt_parent
+oplachenks,priceks,doljen,gotov,akt,url,groupi,install,gr,agent,data_napom,toha_produkti.parent AS produkt_parent
 
 FROM schet 
 $tohaAccessJoin
-LEFT JOIN schet_status b
-    ON b.id = (
-        SELECT MAX(ss.id)
-        FROM schet_status ss
-        WHERE ss.schet = schet.rand
-    )
 
-WHERE schet.del = '0' AND $groupi $tohaSearchWhere $getakt $turbo $gotov $status $goroddd $akt_date $gen_date $postavka $generac $oplachenks $doljenop $oplachen $neoplachen $doljen $otk $cher $ust_sert $krossprod $prodplus $incoming $postprod $moy $y $m $d $tohaAccessWhere ORDER BY STR_TO_DATE(b.data, '%d.%m.%Y; %H:%i'), CAST(CONCAT(y, '-', m, '-', d) AS DATE) asc ");
+WHERE schet.del = '0' AND $groupi $tohaSearchWhere $getakt $turbo $gotov $status $goroddd $akt_date $gen_date $postavka $generac $oplachenks $doljenop $oplachen $neoplachen $doljen $otk $cher $ust_sert $krossprod $prodplus $incoming $postprod $moy $y $m $d $tohaAccessWhere ORDER BY schet.id ASC ");
 
 while($row = mysql_fetch_array($query)) {
 //    echo "<script>console.log('Row:', " . json_encode($row) . ");</script>";

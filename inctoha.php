@@ -53,9 +53,9 @@ if(substr_count($userdata['dotdel'], $row['otdel']) == 1){
     if(!empty($row['nomerschetks'])){
         //echo $row['nomerschetks'];
         $nomerschetks = array("№", " ", "С", "ч", "е", "т");
-        echo '<span class="glyphicon glyphicon-barcode" aria-hidden="true" style="display: initial;"></span>',str_replace($nomerschetks, "", $row['nomerschetks']);
+        echo str_replace($nomerschetks, "", $row['nomerschetks']);
     }else{
-        echo 'Забыли';
+        echo '&mdash;';
     }
     echo '</td>';
     echo '<td id="date'.$row['rand'].'" style="text-align: center; width: 4%; font-size: 14px;">';

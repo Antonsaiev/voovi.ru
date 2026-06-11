@@ -1840,7 +1840,7 @@ if ($komneteInvoiceQuery) {
                         $nomerschetks = array("№", " ", "С", "ч", "е", "т");
                         echo 'K_',str_replace($nomerschetks, "", $schet['nomerschetks']);
                     }else{
-                        echo 'Забыли';
+                        echo '&mdash;';
                     }
                 }
             ?></span></span>
