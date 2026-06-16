@@ -392,14 +392,11 @@ function updateDocuments($rand, $d_bill=null, $d_contract=null, $d_specification
     return json_encode($newDocuments);
 }
 
-$typeContract = $_POST['typeContract'];
-$rand = $_POST['rand'];
-if($rand and $typeContract){
-include 'conf.php';
-//echo '<script>console.log("'.$rand, $typeContract.'")</script>';
-$ret = updateDocuments($rand, null, null, null, null, null, null, null, $typeContract);
-//echo '<script>console.log("'.$ret.'")</script>';
+if (isset($_POST['rand'], $_POST['typeContract']) && $_POST['rand'] && $_POST['typeContract']) {
+    if (!defined('DB_HOST')) {
+        include 'conf.php';
+    }
+    //echo '<script>console.log("'.$_POST['rand'], $_POST['typeContract'].'")</script>';
+    $ret = updateDocuments($_POST['rand'], null, null, null, null, null, null, null, $_POST['typeContract']);
+    //echo '<script>console.log("'.$ret.'")</script>';
 }
-?>
-
-

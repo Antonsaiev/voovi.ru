@@ -52,7 +52,8 @@ if(isset($_REQUEST) && count($_REQUEST)>0){
 		$data.=$key."=".$val."\n";
 	}
 	$fps = date("Y-m-d H:i:s")." ".$_SERVER['REMOTE_ADDR']." ".$_SERVER['REQUEST_METHOD']." ".$_SERVER['SCRIPT_FILENAME']."\n".$data."---------------------------\n";
-	mysql_query("INSERT INTO `voovi`.`aaa_log` (`row`,`users`) VALUES ('".mysql_real_escape_string($fps)."','".mysql_real_escape_string($_COOKIE['id'])."');");
+	$logUserId = isset($_COOKIE['id']) ? $_COOKIE['id'] : '';
+	mysql_query("INSERT INTO `voovi`.`aaa_log` (`row`,`users`) VALUES ('".mysql_real_escape_string($fps)."','".mysql_real_escape_string($logUserId)."');");
 	$data="";
 	reset($_REQUEST);
 }

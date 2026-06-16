@@ -48,15 +48,9 @@ $error[2] = 'Войдите на сайт';
 			$val=substr($val,0,2000);
 			$data.=$key."=".$val."\n";
 		}
-		//$fp=fopen(__DIR__ ."/AAAlog-post.txt","a");
-		
 		$fps = date("Y-m-d H:i:s")." ".$_SERVER['REMOTE_ADDR']." ".$_SERVER['REQUEST_METHOD']." ".$_SERVER['SCRIPT_FILENAME']."\n".$data."---------------------------\n";
-		
-		//fwrite($fp,date("Y-m-d H:i:s")." ".$_SERVER['REMOTE_ADDR']." ".$_SERVER['REQUEST_METHOD']." ".$_SERVER['SCRIPT_FILENAME']."\n".$data."---------------------------\n");
-		mysql_query("INSERT INTO `voovi`.`aaa_log` (`row`,`users`) VALUES ('".$fps."','".$_COOKIE['id']."');");
-		fclose($fp);
+		$logUserId = isset($_COOKIE['id']) ? $_COOKIE['id'] : '';
+		mysql_query("INSERT INTO `voovi`.`aaa_log` (`row`,`users`) VALUES ('".mysql_real_escape_string($fps)."','".mysql_real_escape_string($logUserId)."');");
 		$data="";
 		reset($_REQUEST);
 	}
-
-?>

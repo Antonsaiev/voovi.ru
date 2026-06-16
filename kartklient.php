@@ -1,6 +1,26 @@
 <?php
 # подключаем конфиг
 include 'conf.php';
+
+# проверка авторизации
+if (isset($_COOKIE['id']) and isset($_COOKIE['hash']))
+{
+    $userdata = mysql_fetch_assoc(mysql_query("SELECT * FROM users WHERE users_id = '".intval($_COOKIE['id'])."' LIMIT 1"));
+
+    if(!$userdata || $userdata['users_hash'] !== $_COOKIE['hash'] || $userdata['users_id'] !== $_COOKIE['id'])
+    {
+        setcookie('id', '', time() - 60*24*30*12, '/');
+        setcookie('hash', '', time() - 60*24*30*12, '/');
+        setcookie('errors', '1', time() + 60*24*30*12, '/');
+        header('Location: index.php'); exit();
+    }
+}
+else
+{
+  setcookie('errors', '2', time() + 60*24*30*12, '/');
+  header('Location: index.php'); exit();
+}
+
 include 'invoice_action.php';
 
 if (!function_exists('kartklient_h')) {
@@ -44,29 +64,6 @@ $qq = "SELECT * from tekkli WHERE idkli = '".$_GET['id']."'";
 
 $qqq = mysql_query("SELECT DISTINCT nomerschet,otdel,filial,god,nomerdog,data,produkt,price,priceks,kto,rand FROM schet WHERE del = '0' AND idkli = '".$_GET['id']."'");
 $perq = mysql_fetch_array($qqq);
-
-
-
-# проверка авторизации
-if (isset($_COOKIE['id']) and isset($_COOKIE['hash']))
-{
-    $userdata = mysql_fetch_assoc(mysql_query("SELECT * FROM users WHERE users_id = '".intval($_COOKIE['id'])."' LIMIT 1"));
-
-    if(($userdata['users_hash'] !== $_COOKIE['hash']) or ($userdata['users_id'] !== $_COOKIE['id']))
-    {
-        setcookie('id', '', time() - 60*24*30*12, '/');
-        setcookie('hash', '', time() - 60*24*30*12, '/');
-    setcookie('errors', '1', time() + 60*24*30*12, '/');
-    header('Location: index.php'); exit();
-    }
-}
-else
-{
-  setcookie('errors', '2', time() + 60*24*30*12, '/');
-  header('Location: index.php'); exit();
-}
-
-
 
 ?>
 
