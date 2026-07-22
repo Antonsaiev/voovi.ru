@@ -87,7 +87,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($action === 'create_tarif' || $action === 'update_tarif') {
         $data = new_tarif_collect_form_data($productId);
 
-        if ($data['name'] === '') {
+        if ($action === 'create_tarif' && $data['name'] === '') {
             $message = 'Укажите название тарифа.';
             $messageType = 'danger';
         } elseif (voovi_tarif_nullable_int($data['group_tarif']) === null) {
@@ -540,10 +540,12 @@ while ($model = mysql_fetch_assoc($modelQuery)) {
                                     <input type="hidden" name="action" value="update_tarif">
                                     <input type="hidden" name="tarif_parent_id" value="<?php echo $tarifParentId; ?>">
                                     <div class="row">
+                                        <!--
                                         <div class="col-sm-4">
                                             <label>Название</label>
                                             <input class="form-control" type="text" name="name" value="<?php echo new_tarif_h($name); ?>" required>
                                         </div>
+                                        -->
                                         <div class="col-sm-2">
                                             <label>Цена</label>
                                             <input class="form-control" type="text" name="price" value="<?php echo new_tarif_h($row['price']); ?>">

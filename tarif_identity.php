@@ -230,6 +230,9 @@ if (!function_exists('voovi_tarif_escape')) {
 
         $current = voovi_tarif_get_current_version($parentId);
 
+        // A tariff name is immutable after creation.
+        $data['name'] = $parent['name'] !== '' ? $parent['name'] : (isset($current['name']) ? $current['name'] : '');
+
         voovi_tarif_query(voovi_tarif_parent_update_sql($parentId, $data, $parent, $current));
         voovi_tarif_query("UPDATE tarif SET del = '1' WHERE sync_id = " . $parentId . " AND del = '0'");
 
