@@ -810,7 +810,19 @@ oplachenks,priceks,doljen,gotov,akt,url,groupi,install,gr,agent,data_napom,toha_
 FROM schet 
 $tohaAccessJoin
 
-WHERE schet.del = '0' AND $groupi $tohaSearchWhere $getakt $turbo $gotov $status $goroddd $akt_date $gen_date $postavka $generac $oplachenks $doljenop $oplachen $neoplachen $doljen $otk $cher $ust_sert $krossprod $prodplus $incoming $postprod $moy $y $m $d $tohaAccessWhere ORDER BY schet.id ASC ");
+LEFT JOIN (
+    SELECT
+        schet,
+        MAX(id) AS last_status_id
+    FROM schet_status
+    GROUP BY schet
+) toha_last_status
+    ON toha_last_status.schet = schet.rand
+
+WHERE schet.del = '0' AND $groupi $tohaSearchWhere $getakt $turbo $gotov $status $goroddd $akt_date $gen_date $postavka $generac $oplachenks $doljenop $oplachen $neoplachen $doljen $otk $cher $ust_sert $krossprod $prodplus $incoming $postprod $moy $y $m $d $tohaAccessWhere
+-- ORDER BY schet.id ASC
+ORDER BY toha_last_status.last_status_id ASC, schet.id ASC
+");
 
 while($row = mysql_fetch_array($query)) {
 //    echo "<script>console.log('Row:', " . json_encode($row) . ");</script>";
