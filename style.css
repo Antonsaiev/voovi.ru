@@ -1735,7 +1735,149 @@
 	visibility:hidden!important;
 	pointer-events:none!important;
 }
+.savoir-shipped-period{
+	display:none;
+	position:fixed;
+	inset:0;
+	z-index:12000;
+	align-items:center;
+	justify-content:center;
+	padding:20px;
+	background:rgba(18, 27, 38, .68);
+	backdrop-filter:blur(3px);
+}
+.savoir-shipped-period.is-open{
+	display:flex;
+}
+.savoir-shipped-period-dialog{
+	width:100%;
+	max-width:470px;
+	padding:24px;
+	background:#fff;
+	border-radius:16px;
+	box-shadow:0 24px 70px rgba(0, 0, 0, .28);
+}
+.savoir-shipped-period-head{
+	display:flex;
+	align-items:flex-start;
+	justify-content:space-between;
+	gap:20px;
+	margin-bottom:20px;
+}
+.savoir-shipped-period-kicker{
+	margin-bottom:4px;
+	color:#3f8f52;
+	font-size:12px;
+	font-weight:700;
+	letter-spacing:.08em;
+	text-transform:uppercase;
+}
+.savoir-shipped-period-head h3{
+	margin:0;
+	color:#1f2937;
+	font-size:22px;
+	line-height:1.25;
+}
+.savoir-shipped-period-close{
+	width:34px;
+	height:34px;
+	padding:0;
+	border:0;
+	border-radius:50%;
+	background:#eef1f4;
+	color:#4b5563;
+	font-size:25px;
+	line-height:32px;
+}
+.savoir-shipped-period-close:hover,
+.savoir-shipped-period-close:focus{
+	background:#dfe5ea;
+	color:#111827;
+}
+.savoir-shipped-period-year-label{
+	display:block;
+	margin-bottom:6px;
+	color:#4b5563;
+	font-size:13px;
+	font-weight:600;
+}
+.savoir-shipped-period-year{
+	height:42px;
+	margin-bottom:16px;
+	font-size:16px;
+}
+.savoir-shipped-period-months{
+	display:grid;
+	grid-template-columns:repeat(3, 1fr);
+	gap:8px;
+}
+.savoir-shipped-period-month{
+	min-height:42px;
+	padding:9px 8px;
+	border:1px solid #dce2e7;
+	border-radius:9px;
+	background:#f8fafb;
+	color:#374151;
+	font-size:14px;
+	transition:background-color .15s ease, border-color .15s ease, color .15s ease;
+}
+.savoir-shipped-period-month:hover,
+.savoir-shipped-period-month:focus{
+	border-color:#77aa83;
+	background:#edf7ef;
+}
+.savoir-shipped-period-month.is-selected{
+	border-color:#3f8f52;
+	background:#3f8f52;
+	color:#fff;
+	font-weight:600;
+}
+.savoir-shipped-period-actions{
+	margin-top:20px;
+}
+.savoir-shipped-period-submit{
+	display:flex;
+	align-items:center;
+	justify-content:center;
+	gap:10px;
+	width:100%;
+	min-height:52px;
+	padding:13px 22px;
+	border:0;
+	border-radius:12px;
+	background:linear-gradient(135deg, #3f9b57 0%, #2f7f45 100%);
+	box-shadow:0 10px 22px rgba(47, 127, 69, .24);
+	color:#fff;
+	font-size:16px;
+	font-weight:700;
+	letter-spacing:.01em;
+	transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+}
+.savoir-shipped-period-submit:hover,
+.savoir-shipped-period-submit:focus{
+	background:linear-gradient(135deg, #46aa60 0%, #31834a 100%);
+	box-shadow:0 13px 28px rgba(47, 127, 69, .32);
+	color:#fff;
+	outline:0;
+	transform:translateY(-1px);
+}
+.savoir-shipped-period-submit:active{
+	box-shadow:0 6px 14px rgba(47, 127, 69, .22);
+	transform:translateY(1px);
+}
+.savoir-shipped-period-submit .glyphicon{
+	font-size:15px;
+}
 @media (max-width:767px){
+	.savoir-shipped-period{
+		padding:12px;
+	}
+	.savoir-shipped-period-dialog{
+		padding:18px;
+	}
+	.savoir-shipped-period-months{
+		grid-template-columns:repeat(2, 1fr);
+	}
 	.savoir-top-navbar .savoir-top-container{
 		padding-left:18px;
 		padding-right:18px;

@@ -620,6 +620,8 @@ if($tohaSearchValue !== ""){
 }
 if(isset($_GET['akt'])){
 $getakt=" AND schet.akt = '$_GET[akt]'";
+}elseif($tohaSearchValue !== ""){
+$getakt="";
 }else{
 $getakt=" AND schet.akt != '1'";
 }
@@ -766,7 +768,9 @@ $noprice="AND noprice = '$_GET[noprice]'";
 
 $tohaAccessJoin = "INNER JOIN produkti toha_produkti ON toha_produkti.id = schet.produkt";
 $tohaAccessWhere = "";
-if($userdata['inogrn'] != 89097565645){
+if($tohaSearchValue !== ""){
+    $tohaAccessJoin .= " INNER JOIN users_access toha_search_access ON toha_search_access.uslugi = toha_produkti.parent AND toha_search_access.users = '".mysql_real_escape_string($userdata['users_id'])."'";
+}elseif($userdata['inogrn'] != 89097565645){
     $tohaAccessWhere = "AND toha_produkti.parent = '".mysql_real_escape_string($userdata['inogrn'])."'";
 }else{
     $tohaAccessJoin .= " INNER JOIN users_access toha_access ON toha_access.uslugi = toha_produkti.parent AND toha_access.users = '".mysql_real_escape_string($userdata['users_id'])."'";

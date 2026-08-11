@@ -28,7 +28,7 @@ savoir_bottom_tile(
 );
 
 if ($userdata['otvetstven'] == '1') {
-    echo '<a onclick="barak()" style="background: #3FA043;" title="Отгруженные" class="macintosh btn btn-xs">';
+    echo '<a href="#" onclick="barak(); return false;" style="background: #3FA043;" title="Отгруженные" class="macintosh btn btn-xs" aria-haspopup="dialog">';
     echo '<span class="glyphicon glyphicon-ok" aria-hidden="true"></span> ';
     echo savoir_bottom_count_badge('shipped', 'badgee');
     echo '</a>';
