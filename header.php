@@ -1123,7 +1123,7 @@
         <a class="savoir-menu-link" href="/admin_dela.php"><span class="glyphicon glyphicon-user"></span><span>Все организации</span></a>
         <a class="savoir-menu-link" href="/us_manager.php"><i class="icon-users"></i><span>Пользователи</span></a>
         <?php
-        if($userdata['users_id'] == 4 || $userdata['users_id'] == 3||$userdata['users_id'] == 17||$userdata['users_id'] == 27||$userdata['users_id'] == 8||$userdata['users_id'] == 6||$userdata['users_id'] == 12){
+        if($userdata['users_id'] == 4 || $userdata['users_id'] == 3||$userdata['users_id'] == 17||$userdata['users_id'] == 27||$userdata['users_id'] == 8||$userdata['users_id'] == 6||$userdata['users_id'] == 11){
             echo '<a class="savoir-menu-link" href="/new_usluga.php"><span class="glyphicon glyphicon-cloud"></span><span>Новая услуга</span></a>';
         }
         ?>
