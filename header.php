@@ -43,37 +43,34 @@
         jQuery.fn.exists = function() {
             return jQuery(this).length;
         }
+
+        function isLegacyPhoneId(id, prefix) {
+            var suffix = id.substring(prefix.length);
+            var index = parseInt(suffix, 10);
+            return String(index) === suffix && index >= 0 && index < 99999;
+        }
+
+        function initPhoneFields(prefix, mask, placeholder) {
+            $('[id^="' + prefix + '"]').each(function() {
+                if (!isLegacyPhoneId(this.id, prefix)) {
+                    return;
+                }
+
+                $(this)
+                    .mask(mask)
+                    .addClass('rfield')
+                    .removeAttr('required')
+                    .removeAttr('pattern')
+                    .removeAttr('title')
+                    .attr({'placeholder': placeholder});
+            });
+        }
         //	Phone Mask
         $(function() {
 
             if(!is_mobile()){
-
-
-
-
-                for (var i = 0; i < 99999; i++) {
-                    if($('#user_phone' + i).exists()){
-                        $('#user_phone' + i).each(function(){
-                            $(this).mask("9(999) 999-99-99");
-                        });
-                        $('#user_phone' + i)
-                            .addClass('rfield')
-                            .removeAttr('required')
-                            .removeAttr('pattern')
-                            .removeAttr('title')
-                            .attr({'placeholder':'_(___) ___ __ __'});
-                    }  if($('#guser_phone' + i).exists()){
-                        $('#guser_phone' + i).each(function(){
-                            $(this).mask("9(9999) 99-99-99");
-                        });
-                        $('#guser_phone' + i)
-                            .addClass('rfield')
-                            .removeAttr('required')
-                            .removeAttr('pattern')
-                            .removeAttr('title')
-                            .attr({'placeholder':'_(____) __ __ __'});
-                    }
-                }
+                initPhoneFields('user_phone', '9(999) 999-99-99', '_(___) ___ __ __');
+                initPhoneFields('guser_phone', '9(9999) 99-99-99', '_(____) __ __ __');
             }
         });
 
@@ -147,39 +144,37 @@
     });
 
 
-    for(var i=1000000; i<=9999999; i++) {
-        function countRabbits(i) {
-            var ministr = i+"";
-            var miniogrn = ministr.substring(0,5);
-            var miniprod = ministr.substring(5,7);
+    function countRabbits(i) {
+        var ministr = i+"";
+        var miniogrn = ministr.substring(0,5);
+        var miniprod = ministr.substring(5,7);
+        $("#newschetmini").empty();
+        $.ajax({
+            type: "GET",
+            url: "./newschetmini.php",
+            data: "id=" + miniogrn + "&parent=" + miniprod,
+            success: function(msg){
+                var minis = document.getElementById("newschetmini");
+                newdiv.innerHTML = msg;
+            }
+        });
+        var minic = document.getElementById("newschetmini");
+        var newdiv = document.createElement("div");
+        var exit = document.createElement("div");
+        minic.appendChild(newdiv);
+        minic.appendChild(exit);
+        newdiv.className = "martin";
+        newdiv.width = document.documentElement.clientWidth - document.documentElement.clientWidth / 15;
+        exit.className = "exit";
+        exit.id = "exit" + i;
+        var minit = document.createTextNode("");
+        minic.appendChild(minit);
+        document.getElementById("newschetmini").className = "contaidivmini";
+        document.getElementById("schetsubmit").style.cssText="margin-bottom: 5px; border-radius: 0; height: 24px;margin-top: 3px;margin-right: -4px;border:none;    line-height: 23px;";
+        $("#exit" + i).click(function(){
             $("#newschetmini").empty();
-            $.ajax({
-                type: "GET",
-                url: "./newschetmini.php",
-                data: "id=" + miniogrn + "&parent=" + miniprod,
-                success: function(msg){
-                    var minis = document.getElementById("newschetmini");
-                    newdiv.innerHTML = msg;
-                }
-            });
-            var minic = document.getElementById("newschetmini");
-            var newdiv = document.createElement("div");
-            var exit = document.createElement("div");
-            minic.appendChild(newdiv);
-            minic.appendChild(exit);
-            newdiv.className = "martin";
-            newdiv.width = document.documentElement.clientWidth - document.documentElement.clientWidth / 15;
-            exit.className = "exit";
-            exit.id = "exit" + i;
-            var minit = document.createTextNode("");
-            minic.appendChild(minit);
-            document.getElementById("newschetmini").className = "contaidivmini";
-            document.getElementById("schetsubmit").style.cssText="margin-bottom: 5px; border-radius: 0; height: 24px;margin-top: 3px;margin-right: -4px;border:none;    line-height: 23px;";
-            $("#exit" + i).click(function(){
-                $("#newschetmini").empty();
-                document.getElementById("newschetmini").className = "";
-            });
-        }
+            document.getElementById("newschetmini").className = "";
+        });
     }
 
 
@@ -1841,26 +1836,83 @@ document.write(string);
                         return String(numberValue).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
                     }
 
+                    function formatNumber(value) {
+                        var numberValue = Number(value);
+                        if (!isFinite(numberValue)) {
+                            numberValue = 0;
+                        }
+                        if (typeof numeral === 'function') {
+                            return numeral(numberValue).format("0,0");
+                        }
+                        return String(Math.round(numberValue)).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+                    }
+
                     function applyCounts(counts) {
                         var badges = document.querySelectorAll('[data-savoir-count-key]');
                         for (var i = 0; i < badges.length; i++) {
                             var key = badges[i].getAttribute('data-savoir-count-key');
-                            badges[i].innerHTML = formatCount(counts && counts.hasOwnProperty(key) ? counts[key] : 0);
+                            var value = counts && counts.hasOwnProperty(key) ? counts[key] : 0;
+                            if (badges[i].getAttribute('data-savoir-count-format') === 'plain') {
+                                var plainValue = parseInt(value, 10);
+                                badges[i].innerHTML = String(isNaN(plainValue) ? 0 : plainValue);
+                            } else if (badges[i].getAttribute('data-savoir-count-format') === 'number') {
+                                badges[i].innerHTML = formatNumber(value);
+                            } else {
+                                badges[i].innerHTML = formatCount(value);
+                            }
+                        }
+
+                        var highlights = document.querySelectorAll('[data-savoir-highlight-key]');
+                        for (var j = 0; j < highlights.length; j++) {
+                            var highlightKey = highlights[j].getAttribute('data-savoir-highlight-key');
+                            var highlightValue = counts && counts.hasOwnProperty(highlightKey) ? parseInt(counts[highlightKey], 10) : 0;
+                            if (!isNaN(highlightValue) && highlightValue > 0) {
+                                highlights[j].setAttribute('style', 'font-size: 14px; color: #fff; background-color: #3b5998; display: inline-block; text-align: center;');
+                            }
+                        }
+                    }
+
+                    function showCountsUnavailable() {
+                        var badges = document.querySelectorAll('[data-savoir-count-key]');
+                        for (var i = 0; i < badges.length; i++) {
+                            if (badges[i].innerHTML === '...') {
+                                badges[i].innerHTML = '&mdash;';
+                            }
                         }
                     }
 
                     function loadBottomCounts() {
                         var xhr = new XMLHttpRequest();
+                        var settled = false;
+
+                        function fail() {
+                            if (settled) {
+                                return;
+                            }
+                            settled = true;
+                            showCountsUnavailable();
+                        }
+
                         xhr.open('GET', '/header_counts_ajax.php', true);
+                        xhr.timeout = 15000;
                         xhr.onreadystatechange = function () {
-                            if (xhr.readyState !== 4 || xhr.status !== 200) {
+                            if (xhr.readyState !== 4) {
+                                return;
+                            }
+                            if (xhr.status !== 200) {
+                                fail();
                                 return;
                             }
                             try {
                                 var data = JSON.parse(xhr.responseText);
                                 applyCounts(data.counts || {});
-                            } catch (e) {}
+                                settled = true;
+                            } catch (e) {
+                                fail();
+                            }
                         };
+                        xhr.onerror = fail;
+                        xhr.ontimeout = fail;
                         xhr.send(null);
                     }
 
@@ -1891,123 +1943,21 @@ document.write(string);
                             <li><a href="#"></a></li>
                             <li class="slonalert slonalert-success">
                                 <strong>S:</strong>
-                                <?php
-                                echo'<script type="text/javascript">
-var c=';
-                                $query = mysql_query("SELECT DISTINCT price,priceks,rand,akt,kto,akt_date,cher from schet WHERE akt = '1' AND cher='0'AND kto = '".$userdata['users_id']."' AND akt_date = '".date('ym')."' AND del = '0'");
-                                while($row = mysql_fetch_array($query)) {
-                                    if (!empty($row['price'])){
-                                        echo $row['price'];
-                                    }else{
-                                        echo '0';
-                                    }
-
-                                    echo'+';
-                                }
-                                echo'0;
-string = numeral(c).format("0,0");
-document.write(string);
-</script>';
-                                ?>
+                                <span data-savoir-count-key="salary_shipped_price" data-savoir-count-format="number">...</span>
                                 <br><strong>К:</strong>
-                                <?php
-                                echo'<script type="text/javascript">
-var c=';
-                                $query = mysql_query("SELECT DISTINCT price,priceks,rand,akt,kto,akt_date,cher from schet WHERE akt = '1' AND cher='0'AND kto = '".$userdata['users_id']."' AND akt_date = '".date('ym')."' AND del = '0'");
-                                while($row = mysql_fetch_array($query)) {
-                                    if (!empty($row['priceks'])){
-                                        echo $row['priceks'];
-                                    }else{
-                                        echo '0';
-                                    }
-
-                                    echo'+';
-                                }
-                                echo'0;
-string = numeral(c).format("0,0");
-document.write(string);
-</script>';
-                                ?>
+                                <span data-savoir-count-key="salary_shipped_priceks" data-savoir-count-format="number">...</span>
                             </li>
                             <li class="slonalert slonalert-warning">
                                 <strong>S:</strong>
-                                <?php
-                                echo'<script type="text/javascript">
-var c=';
-                                $query = mysql_query("SELECT DISTINCT price,rand,kto,m,y,oplachenks,del,akt,otk,cher from schet WHERE akt='0' AND cher='0' AND oplachenks = '1' AND kto = '".$userdata['users_id']."' AND del = '0'");
-                                while($row = mysql_fetch_array($query)) {
-                                    if (!empty($row['price'])){
-                                        echo $row['price'];
-                                    }else{
-                                        echo '0';
-                                    }
-
-                                    echo'+';
-                                }
-                                echo'0;
-string = numeral(c).format("0,0");
-document.write(string);
-</script>';
-                                ?>
+                                <span data-savoir-count-key="salary_paid_price" data-savoir-count-format="number">...</span>
                                 <br><strong>К:</strong>
-                                <?php
-                                echo'<script type="text/javascript">
-var c=';
-                                $query = mysql_query("SELECT DISTINCT priceks,rand,kto,m,y,oplachenks,del,akt,otk,cher from schet WHERE akt='0' AND cher='0' AND oplachenks = '1' AND kto = '".$userdata['users_id']."' AND del = '0'");
-                                while($row = mysql_fetch_array($query)) {
-                                    if (!empty($row['priceks'])){
-                                        echo $row['priceks'];
-                                    }else{
-                                        echo '0';
-                                    }
-
-                                    echo'+';
-                                }
-                                echo'0;
-string = numeral(c).format("0,0");
-document.write(string);
-</script>';
-                                ?>
+                                <span data-savoir-count-key="salary_paid_priceks" data-savoir-count-format="number">...</span>
                             </li>
                             <li class="slonalert slonalert-danger">
                                 <strong>S:</strong>
-                                <?php
-                                echo'<script type="text/javascript">
-var c=';
-                                $query = mysql_query("SELECT DISTINCT price,rand,kto,m,y,oplachenks,del,akt,otk,cher from schet WHERE akt='0' AND otk='0' AND cher='0' AND oplachenks = '0' AND kto = '".$userdata['users_id']."' AND del = '0'");
-                                while($row = mysql_fetch_array($query)) {
-                                    if (!empty($row['price'])){
-                                        echo $row['price'];
-                                    }else{
-                                        echo '0';
-                                    }
-
-                                    echo'+';
-                                }
-                                echo'0;
-string = numeral(c).format("0,0");
-document.write(string);
-</script>';
-                                ?>
+                                <span data-savoir-count-key="salary_unpaid_price" data-savoir-count-format="number">...</span>
                                 <br><strong>К:</strong>
-                                <?php
-                                echo'<script type="text/javascript">
-var c=';
-                                $query = mysql_query("SELECT DISTINCT priceks,rand,kto,m,y,oplachenks,del,akt,otk,cher from schet WHERE akt='0' AND otk='0' AND oplachenks = '0' AND cher='0' AND kto = '".$userdata['users_id']."' AND del = '0'");
-                                while($row = mysql_fetch_array($query)) {
-                                    if (!empty($row['priceks'])){
-                                        echo $row['priceks'];
-                                    }else{
-                                        echo '0';
-                                    }
-
-                                    echo'+';
-                                }
-                                echo'0;
-string = numeral(c).format("0,0");
-document.write(string);
-</script>';
-                                ?>
+                                <span data-savoir-count-key="salary_unpaid_priceks" data-savoir-count-format="number">...</span>
                             </li>
                             <li><a href="#">Зарплата</a></li>
                             <li><a href="#">Мои заказы</a></li>

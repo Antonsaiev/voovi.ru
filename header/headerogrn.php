@@ -29,10 +29,28 @@
 		}
 	</script></li>
            <?php
-		$query214 = mysql_query("SELECT * from users_access  WHERE users = '".$userdata['users_id']."'");	
+		$query214 = mysql_query("SELECT * from users_access WHERE users = '".$userdata['users_id']."'");
+		$accessRows = array();
+		$serviceIds = array();
 		while($row214 = mysql_fetch_array($query214)) {
-		$query32 = mysql_query("SELECT * from uslugi  WHERE del = '0' AND id = '".$row214['uslugi']."' ORDER BY name ");	
-		while($row32 = mysql_fetch_array($query32)) {
+			$accessRows[] = $row214;
+			$serviceIds[(int)$row214['uslugi']] = (int)$row214['uslugi'];
+		}
+
+		$servicesById = array();
+		if (!empty($serviceIds)) {
+			$query32 = mysql_query("SELECT * from uslugi WHERE del = '0' AND id IN (".implode(',', $serviceIds).")");
+			while($serviceRow = mysql_fetch_array($query32)) {
+				$servicesById[(int)$serviceRow['id']] = $serviceRow;
+			}
+		}
+
+		foreach($accessRows as $row214) {
+			$serviceId = (int)$row214['uslugi'];
+			if (!isset($servicesById[$serviceId])) {
+				continue;
+			}
+			$row32 = $servicesById[$serviceId];
 
     echo "<li>";
 	echo '<label><input class="none" type="radio" name="radioogrn" onchange="startacp'.$row32['id'].'(this.value)" ';
@@ -58,9 +76,8 @@
 		}
 	</script>';
 	echo '</li>';
-  }
-  }
-  ?>
+	  }
+	  ?>
           </ul>
         </li>
 		
