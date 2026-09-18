@@ -100,7 +100,7 @@ $fullName = short_name($userdata);
     <meta charset="utf-8">
     <meta http-equiv="Content-Style-Type" content="text/css">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Я в компании</title>
+    <title>Процесс в счетах</title>
     <link href="css/bootstrap.min.css" rel="stylesheet">
     <link rel="shortcut icon" href="/favicon.ico">
     <style>
@@ -672,19 +672,19 @@ $fullName = short_name($userdata);
 <main class="company-page">
     <div class="company-heading">
         <div>
-            <h1>Я в компании</h1>
-            <p>Профиль, контакты и доступы текущего пользователя.</p>
+            <h1>Процесс в счетах</h1>
+            <p>Состояние счетов по компаниям и периодам.</p>
         </div>
         <span class="company-badge">Статус: в компании</span>
     </div>
 
     <nav class="company-tabs" aria-label="Разделы">
-        <button type="button" class="company-tab is-active" data-company-tab="profile">Я в компании</button>
-        <button type="button" class="company-tab" data-company-tab="remote" data-company-url="tablschet.php?id=<?php echo intval($userdata['users_id']); ?>">Таблица счетов</button>
-        <button type="button" class="company-tab" data-company-tab="remote" data-company-url="procinschet.php?id=<?php echo intval($userdata['users_id']); ?>">Процесс в счетах</button>
+        <button type="button" class="company-tab" data-company-tab="profile" data-company-description="Профиль, контакты и доступы текущего пользователя.">Я в компании</button>
+        <button type="button" class="company-tab" data-company-tab="remote" data-company-description="Счета по компаниям за выбранный период." data-company-url="tablschet.php?id=<?php echo intval($userdata['users_id']); ?>">Таблица счетов</button>
+        <button type="button" class="company-tab is-active" data-company-tab="remote" data-company-description="Состояние счетов по компаниям и периодам." data-company-url="procinschet.php?id=<?php echo intval($userdata['users_id']); ?>">Процесс в счетах</button>
     </nav>
 
-    <div id="companyProfilePane" class="company-tab-pane is-active">
+    <div id="companyProfilePane" class="company-tab-pane">
         <section class="company-hero">
             <div class="company-panel company-profile">
                 <img class="company-avatar" src="<?php echo h($avatarSrc); ?>" alt="">
@@ -766,7 +766,7 @@ $fullName = short_name($userdata);
         </section>
     </div>
 
-    <section id="companyRemotePane" class="company-tab-pane company-panel company-remote-pane"></section>
+    <section id="companyRemotePane" class="company-tab-pane company-panel company-remote-pane is-active"></section>
 </main>
 
 <script src="/js/jquery-1.11.0.min.js?v=company-page"></script>
@@ -784,6 +784,9 @@ $fullName = short_name($userdata);
 
             $('.company-tab').removeClass('is-active');
             $button.addClass('is-active');
+            $('.company-heading h1').text($button.text());
+            $('.company-heading p').text($button.data('company-description'));
+            document.title = $button.text();
 
             if (tabType === 'profile') {
                 $remotePane.removeClass('is-active company-table-pane company-process-pane');
@@ -808,12 +811,29 @@ $fullName = short_name($userdata);
                 cache: false,
                 success: function(html) {
                     $remotePane.html(html);
+
+                    if (url.indexOf('procinschet.php') !== -1) {
+                        var $organization = $remotePane.find('#getogr');
+                        var $savoir = $organization.find('option').filter(function() {
+                            return $.trim($(this).text()).toUpperCase() === 'SAVOIR';
+                        }).first();
+
+                        if ($savoir.length) {
+                            $organization.val($savoir.val());
+                        } else if (!$organization.val()) {
+                            $organization.val('0');
+                        }
+
+                        $remotePane.find('#period').trigger('click');
+                    }
                 },
                 error: function() {
                     $remotePane.html('<p class="company-empty">Не удалось загрузить раздел.</p>');
                 }
             });
         });
+
+        $('.company-tab.is-active').trigger('click');
     })(jQuery);
 </script>
 </body>
