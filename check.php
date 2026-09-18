@@ -813,17 +813,6 @@ $fullName = short_name($userdata);
                     $remotePane.html(html);
 
                     if (url.indexOf('procinschet.php') !== -1) {
-                        var $organization = $remotePane.find('#getogr');
-                        var $savoir = $organization.find('option').filter(function() {
-                            return $.trim($(this).text()).toUpperCase() === 'SAVOIR';
-                        }).first();
-
-                        if ($savoir.length) {
-                            $organization.val($savoir.val());
-                        } else if (!$organization.val()) {
-                            $organization.val('0');
-                        }
-
                         $remotePane.find('#period').trigger('click');
                     }
                 },

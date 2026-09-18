@@ -2,21 +2,42 @@
 # подключаем конфиг
 include 'conf.php'; 
 
-$orgn=$_COOKIE['orgn'];
+$organizations = array();
+$savedOrgId = isset($_COOKIE['orgn']) ? intval($_COOKIE['orgn']) : 0;
+$selectedOrgId = 0;
+$defaultOrgId = 0;
+$defaultOrgPriority = 0;
+$userId = isset($_GET['id']) ? intval($_GET['id']) : 0;
+$organizationQuery = mysql_query("SELECT DISTINCT uslugi.id, uslugi.name
+    FROM uslugi
+    INNER JOIN users_access ON users_access.uslugi = uslugi.id
+    WHERE users_access.users = '".$userId."' AND uslugi.del != '1'
+    ORDER BY uslugi.name, uslugi.id");
 
-	if($orgn!="0")
-	{
-	$udosrpod = "SELECT uslugi.id,uslugi.name,users_access.users from uslugi left join users_access on uslugi.id=users_access.uslugi where users_access.users='".$_GET['id']."' and uslugi.id='".$orgn."'";
-	$udosresultrpod = mysql_query($udosrpod);
-	$udospersonrpod = mysql_fetch_array($udosresultrpod);
-	$idogrn=$udospersonrpod['id'];
-	$nameogrn=$udospersonrpod['name'];
-	}
-	else
-	{
-		$idogrn="0";
-		$nameogrn="Все организации";
-	}
+if ($organizationQuery) {
+    while ($organization = mysql_fetch_assoc($organizationQuery)) {
+        $organizations[] = $organization;
+        if (intval($organization['id']) === $savedOrgId) {
+            $selectedOrgId = $savedOrgId;
+        }
+
+        // The active company is ИЦ "SAVOIR"; other SAVOIR services are separate organizations.
+        $normalizedName = preg_replace('/[\s\p{Z}"\'«»“”„]+/u', '', $organization['name']);
+        $priority = 0;
+        if (preg_match('/^ИЦSAVOIR$/iu', $normalizedName)) {
+            $priority = 2;
+        } elseif (strcasecmp($normalizedName, 'SAVOIR') === 0) {
+            $priority = 1;
+        }
+        if ($priority > $defaultOrgPriority) {
+            $defaultOrgId = intval($organization['id']);
+            $defaultOrgPriority = $priority;
+        }
+    }
+}
+if ($defaultOrgId > 0) {
+    $selectedOrgId = $defaultOrgId;
+}
 ?>
 <?php include_once 'voovi_spinner.php'; ?>
 <div class="by amt" style="
@@ -28,12 +49,10 @@ $orgn=$_COOKIE['orgn'];
 
 <div class='statdate' style="width:390px;float: left;">
 <select class='form-control' id="getogr">
-<option value =<?echo $idogrn;?> selected><? echo $nameogrn;?></option>
-<option value="0">Все организации</option>
-<?$rep=mysql_query("SELECT uslugi.id,uslugi.name,users_access.users from uslugi left join users_access on uslugi.id=users_access.uslugi where users_access.users='".$_GET['id']."' and uslugi.del!='1'");
-   while($resep = mysql_fetch_assoc($rep)) :?>
-   <option value ="<?echo $resep['id'];?>"><?echo $resep['name'];?></option>
-   <?php endwhile; ?>
+<option value="0"<?php if ($selectedOrgId === 0) { echo ' selected'; } ?>>Все организации</option>
+<?php foreach ($organizations as $organization): ?>
+   <option value="<?php echo intval($organization['id']); ?>"<?php if (intval($organization['id']) === $selectedOrgId) { echo ' selected'; } ?>><?php echo htmlspecialchars($organization['name'], ENT_QUOTES, 'UTF-8'); ?></option>
+<?php endforeach; ?>
 </select>
 </div>
 <div class='statdate' style="width:400px;float: left;">
