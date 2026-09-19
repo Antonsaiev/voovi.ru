@@ -100,6 +100,7 @@ $newschetBackHref = '/newusluga.php?'.http_build_query($newschetBackParams);
 <meta http-equiv="Content-Style-Type" content="text/css" />
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link href="css/bootstrap.min.css" rel="stylesheet">
+<link href="/css/schet-number-check.css?v=2" rel="stylesheet">
     <script src="/js/cdnjs.cloudflare.com_ajax_libs_decimal.js_9.0.0_decimal.min.js"></script>
 <style type="text/css">
 .schet-loading-overlay {
@@ -2651,7 +2652,8 @@ echo'" style="width:100%;">
 <span class="glyphicon glyphicon-tag" aria-hidden="true"></span> Номер счета:
 </td>
 <td  style="padding: 5px;">
-<input type="text" class="form-control" name="nomerschetks" id="nomerschetks"  value="<?php if(isset($_GET['rand'])){ echo $pdepo['nomerschetks'];}?>">
+<input type="text" class="form-control" name="nomerschetks" id="nomerschetks" aria-describedby="schet-number-warning" data-exclude-rand="<?php echo isset($_GET['rand']) ? newschet_h($_GET['rand']) : ''; ?>" value="<?php if(isset($_GET['rand'])){ echo newschet_h($pdepo['nomerschetks']);}?>">
+<div id="schet-number-warning" role="status" aria-live="polite" style="display:none;"></div>
 </td></tr>
 <tr><td style="width:1px;">
 <span class="glyphicon glyphicon-user" aria-hidden="true"></span> Агент:
@@ -3272,6 +3274,7 @@ error_log(date('Y-m-d H:i:s') . ' ' . $messaeLog . PHP_EOL, 3, 'log/voovi.log');
 
 <script src="/js/jquery-1.11.0.min.js"></script>
 <script src="js/bootstrap.min.js"></script>
+<script src="/js/schet-number-check.js?v=2"></script>
 <script type="text/javascript">
 (function () {
     function onReady(fn) {
@@ -3304,6 +3307,10 @@ error_log(date('Y-m-d H:i:s') . ' ' . $messaeLog . PHP_EOL, 3, 'log/voovi.log');
         }
 
         form.onsubmit = function () {
+            if (form.schetNumberCanSubmit && !form.schetNumberCanSubmit()) {
+                return false;
+            }
+
             if (form.getAttribute('data-loading') === '1') {
                 return false;
             }

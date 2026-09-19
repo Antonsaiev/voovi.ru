@@ -1,0 +1,26 @@
+#nomerschetks.schet-number-duplicate {
+    border: 2px solid #b7791f;
+    background-color: #fff9e6;
+    box-shadow: 0 0 0 2px rgba(183, 121, 31, 0.15);
+}
+
+#schet-number-warning {
+    margin-top: 8px;
+    padding: 10px 12px;
+    border: 1px solid #e0bf75;
+    border-radius: 6px;
+    background: #fff6db;
+    color: #704b12;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+#schet-number-warning.schet-number-check-error {
+    border-color: #cfd8e3;
+    background: #f3f6f8;
+    color: #52616f;
+}
+
+.schet-number-retry {
+    margin-top: 8px;
+}

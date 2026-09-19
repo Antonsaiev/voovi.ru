@@ -91,6 +91,7 @@ $newschetBackHref = '/newusluga.php?'.http_build_query($newschetBackParams);
 <meta http-equiv="Content-Style-Type" content="text/css" />
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link href="css/bootstrap.min.css" rel="stylesheet">
+<link href="/css/schet-number-check.css?v=2" rel="stylesheet">
 <style type="text/css">
 .schet-loading-overlay {
     display: none;
@@ -528,7 +529,8 @@ echo '</script>';
 Номер счета:
 </td>
 <td  style="padding: 5px;">
-<input type="text" class="form-control" name="nomerschetks" id="nomerschetks"  value="">
+<input type="text" class="form-control" name="nomerschetks" id="nomerschetks" aria-describedby="schet-number-warning" value="">
+<div id="schet-number-warning" role="status" aria-live="polite" style="display:none;"></div>
 </td></tr>
 </table>
 <div>
@@ -566,6 +568,7 @@ echo '</div></div>';
 
 <script src="/js/jquery-1.11.0.min.js"></script>
 <script src="js/bootstrap.min.js"></script>
+<script src="/js/schet-number-check.js?v=2"></script>
 <script type="text/javascript">
 (function () {
     function onReady(fn) {
@@ -598,6 +601,10 @@ echo '</div></div>';
         }
 
         form.onsubmit = function () {
+            if (form.schetNumberCanSubmit && !form.schetNumberCanSubmit()) {
+                return false;
+            }
+
             if (form.getAttribute('data-loading') === '1') {
                 return false;
             }
