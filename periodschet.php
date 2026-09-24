@@ -44,7 +44,7 @@ else
  margin-bottom: 10px;
 ">
 <?
-$arYears = range(2018, date('Y'));
+$arYears = range(date('Y'), 2018);
 $m = date(F);
 $_monthsList = array(
 "1"=>"Январь","2"=>"Февраль","3"=>"Март",
