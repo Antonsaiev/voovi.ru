@@ -2,6 +2,7 @@
 # подключаем конфиг
 include 'conf.php';  
 require_once 'schet_identity.php';
+require_once 'invoice_money.php';
 
 # проверка авторизации
 if (isset($_COOKIE['id']) and isset($_COOKIE['hash'])) 
@@ -82,6 +83,8 @@ if (isset($_GET['rand'])) {
     $newschetBackParams['rand'] = $_GET['rand'];
 }
 $newschetBackHref = '/newusluga.php?'.http_build_query($newschetBackParams);
+$schetFormScope = basename(__FILE__).':'.$newschetClientId.':'.$newschetProductId;
+$schetFormToken = voovi_schet_form_token($schetFormScope, $userdata);
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="ru" lang="ru">
@@ -394,30 +397,38 @@ $person = $newschetProduct ? $newschetProduct : mysql_fetch_array(mysql_query("S
 <?php 
 $shetrand = '';
 
+try {
 if(isset($_POST['submitsch'])){
+if (isset($_POST['aallsumm']) && trim($_POST['aallsumm']) !== '') {
+    $_POST['aallsumm'] = voovi_money_round($_POST['aallsumm']);
+}
 
 $ogrn = "SELECT * FROM ogrn WHERE inn ='".$_GET['inn']."' AND kpp ='".$_GET['kpp']."' ";
-$rogrn = mysql_query($ogrn);
+$rogrn = voovi_schet_query($ogrn);
 $pogrn = mysql_fetch_array($rogrn);
 $inn = $pogrn['inn'];
 $kpp = $pogrn['kpp'];
 $naim = $pogrn['naim'];
 $agent=htmlspecialchars($_POST["agent"]);
-$schetIdentity = voovi_allocate_schet_identity(date("y"), $userdata['users_id'], $userdata['otdel']);
+$schetIdentity = voovi_begin_schet_creation(isset($_POST['creation_token']) ? $_POST['creation_token'] : '', $schetFormScope, $userdata, $newschetClientId);
+        if ($schetIdentity['reused']) {
+            echo '<script>window.location.href="/kartklient.php?id='.(int)$_GET['id'].'";</script>';
+            exit;
+        }
 $shetrand = $schetIdentity['rand'];
 $sujmdfhsd = $schetIdentity['kolichschet'];
 $schetNs = $schetIdentity['ns'];
 $_POST['shetrand'] = $shetrand;
 
 $qrand = "SELECT sortir FROM `schet` ORDER BY sortir DESC LIMIT 1";
-					$resultrand = mysql_query($qrand);
+					$resultrand = voovi_schet_query($qrand);
 					$personrand = mysql_fetch_array($resultrand);
 					
 $var = $personrand['sortir'] + 1;
 
 
 $qs = "SELECT count(*) FROM schet WHERE idkli = '".$_GET['id']."' AND produkt = '".$_GET['parent']."'";
-$rs = mysql_query($qs);
+$rs = voovi_schet_query($qs);
 $ps = mysql_result($rs, 0);
 $zs = $ps['nomerchet']+ 1;
 	$azaza = "INSERT INTO `schet` (
@@ -485,7 +496,7 @@ $zs = $ps['nomerchet']+ 1;
 '$_POST[url]',
 '$agent'
 )";
-mysql_query($azaza) or die(mysql_error($link));
+voovi_schet_query($azaza);
 $data_documents_str = "INSERT INTO `document_data` (
     `rand`,
     `d_bill`,
@@ -501,15 +512,20 @@ $data_documents_str = "INSERT INTO `document_data` (
     '".date("y-m-d")."',
     '".date("y-m-d")."'
     )";
-mysql_query($data_documents_str) or die(mysql_error($link));
+voovi_schet_query($data_documents_str);
+voovi_schet_commit($shetrand);
 echo '<script type="text/javascript">'; 
 echo 'window.location.href="/kartklient.php?id='.$_GET['id'].'";'; 
 echo '</script>';
 
 }
+} catch (Exception $error) {
+    voovi_schet_render_error($error);
+}
 
 ?>
 <form method="post" id="schetForm">
+<input type="hidden" name="creation_token" value="<?php echo newschet_h($schetFormToken); ?>">
 <table class="table">
 <tr><td style="width:20px;">
 Ссылка
@@ -568,7 +584,7 @@ echo '</div></div>';
 
 <script src="/js/jquery-1.11.0.min.js"></script>
 <script src="js/bootstrap.min.js"></script>
-<script src="/js/schet-number-check.js?v=2"></script>
+<script src="/js/schet-number-check.js?v=3"></script>
 <script type="text/javascript">
 (function () {
     function onReady(fn) {

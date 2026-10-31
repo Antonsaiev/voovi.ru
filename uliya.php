@@ -26,7 +26,7 @@ $pav = "SELECT * FROM schet WHERE rand = $_GET[id]";
 $pavresult = mysql_query($pav);
 $pavoir = mysql_fetch_array($pavresult);
 
-$sch = "SELECT DISTINCT nomerschet,oferta,prodlen,generac,name,lico,rand,otdel,filial,god,nomerdog,data,produkt,price,kto,inn,kpp,koment,ogrn,skidka FROM schet WHERE rand ='".$_GET['id']."'  ORDER BY id DESC";
+$sch = "SELECT DISTINCT ns,nomerschet,oferta,prodlen,generac,name,lico,rand,otdel,filial,god,nomerdog,data,produkt,price,kto,inn,kpp,koment,ogrn,skidka FROM schet WHERE rand ='".$_GET['id']."'  ORDER BY id DESC";
 $schetresult = mysql_query($sch);
 $schet = mysql_fetch_array($schetresult);
 
@@ -392,7 +392,7 @@ text-align:center;line-height:normal;text-autospace:none'><b><span
 style='font-size:10.0pt;font-family:"Times","serif";color:black'>СЧЕТ<?php
 if($schet['oferta'] == 1){
 echo '-ОФЕРТА';
-}?>&nbsp;№&nbsp;<?php echo $schet['god'].$schet['filial'].$schet['otdel'].$pfsdhhgf['id'].$schet['nomerschet'];?></span></b></p>
+}?>&nbsp;№&nbsp;<?php echo $schet['ns'];?></span></b></p>
 
 <p class=MsoNormal align=center style='margin-bottom:0cm;margin-bottom:.0001pt;
 text-align:center;line-height:normal;text-autospace:none'><b><span

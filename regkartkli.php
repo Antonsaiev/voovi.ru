@@ -20,7 +20,7 @@ $pav = "SELECT * FROM schet WHERE del = '0' AND rand = $_GET[id]";
 $pavresult = mysql_query($pav);
 $pavoir = mysql_fetch_array($pavresult);
 
-$sch = "SELECT DISTINCT nomerschet,kolichschet,fadress,data,d,m,y,tell,oferta,prodlen,generac,name,lico,rand,otdel,filial,god,nomerdog,data,produkt,price,kto,inn,kpp,koment,ogrn,skidka,podpisantv,vladelec FROM schet WHERE del = '0' AND rand ='".$_GET['id']."'  ORDER BY id DESC";
+$sch = "SELECT DISTINCT ns,nomerschet,kolichschet,fadress,data,d,m,y,tell,oferta,prodlen,generac,name,lico,rand,otdel,filial,god,nomerdog,data,produkt,price,kto,inn,kpp,koment,ogrn,skidka,podpisantv,vladelec FROM schet WHERE del = '0' AND rand ='".$_GET['id']."'  ORDER BY id DESC";
 $schetresult = mysql_query($sch);
 $schet = mysql_fetch_array($schetresult);
 $sch1212 = "SELECT * FROM klient WHERE id='".$schet['vladelec']."'  ORDER BY id DESC";
@@ -633,7 +633,7 @@ $str .= $ktopgenerac['l_name'];
   <td width=161 style="width:500.0pt;padding:0cm 5.4pt 0cm 5.4pt;height:3.5pt">
   <p class=MsoNormal style="margin-bottom:0cm;margin-bottom:.0001pt;mso-element:
   frame;mso-element-frame-hspace:9.0pt;mso-element-wrap:around;mso-element-anchor-horizontal:
-  margin;mso-element-left:-8.8pt;mso-element-top:30.75pt;mso-height-rule:exactly">'.$schet['god'].$schet['kto'].$schet['otdel'].$schet['kolichschet'].'</p>
+  margin;mso-element-left:-8.8pt;mso-element-top:30.75pt;mso-height-rule:exactly">'.$schet['ns'].'</p>
   </td>
  </tr>
  <tr style="mso-yfti-irow:3;mso-yfti-lastrow:yes;height:8.25pt">

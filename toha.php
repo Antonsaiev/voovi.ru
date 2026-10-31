@@ -615,7 +615,7 @@ if($tohaSearchValue !== ""){
         OR schet.ogrn LIKE '%".$tohaSearchEscaped."%'
         OR schet.kpp LIKE '%".$tohaSearchEscaped."%'
         OR schet.rand LIKE '%".$tohaSearchEscaped."%'
-        OR CONCAT(schet.god, schet.kto, schet.otdel, schet.kolichschet) LIKE '%".$tohaSearchCompact."%'
+        OR schet.ns LIKE '%".$tohaSearchCompact."%'
     )";
 }
 if(isset($_GET['akt'])){

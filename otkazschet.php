@@ -1,130 +1,71 @@
-<?
-include 'conf.php';
+<?php
+require 'conf.php';
 require_once 'schet_identity.php';
-if (!isset($_GET['rand']) || $_GET['rand'] === '') {
-    exit;
+header('Content-Type: application/json; charset=utf-8');
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405); echo json_encode(array('error'=>'Используйте форму счёта')); exit;
 }
-if($_GET['tipschet']=="prod") {
-    $delset="`del`='0',`prodlens`='1',`prodlenks`='1'";
-}
-else{
-    $delset="`del`='0'";
-}
-$datet= date("Y-m-d");
-$sql = mysql_query("UPDATE schet SET $delset,`dateotkaz` ='".$datet."',`ktootkaz` ='".$_GET['kto']."' WHERE `rand` = '" . $_GET['rand'] . "'");
-$newSchetIdentity = null;
-
-$q = "SELECT * FROM `schet` WHERE rand ='".$_GET['rand']."'";
-$result = mysql_query($q);
-while($person  = mysql_fetch_assoc($result ))  {
-/*$person = mysql_fetch_array($result);*/
-if($person['akt']=="1") {
-    if ($newSchetIdentity === null) {
-        $newSchetIdentity = voovi_allocate_schet_identity(date("Y"), $person['kto'], $person['otdel']);
-    }
-    $kols = $newSchetIdentity['kolichschet'];
-    $shetrand = $newSchetIdentity['rand'];
-    if ($_GET['tipschet'] == "prod") {
-        $datetim = date("d.m.y в H:i");
-        $dated = date("d");
-        $datem = date("m");
-        $datey = date("Y");
+$user = voovi_schet_authenticated_user();
+try {
+    $rand = isset($_POST['rand']) && is_string($_POST['rand']) ? $_POST['rand'] : '';
+    $reason = isset($_POST['tipotkaz']) ? (int)$_POST['tipotkaz'] : 0;
+    $extension = isset($_POST['tipschet']) && $_POST['tipschet'] === 'prod';
+    $scope = 'otkazschet.php:'.$rand;
+    voovi_schet_request_key(isset($_POST['creation_token']) ? $_POST['creation_token'] : '', $scope, $user);
+    if ($rand === '' || strlen($rand) > 366 || $reason <= 0) { throw new RuntimeException('Выберите счёт и причину отказа.'); }
+    $sourceNumber = voovi_schet_stored_number($rand);
+    $escapedRand = mysql_real_escape_string($rand);
+    $first = mysql_fetch_assoc(voovi_schet_query("SELECT * FROM schet WHERE rand='".$escapedRand."' AND `del`='0' ORDER BY id LIMIT 1"));
+    $shipped = (string)$first['akt'] === '1';
+    $identity = null;
+    if ($shipped) {
+        voovi_schet_require_transactions(array('bills_voovi_links'));
+        // Автор и отдел исходного счёта сохраняются; повтор действия возвращает прежний клон.
+        $identity = voovi_begin_schet_creation($_POST['creation_token'], $scope, $user, $first['idkli'], $first['kto'], $first['otdel']);
+        if ($identity['reused']) { echo json_encode(array('rand'=>$identity['rand'], 'reused'=>true)); exit; }
+        voovi_schet_query("SELECT id FROM schet WHERE rand='".$escapedRand."' AND `del`='0' FOR UPDATE");
+        voovi_schet_stored_number($rand);
     } else {
-        $datetim = $person['data'];
-        $dated = $person['d'];
-        $datem = $person['m'];
-        $datey = "20" . $person['y'];
+        voovi_begin_schet_edit($rand);
     }
-
-        $azaza = "INSERT INTO `schet` (
-        `ns`,
-		`shetold`,
-			`idkli`,
-			`sortir`,
-			`otdel`,
-			`filial`,
-			`god`,
-			`nomerdog`,
-			`nomerschet`,
-			`kolichschet`,
-			`nomerschetks`,
-			`oplachenks`,
-			`kvo`,
-			`prod`,
-			`goroddd`,
-			`prodlen`,
-			`skidka`,
-			`priceks`,
-			`price`,
-			`ogrn`,
-			`name`,
-			`inn`,
-			`kpp`,
-			`produkt`,
-			`kto`,
-			`data`,
-			`d`,
-			`m`,
-			`y`,
-			`time`,
-			`cher`,
-			`rand`,
-			`koment`,
-			`lico`,
-			`vladelec`,
-			`oferta`,
-			`prichotk`,
-			`ktootkaz`,
-			`dateotkaz`,
-			`url`
-			) VALUES (
-			'" . $newSchetIdentity['ns'] . "',
-		'" . $person['ns'] . "',
-		'" . $person['idkli'] . "',
-		'" . $person['sortir'] . "',
-		'" . $person['otdel'] . "',
-		'" . $person['filial'] . "',
-		'" . date("Y") . "',
-		'" . $person['nomerdog'] . "',
-		'" . $person['nomerschet'] . "',
-		'" . $kols . "',
-		'" . $person['nomerschetks'] . "',
-		'0',
-		'" . $person['kvo'] . "',
-		'" . $person['prod'] . "',
-		'" . $person['goroddd'] . "',
-		'" . $person['prodlen'] . "',
-		'" . $person['skidka'] . "',
-		'" . $person['priceks'] . "',
-		'" . $person['price'] . "',
-		'" . $person['ogrn'] . "',
-		'" . $person['name'] . "',
-		'" . $person['inn'] . "',
-		'" . $person['kpp'] . "',
-		'" . $person['produkt'] . "',
-		'" . $person['kto'] . "',
-		'" . $datetim . "',
-			'" . $dated . "',
-			'" . $datem . "',
-			'" . $datey . "',
-			'" . $person['time'] . "',
-			'1',
-			'" . $shetrand . "',
-			'Отказ от счета " . $person['ns'] . "',
-			'" . $person['lico'] . "',
-			'" . $person['vladelec'] . "',
-			'" . $person['oferta'] . "',
-			'" . $_GET['tipotkaz'] . "',
-			'" . $_GET['kto'] . "',
-			'" . date("Y-m-d") . "',
-			'" . $person['url'] . "'
-		)";
-        mysql_query($azaza) or die(mysql_error($link));
+    $rows = voovi_schet_query("SELECT * FROM schet WHERE rand='".$escapedRand."' AND `del`='0' ORDER BY id");
+    $source = array();
+    while ($row = mysql_fetch_assoc($rows)) {
+        if (((string)$row['akt'] === '1') !== $shipped) { throw new RuntimeException('Состояние счёта изменилось. Обновите список.'); }
+        $source[] = $row;
     }
-
-if($person['akt']=="0")
-{
-    $sqlli = mysql_query("UPDATE schet SET `cher`='1', `prichotk`='" . $_GET['tipotkaz'] . "' WHERE `rand` = '" . $_GET['rand'] . "'");
+    if (!$source) { throw new RuntimeException('Счёт больше не доступен. Обновите список.'); }
+    $changes = "dateotkaz='".date('Y-m-d')."',ktootkaz=".(int)$user['users_id'];
+    if ($extension) { $changes .= ",prodlens='1',prodlenks='1'"; }
+    if (!$shipped) { $changes .= ",cher='1',prichotk=".$reason; }
+    voovi_schet_query("UPDATE schet SET ".$changes." WHERE rand='".$escapedRand."' AND `del`='0'");
+    if ($shipped) {
+        $fields = array('idkli','sortir','otdel','filial','nomerdog','nomerschet','nomerschetks','kvo','prod','goroddd','kvogorod','nds',
+            'prodlen','skidka','priceks','price','ogrn','name','inn','kpp','produkt','kto','data','d','m','y','time',
+            'lico','vladelec','oferta','url');
+        foreach ($source as $row) {
+            $copy = array();
+            foreach ($fields as $field) { $copy[$field] = $row[$field]; }
+            $copy['ns'] = $identity['ns']; $copy['rand'] = $identity['rand']; $copy['god'] = $identity['god'];
+            $copy['kolichschet'] = $identity['kolichschet']; $copy['shetold'] = $sourceNumber;
+            $copy['oplachenks'] = '0'; $copy['cher'] = '1'; $copy['prichotk'] = $reason;
+            $copy['ktootkaz'] = $user['users_id']; $copy['dateotkaz'] = date('Y-m-d');
+            $copy['koment'] = 'Отказ от счета '.$sourceNumber;
+            if (strlen((string)$copy['y']) === 2) { $copy['y'] = '20'.$copy['y']; }
+            if ($extension) {
+                $copy['data'] = date('d.m.y в H:i'); $copy['d'] = date('d'); $copy['m'] = date('m'); $copy['y'] = date('Y');
+            }
+            $values = array();
+            foreach ($copy as $value) { $values[] = $value === null ? 'NULL' : "'".mysql_real_escape_string((string)$value)."'"; }
+            voovi_schet_query('INSERT INTO schet (`'.implode('`,`', array_keys($copy)).'`) VALUES ('.implode(',', $values).')');
+        }
+        voovi_copy_schet_related_data($rand, $identity['rand'], $copy);
+    }
+    $resultRand = $identity ? $identity['rand'] : $rand;
+    voovi_schet_commit($resultRand);
+    echo json_encode(array('rand'=>$resultRand, 'reused'=>false));
+} catch (Exception $error) {
+    voovi_schet_rollback();
+    http_response_code(400);
+    echo json_encode(array('error'=>$error->getMessage()), JSON_UNESCAPED_UNICODE);
 }
-}
-?>

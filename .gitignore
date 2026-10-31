@@ -15,3 +15,11 @@ img/product-icons/
 log/
 *.sql
 .DS_Store
+
+# Локальные копии и временные файлы
+__pycache__/
+*.py[cod]
+*.bak
+*.backup
+*.orig
+*.rej

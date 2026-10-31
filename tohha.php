@@ -516,10 +516,7 @@ $query = mysql_query("SELECT * FROM schet WHERE del = '0' AND $groupi $getakt $t
 	echo '</td>';
 	echo '<td >';
 	if($row['nomerschet'] != 'В КС'){
-		echo '<span class="glyphicon glyphicon-bookmark" aria-hidden="true"  style="display: initial;"></span>',$row['god'],$row['kto'],$row['otdel'],$row['kolichschet'].'<br>';
-		if($row['ns']=='0'){
-			mysql_query("UPDATE schet SET ns='".$row['god'].$row['kto'].$row['otdel'].$row['kolichschet']."' WHERE rand =".$row['rand']);
-		}
+		echo '<span class="glyphicon glyphicon-bookmark" aria-hidden="true"  style="display: initial;"></span>',$row['ns'].'<br>';
 	}else{
 		
 	}

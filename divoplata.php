@@ -10,7 +10,7 @@ $pavoir = mysql_fetch_array($pavresult);
 
 
 
-$sch = "SELECT DISTINCT nomerschet,kolichschet,prodlen,generac,name,lico,rand,otdel,filial,god,nomerdog,data,produkt,price,kto,inn,kpp,koment,ogrn,skidka,podpisant,d,m,y FROM schet WHERE del = '0' AND rand ='$_GET[rand]'  ORDER BY id DESC";
+$sch = "SELECT DISTINCT ns,nomerschet,kolichschet,prodlen,generac,name,lico,rand,otdel,filial,god,nomerdog,data,produkt,price,kto,inn,kpp,koment,ogrn,skidka,podpisant,d,m,y FROM schet WHERE del = '0' AND rand ='$_GET[rand]'  ORDER BY id DESC";
 $schetresult = mysql_query($sch);
 $schet = mysql_fetch_array($schetresult);
 
@@ -95,7 +95,7 @@ $u = "INSERT INTO `kvobop`(
 '$_POST[komm]',
 '".$pavoir['rand']."',
 '".$userdata['users_id']."',
-'".$pavoir['god'].$pavoir['filial'].$pavoir['otdel'].$pfsdhhgf['id'].$pavoir['nomerschet']."',
+'".mysql_real_escape_string((string)$pavoir['ns'])."',
 '".$class413241324."',
 '".$person['ogrn']."',
 '".$pavoir['price']."',
@@ -162,7 +162,7 @@ echo '<div>
 <div>
 <div class="modal-header">
 
-<h4 class="modal-title" id="myModalLabel">Квитанции по счету: '.$pavoir['god'].$pavoir['filial'].$pavoir['otdel'].$pavoir['idkli'].$pavoir['nomerschet'].'</h4>
+<h4 class="modal-title" id="myModalLabel">Квитанции по счету: '.$pavoir['ns'].'</h4>
 </div>
 <div class="modal-body">
 ';
@@ -243,7 +243,7 @@ echo '<div>
 <div>
   <div class="modal-header">
 
-<h4 class="modal-title" id="myModalLabel">Оплата счета: '.$pavoir['god'].$pavoir['filial'].$pavoir['otdel'].$pavoir['idkli'].$pavoir['nomerschet'].'</h4>
+<h4 class="modal-title" id="myModalLabel">Оплата счета: '.$pavoir['ns'].'</h4>
   </div>
   <form action="'.$_SERVER['REQUEST_URI'].'" method="post">
   <div class="modal-body">

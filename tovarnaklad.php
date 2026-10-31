@@ -3,6 +3,7 @@
 include 'conf.php';
 include 'invoice_action.php';
 include 'nds.php';
+require_once 'invoice_money.php';
 
 # проверка авторизации
 if (isset($_COOKIE['id']) and isset($_COOKIE['hash'])) 
@@ -24,7 +25,7 @@ else
 }
 ?><?php
 include 'conf.php';
-$pav = "SELECT * FROM schet WHERE del = '0' AND rand = $_GET[id]";
+$pav = "SELECT * FROM schet WHERE del = '0' AND rand = '".mysql_real_escape_string((string)$_GET['id'])."' ORDER BY id LIMIT 1";
 $pavresult = mysql_query($pav);
 $pavoir = mysql_fetch_array($pavresult);
 
@@ -48,6 +49,7 @@ $savoir = mysql_fetch_array($savresult);
 $nds_info = nds_parse(isset($pavoir['nds']) ? $pavoir['nds'] : '');
 $nds_code = $nds_info['code'];
 $nds_rate = (float)$nds_info['rate'];
+$invoiceAmounts = voovi_invoice_document_amounts($_GET['id'], $pavoir, $nds_rate);
 
 
 
@@ -277,7 +279,7 @@ x:publishsource="Excel">
   <td colspan=21 rowspan=2 height=30 class=xl18925266 style="border-right:1.0pt solid black;
   height:22.9pt">ТОВАРНАЯ НАКЛАДНАЯ<span style="mso-spacerun:yes"> </span></td>
   <td colspan=6 rowspan=2 class=xl20025266 style="border-bottom:1.0pt solid black; text-align:center;">';
-  $str .= ''.$schet['god'].$schet['kto'].$schet['otdel'].$schet['kolichschet'].'</td>
+  $str .= ''.$schet['ns'].'</td>
   <td colspan=6 rowspan=2 class=xl19825266 style="border-bottom:1.0pt solid black">'.$date->format('d.m.Y').'</td>
   <td colspan=12 class=xl18825266 style="border-left:none">&nbsp;</td>
  </tr>
@@ -369,47 +371,42 @@ x:publishsource="Excel">
 
 $i = 1;
 $summ=0;
-// --- накопители, чтобы "сумма строк == итого" ---
-$sum_gross = 0.0; // сумма с НДС
-$sum_net   = 0.0; // сумма без НДС
-$sum_vat   = 0.0; // НДС
-$query = mysql_query("SELECT * FROM schet WHERE del = '0' AND rand = '".$_GET['id']."'");
-while($row = mysql_fetch_array($query)) {
-
+$printRows = array();
+$query = mysql_query("SELECT * FROM schet WHERE del = '0' AND rand = '".$_GET['id']."' ORDER BY id");
+while ($row = mysql_fetch_array($query)) { $printRows[] = $row; }
+if (isset($invoiceAmounts['items']['travel'])) {
+    $printRows[] = array('id'=>'travel', 'prod'=>'travel', 'kvo'=>$invoiceAmounts['items']['travel']['quantity']);
+}
+foreach ($printRows as $row) {
 if(!empty($row['prod'])){
-$rpod = "SELECT * FROM tarif WHERE id =".$row['prod'];
-$resultrpod = mysql_query($rpod);
-$personrpod = mysql_fetch_array($resultrpod);
+if ($row['id'] === 'travel') {
+    $personrpod = array('name'=>'Выезд специалиста');
+} else {
+    $rpod = "SELECT * FROM tarif WHERE id =".$row['prod'];
+    $resultrpod = mysql_query($rpod);
+    $personrpod = mysql_fetch_array($resultrpod);
+}
 
-$qty = (float)$row['kvo'];
-
-$unit_gross = (float)$personrpod['price'] - ((float)$personrpod['price'] * ((float)$row['skidka'] / 100));
-// Сумма строки "с НДС"
-$line_gross = round($unit_gross * $qty, 2);
-
-$line_vat = 0.0;
-$line_net = $line_gross;
+$lineAmounts = $invoiceAmounts['items'][$row['id']];
+$qty = $lineAmounts['quantity'];
+$line_gross = $lineAmounts['gross'];
+$line_vat = $lineAmounts['vat'];
+$line_net = $lineAmounts['net'];
 
 $nds_cell_rate = 'Без НДС';
 $nds_cell_sum  = '&nbsp;';
 
 if ($nds_rate > 0) {
     // НДС "в том числе" из суммы строки
-    $line_vat = nds_included_sum($line_gross, $nds_rate);
-    $line_net = round($line_gross - $line_vat, 2);
-
     $nds_cell_rate = (string)$nds_rate;
-    $nds_cell_sum  = number_format($line_vat, 2, '.', ' ');
+    $nds_cell_sum  = voovi_money_format($line_vat);
 }
 
 // Цена без НДС за единицу (из net строки)
-$unit_net = ($qty > 0) ? round($line_net / $qty, 2) : 0.0;
+$unit_net = $lineAmounts['unit_net'];
 
 // --- накопление итогов ---
 $summ     += $qty;          // у тебя это "количество" в Итого
-$sum_gross+= $line_gross;
-$sum_net  += $line_net;
-$sum_vat  += $line_vat;
 $str .=  '<tr class=xl7125266 height=53 style="mso-height-source:userset;height:39.75pt">
   <td colspan=2 height=53 class=xl13925266 style="height:39.75pt;    vertical-align: middle;">'.$i++.'</td>
   
@@ -432,20 +429,20 @@ $str .=  '<tr class=xl7125266 height=53 style="mso-height-source:userset;height:
   
   <td colspan=3 class=xl14925266 kol style="border-left:none">'.$row['kvo'].'</td>
   
-  <td colspan=3 class=xl14925266 style="border-left:none">'.number_format($unit_net, 2, '.', ' ').'</td>
+  <td colspan=3 class=xl14925266 style="border-left:none">'.voovi_money_format($unit_net).'</td>
   
-  <td colspan=3 class=xl14925266 style="border-left:none">'.number_format($line_net, 2, '.', ' ').'</td>
+  <td colspan=3 class=xl14925266 style="border-left:none">'.voovi_money_format($line_net).'</td>
   
   <td colspan=2 class=xl11225266 id=m>'.$nds_cell_rate.'</td>
   <td colspan=3 class=xl15225266>'.$nds_cell_sum.'</td>
-  <td colspan=4 class=xl14925266 style="border-left:none" >'.number_format($line_gross, 2, '.', ' ').'</td>
+  <td colspan=4 class=xl14925266 style="border-left:none" >'.voovi_money_format($line_gross).'</td>
  </tr>';
 }
 }
 // --- итоги = сумма по строкам ---
-$total_gross = round($sum_gross, 2);
-$total_net   = round($sum_net, 2);
-$total_vat   = round($sum_vat, 2);
+$total_gross = $invoiceAmounts['gross'];
+$total_net = $invoiceAmounts['net'];
+$total_vat = $invoiceAmounts['vat'];
 
 // Если ниже по шаблону используешь $strgorod (num2str($strgorod)),
 // приравниваем его к итогу по строкам, чтобы прописью было то же число.
@@ -456,7 +453,7 @@ $nds_total_sum_cell  = 'X';
 
 if ($nds_rate > 0) {
     $nds_total_rate_cell = (string)$nds_rate;
-    $nds_total_sum_cell  = number_format($total_vat, 2, '.', ' ');
+    $nds_total_sum_cell  = voovi_money_format($total_vat);
 }
   $str .=  '
  
@@ -477,10 +474,10 @@ if ($nds_rate > 0) {
   <td colspan=2 class=xl16625266 style="border-left:none">0,00</td>
   <td colspan=3 class=xl16625266 style="border-left:none">'.$summ.'</td>
   <td colspan=3 class=xl16225266 style="border-left:none">X</td>
-  <td colspan=3 class=xl16325266 style="border-right:.5pt solid black;border-left:none">'.number_format($total_net, 2, '.', ' ').'</td>
+  <td colspan=3 class=xl16325266 style="border-right:.5pt solid black;border-left:none">'.voovi_money_format($total_net).'</td>
   <td colspan=2 class=xl13525266 style="border-left:none">'.$nds_total_rate_cell.'</td>
   <td colspan=3 class=xl16625266 style="border-left:none">'.$nds_total_sum_cell.'</td>
-  <td colspan=4 class=xl16325266 style="border-right:.5pt solid black;border-left:none">'.number_format($total_gross, 2, '.', ' ').'</td>
+  <td colspan=4 class=xl16325266 style="border-right:.5pt solid black;border-left:none">'.voovi_money_format($total_gross).'</td>
 
  </tr>
  <tr height=15 style="mso-height-source:userset;height:11.45pt">

@@ -3,6 +3,7 @@
 include 'conf.php';  
 require_once 'schet_identity.php';
 require_once 'tarif_identity.php';
+require_once 'invoice_money.php';
 
 # проверка авторизации
 if (isset($_COOKIE['id']) and isset($_COOKIE['hash'])) 
@@ -22,7 +23,7 @@ else
   header('Location: index.php'); exit();
 }
 
-$qestar = "SELECT DISTINCT nomerschet,ogrn,prodlen,generac,name,kolichschet,lico,rand,otdel,filial,god,nomerdog,data,produkt,price,kto,inn,kpp,idkli,koment,oplachen,oplachenks,doljen,gotov,akt,url,groupi,gr,gen,kvo,prod,kvogorod,goroddd,skidka,priceks,d,m,y,time,oferta,del FROM schet WHERE del = '0' AND rand ='".$_GET['rand']."'";
+$qestar = "SELECT DISTINCT ns,nomerschet,ogrn,prodlen,generac,name,kolichschet,lico,rand,otdel,filial,god,nomerdog,data,produkt,price,kto,inn,kpp,idkli,koment,oplachen,oplachenks,doljen,gotov,akt,url,groupi,gr,gen,kvo,prod,kvogorod,goroddd,skidka,priceks,d,m,y,time,oferta,del FROM schet WHERE del = '0' AND rand ='".$_GET['rand']."'";
 $restar = mysql_query($qestar);
 $pestar = mysql_fetch_array($restar);
 
@@ -91,6 +92,8 @@ if (isset($_GET['rand'])) {
     $newschetBackParams['rand'] = $_GET['rand'];
 }
 $newschetBackHref = '/newusluga.php?'.http_build_query($newschetBackParams);
+$schetFormScope = basename(__FILE__).':'.$newschetClientId.':'.$newschetProductId;
+$schetFormToken = voovi_schet_form_token($schetFormScope, $userdata);
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="ru" lang="ru">
@@ -827,15 +830,25 @@ $zs = $ps['nomerschet'] + 1;
 $qre = "SELECT * FROM `produkti` WHERE id =$_GET[parent]";
 $resultre = mysql_query($qre);
 $personre = mysql_fetch_array($resultre);
+try {
 if(isset($_POST['submitsch'])){
+    $validatedTariffs = voovi_validate_schet_tariffs($_GET['parent'], '', $_POST);
+    $_POST['aallsumm'] = voovi_invoice_form_total($validatedTariffs, $_POST);
+    $rowazaza = $validatedTariffs[0];
+    $previousSchetRand = voovi_schet_previous_rand(isset($_POST['nsold']) ? $_POST['nsold'] : '');
+
 	//if($_GET['parent']==319&&$_POST['kol_opis']==""||$_GET['parent']==400&&$_POST['kol_opis']=="" ||$_GET['parent']==391&&$_POST['kol_opis']==""&&$_GET['parent']==319)
     if (in_array($_GET['parent'], [319, 400, 391, 426, 428, 427]) && $_POST['kol_opis'] == "")
 	{
-		echo'<script>alert("Не введено количесвто описей")</script>';
+		throw new VooviSchetException('Укажите количество строк в описи.');
 	}
 		else
 		{
-        $schetIdentity = voovi_allocate_schet_identity(date("y"), $userdata['users_id'], $userdata['otdel']);
+        $schetIdentity = voovi_begin_schet_creation(isset($_POST['creation_token']) ? $_POST['creation_token'] : '', $schetFormScope, $userdata, $newschetClientId);
+        if ($schetIdentity['reused']) {
+            echo '<script>window.location.href="/kartklient.php?id='.(int)$_GET['id'].'";</script>';
+            exit;
+        }
         $shetrand = $schetIdentity['rand'];
         $sujmdfhsd = $schetIdentity['kolichschet'];
         $schetNs = $schetIdentity['ns'];
@@ -883,7 +896,7 @@ if(isset($_POST['submitsch'])){
 		'$_POST[priceks]',
 		'".$userdata['users_id']."'
 		)";
-		mysql_query($azaza) or die(mysql_error($link));
+		voovi_schet_query($azaza);
 		}
 		}
 		if($_POST['av']==1)
@@ -925,7 +938,7 @@ if(isset($_POST['submitsch'])){
 		'$_POST[priceks]',
 		'".$userdata['users_id']."'
 		)";
-		mysql_query($azaza) or die(mysql_error($link));
+		voovi_schet_query($azaza);
 		}
 		}
 		if($_POST['av']==2)
@@ -965,7 +978,7 @@ if(isset($_POST['submitsch'])){
 		'$_POST[priceks]',
 		'".$userdata['users_id']."'
 		)";
-		mysql_query($azaza) or die(mysql_error($link));
+		voovi_schet_query($azaza);
 		}
 		}
 		if($_POST['av']=="3")
@@ -1008,7 +1021,7 @@ if(isset($_POST['submitsch'])){
 		'$_POST[priceks]',
 		'".$userdata['users_id']."'
 		)";
-		mysql_query($azaza) or die(mysql_error($link));
+		voovi_schet_query($azaza);
 		}
 		}
         if($_POST['av']=="4")
@@ -1051,7 +1064,7 @@ if(isset($_POST['submitsch'])){
 		'$_POST[priceks]',
 		'".$userdata['users_id']."'
 		)";
-                mysql_query($azaza) or die(mysql_error($link));
+                voovi_schet_query($azaza);
             }
         }
 		$dop_prod = $_POST['dobprod'];
@@ -1104,7 +1117,7 @@ if(isset($_POST['submitsch'])){
 		'$_POST[priceks]',
 		'".$userdata['users_id']."'
 		)";
-		mysql_query($azaza) or die(mysql_error($link));
+		voovi_schet_query($azaza);
 		    $pagentd="";
 			$sagentd="";
 			$chisroldob="";
@@ -1149,7 +1162,7 @@ if(isset($_POST['submitsch'])){
 		'$_POST[priceks]',
 		'".$userdata['users_id']."'
 		)";
-		mysql_query($azaza) or die(mysql_error($link));
+		voovi_schet_query($azaza);
 		    $pagentd="";
 			$sagentd="";
 			$chisroldob="";
@@ -1193,7 +1206,7 @@ if(isset($_POST['submitsch'])){
 		'$_POST[priceks]',
 		'".$userdata['users_id']."'
 		)";
-		mysql_query($azaza) or die(mysql_error($link));
+		voovi_schet_query($azaza);
 		    $pagentd="";
 			$sagentd="";
 			$chisroldob="";
@@ -1238,7 +1251,7 @@ if(isset($_POST['submitsch'])){
 		'$_POST[priceks]',
 		'".$userdata['users_id']."'
 		)";
-		mysql_query($azaza) or die(mysql_error($link));
+		voovi_schet_query($azaza);
 		    $pagentd="";
 			$sagentd="";
 			$chisroldob="";
@@ -1283,7 +1296,7 @@ if(isset($_POST['submitsch'])){
 		'$_POST[priceks]',
 		'".$userdata['users_id']."'
 		)";
-                mysql_query($azaza) or die(mysql_error($link));
+                voovi_schet_query($azaza);
                 $pagentd="";
                 $sagentd="";
                 $chisroldob="";
@@ -1307,7 +1320,7 @@ if(isset($_POST['submitsch'])){
 		'$dop_yslygi[$i]',
 		'".$userdata['users_id']."'
 		)";
-		mysql_query($azaza) or die(mysql_error($link));
+		voovi_schet_query($azaza);
         }*/
 		}
     }
@@ -1334,34 +1347,34 @@ if(isset($_POST['submitsch'])){
 		{
 			if($_POST['priceks']!=""&&$_POST['priceks']!="0")
 			{
-					$komenti = "UPDATE schet SET `prodlenks`='1' WHERE ns='".$_POST['nsold']."'";
-		            mysql_query($komenti) or die(mysql_error($linki));
+					$komenti = "UPDATE schet SET `prodlenks`='1' WHERE rand='".mysql_real_escape_string($previousSchetRand)."'";
+		            voovi_schet_query($komenti);
 			}
 			if($_POST['aallsumm']!=""&&$_POST['aallsumm']!="0")
 			{
 			    if($_POST['skidka']=="100")
                 {
-                    $komentis = "UPDATE schet SET `prodlens`='1' WHERE ns='".$_POST['nsold']."'";
-                    mysql_query($komentis) or die(mysql_error($link));
+                    $komentis = "UPDATE schet SET `prodlens`='1' WHERE rand='".mysql_real_escape_string($previousSchetRand)."'";
+                    voovi_schet_query($komentis);
                 }
-			        $komenti = "UPDATE schet SET `prodlens`='1' WHERE ns='".$_POST['nsold']."'";
-		            mysql_query($komenti) or die(mysql_error($link));
+			        $komenti = "UPDATE schet SET `prodlens`='1' WHERE rand='".mysql_real_escape_string($previousSchetRand)."'";
+		            voovi_schet_query($komenti);
 			}
 		}
 		$agent=htmlspecialchars($_POST["agent"]);
 		$ogrn = "SELECT * FROM ogrn WHERE inn ='".$_GET['inn']."' AND kpp ='".$_GET['kpp']."' ";
-		$rogrn = mysql_query($ogrn);
+		$rogrn = voovi_schet_query($ogrn);
 		$pogrn = mysql_fetch_array($rogrn);
 		$inn = $pogrn['inn'];
 		$kpp = $pogrn['kpp'];
 		$naim = $pogrn['naim'];
 			$qrand = "SELECT sortir FROM `schet` ORDER BY sortir DESC LIMIT 1";
-		$resultrand = mysql_query($qrand);
+		$resultrand = voovi_schet_query($qrand);
 		$personrand = mysql_fetch_array($resultrand);		
 		echo $personrand['sortir'];
 		$var = $personrand['sortir'] + 1;
 		$qs = "SELECT count(*) FROM schet WHERE idkli = '".$_GET['id']."' AND produkt = '".$_GET['parent']."'";
-		$rs = mysql_query($qs);
+		$rs = voovi_schet_query($qs);
 		$ps = mysql_result($rs, 0);
 		$zs = $ps['nomerchet']+ 1;
 			$azaza = "INSERT INTO `schet` (
@@ -1441,7 +1454,7 @@ if(isset($_POST['submitsch'])){
 			'$_POST[kol_opis]',
             $nds
 		)";
-		mysql_query($azaza) or die(mysql_error($link));
+		voovi_schet_query($azaza);
         $data_documents_str = "INSERT INTO `document_data` (
 		`rand`,
 		`d_bill`,
@@ -1457,33 +1470,34 @@ if(isset($_POST['submitsch'])){
 		'".date("y-m-d")."',
 		'".date("y-m-d")."'
 		)";
-        mysql_query($data_documents_str) or die(mysql_error($link));
+        voovi_schet_query($data_documents_str);
         $messaeLog = ' Пользователь ' . $userdata['users_id'] . ' GET[rand] ' . $_GET['rand'] . ' $shetrand ' . $shetrand . ' $_POST[shetrand] ' . $_POST['shetrand']
             . ' kolichschet ' . $sujmdfhsd . ' $zs ' . $zs . ' $_POST[submitsch] ' . $_POST['submitsch'] . ' $_POST[dog] '
             . $_POST['dog'];
         error_log(date('Y-m-d H:i:s') . $messaeLog . PHP_EOL, 3, 'log/voovi.log');
-		echo '<script type="text/javascript">'; 
+		voovi_schet_commit($shetrand);
+        echo '<script type="text/javascript">';
 		echo 'window.location.href="/kartklient.php?id='.$_GET['id'].'";'; 
 		echo '</script>';
 	}
     else{
 		$aktivn = "INSERT INTO `aktivn` (`data`,`deistvie`,`users`,`gmd`,`tip`) VALUES ('". date("d.m.Y; H:i:s") ."','Новый счет','".$userdata['users_id']."','".date("Ymd")."','')";
-		mysql_query($aktivn) or die(mysql_error($link));
+		voovi_schet_query($aktivn);
 
 		$qe = "SELECT * FROM dogovor ORDER BY nomer DESC LIMIT 1";
-		$re = mysql_query($qe);
+		$re = voovi_schet_query($qe);
 		$pe = mysql_fetch_array($re);
 		$ze = $pe['nomer']+ 1;
 
 		$qrand = "SELECT sortir FROM `schet` ORDER BY sortir DESC LIMIT 1";
-		$resultrand = mysql_query($qrand);
+		$resultrand = voovi_schet_query($qrand);
 		$personrand = mysql_fetch_array($resultrand);
 							
 		echo $personrand['sortir'];
 		$var = $personrand['sortir'] + 1;
 
 		$ogrn = "SELECT * FROM ogrn WHERE id =".$_GET['id'];
-		$rogrn = mysql_query($ogrn);
+		$rogrn = voovi_schet_query($ogrn);
 		$pogrn = mysql_fetch_array($rogrn);
 		$inn = $pogrn['inn'];
 		$kpp = $pogrn['kpp'];
@@ -1503,9 +1517,9 @@ if(isset($_POST['submitsch'])){
 		'".$ze."',
 		'".$_GET['id']."'
 		)";
-		mysql_query($u) or die(mysql_error($link));
+		voovi_schet_query($u);
 		}
-		$qazaza = mysql_query(voovi_tarif_schet_query($_GET['parent'], isset($_GET['rand']) ? $_GET['rand'] : ''));
+		$qazaza = voovi_schet_query(voovi_tarif_schet_query($_GET['parent'], isset($_GET['rand']) ? $_GET['rand'] : ''));
 		while($rowazaza = mysql_fetch_array($qazaza)) {
 		if($_POST[$rowazaza['id']] == 1){
 			
@@ -1531,18 +1545,18 @@ if(isset($_POST['submitsch'])){
 		{
 		if($_POST['priceks']!=""&&$_POST['priceks']!="0")
 			{
-					$koment = "UPDATE schet SET `prodlens`='1' WHERE ns='".$_POST['nsold']."'";
-		            mysql_query($koment) or die(mysql_error($link));
+					$koment = "UPDATE schet SET `prodlens`='1' WHERE rand='".mysql_real_escape_string($previousSchetRand)."'";
+		            voovi_schet_query($koment);
 			}
         if($_POST['aallsumm']!=""&&$_POST['aallsumm']!="0")
 			{
                 if($_POST['skidka']=="100")
                 {
-                    $komentis = "UPDATE schet SET `prodlens`='1' WHERE ns='".$_POST['nsold']."'";
-                    mysql_query($komentis) or die(mysql_error($link));
+                    $komentis = "UPDATE schet SET `prodlens`='1' WHERE rand='".mysql_real_escape_string($previousSchetRand)."'";
+                    voovi_schet_query($komentis);
                 }
-			$komenti = "UPDATE schet SET `prodlenks`='1' WHERE ns='".$_POST['nsold']."'";
-		            mysql_query($komenti) or die(mysql_error($link));
+			$komenti = "UPDATE schet SET `prodlenks`='1' WHERE rand='".mysql_real_escape_string($previousSchetRand)."'";
+		            voovi_schet_query($komenti);
 			}
 		}
 		$pkvo = $rowazaza;
@@ -1630,7 +1644,7 @@ if(isset($_POST['submitsch'])){
         '$_POST[kol_opis]',
         $nds
 		)";
-		mysql_query($azaza) or die(mysql_error($link));
+		voovi_schet_query($azaza);
 
 
 		}
@@ -1651,17 +1665,18 @@ if(isset($_POST['submitsch'])){
 		'".date("y-m-d")."',
 		'".date("y-m-d")."'
 		)";
-        mysql_query($data_documents_str) or die(mysql_error($link));
+        voovi_schet_query($data_documents_str);
         $messaeLog = ' Пользователь ' . $userdata['users_id'] . ' GET[rand] ' . $_GET['rand'] . ' $shetrand ' . $shetrand . ' $_POST[shetrand] ' . $_POST['shetrand']
             . ' kolichschet ' . $sujmdfhsd . ' $zs ' . $zs . ' $_POST[submitsch] ' . $_POST['submitsch'] . ' $_POST[dog] '
             . $_POST['dog'];
         error_log(date('Y-m-d H:i:s') . $messaeLog . PHP_EOL, 3, 'log/voovi.log');
+        voovi_schet_commit($shetrand);
         echo '<script type="text/javascript">';
         echo 'window.location.href="/kartklient.php?id='.$_GET['id'].'";';
         echo '</script>';
 
 		$mamba = voovi_tarif_schet_query($_GET['parent'], isset($_GET['rand']) ? $_GET['rand'] : '');
-		$rmamba = mysql_query($mamba);
+		$rmamba = voovi_schet_query($mamba);
 		$pmamba = mysql_fetch_array($rmamba);
 		$pkvo = $pmamba;
 		$agent=htmlspecialchars($_POST["agent"]);
@@ -1689,18 +1704,18 @@ if(isset($_POST['submitsch'])){
 		{
 			if($_POST['priceks']!=""&&$_POST['priceks']!="0")
 			{
-					$koment = "UPDATE schet SET `prodlens`='1' WHERE ns='".$_POST['nsold']."'";
-		            mysql_query($koment) or die(mysql_error($link));
+					$koment = "UPDATE schet SET `prodlens`='1' WHERE rand='".mysql_real_escape_string($previousSchetRand)."'";
+		            voovi_schet_query($koment);
 			}
 			if($_POST['aallsumm']!=""&&$_POST['aallsumm']!="0")
 			{
                 if($_POST['skidka']=="100")
                 {
-                    $komentis = "UPDATE schet SET `prodlens`='1' WHERE ns='".$_POST['nsold']."'";
-                    mysql_query($komentis) or die(mysql_error($link));
+                    $komentis = "UPDATE schet SET `prodlens`='1' WHERE rand='".mysql_real_escape_string($previousSchetRand)."'";
+                    voovi_schet_query($komentis);
                 }
-			$komenti = "UPDATE schet SET `prodlenks`='1' WHERE ns='".$_POST['nsold']."'";
-		            mysql_query($komenti) or die(mysql_error($link));
+			$komenti = "UPDATE schet SET `prodlenks`='1' WHERE rand='".mysql_real_escape_string($previousSchetRand)."'";
+		            voovi_schet_query($komenti);
 			}
 		}
 		//------------------------------------------------------------------------
@@ -1787,7 +1802,7 @@ if(isset($_POST['submitsch'])){
 	    '$_POST[kol_opis]',
         $nds
 		)";
-		mysql_query($azazai) or die(mysql_error($link));
+		voovi_schet_query($azazai);
 
         $data_documents_str = "INSERT INTO `document_data` (
 		`rand`,
@@ -1804,12 +1819,13 @@ if(isset($_POST['submitsch'])){
 		'".date("y-m-d")."',
 		'".date("y-m-d")."'
 		)";
-        mysql_query($data_documents_str) or die(mysql_error($link));
+        voovi_schet_query($data_documents_str);
             $messaeLog = ' Пользователь ' . $userdata['users_id'] . ' GET[rand] ' . $_GET['rand'] . ' $shetrand ' . $shetrand . ' $_POST[shetrand] ' . $_POST['shetrand']
                 . ' kolichschet ' . $sujmdfhsd . ' $zs ' . $zs . ' $_POST[submitsch] ' . $_POST['submitsch'] . ' $_POST[dog] '
                 . $_POST['dog'];
             error_log(date('Y-m-d H:i:s') . $messaeLog . PHP_EOL, 3, 'log/voovi.log');
-            echo '<script type="text/javascript">';
+            voovi_schet_commit($shetrand);
+        echo '<script type="text/javascript">';
             echo 'window.location.href="/kartklient.php?id='.$_GET['id'].'";';
             echo '</script>';
 		//---------------------------------------------------------------------------
@@ -1819,437 +1835,32 @@ if(isset($_POST['submitsch'])){
 
 
 	}
-        if(isset($_POST['dobprod']))
-        {
-        $dop_yslygi = $_POST['dobprod'];
-        $count = count($dop_yslygi); //это количество элементов массива, для цикла.
-        }
-		if($count != 0)
-        {
-				for ($i=0; $i < $count; $i++)
-        {
-					$azazal = "INSERT INTO `schet` (
-		
-		`dobprod`,
-		`kto`
-		) VALUES (
-		'$dop_yslygi[$i]',
-		'".$userdata['users_id']."',
-		)";
-		mysql_query($azazal) or die(mysql_error($link));
-        }
-        }
+
 	}
 }
 
 
 if(isset($_POST['submitsave'])){
 
+    $validatedTariffs = voovi_validate_schet_tariffs($_GET['parent'], $pestar['rand'], $_POST);
+    $_POST['aallsumm'] = voovi_invoice_form_total($validatedTariffs, $_POST);
+    $previousSchetRand = voovi_schet_previous_rand(isset($_POST['nsold']) ? $_POST['nsold'] : '');
     $shetrand = $pestar['rand'];
     $sujmdfhsd = $pestar['kolichschet'];
-    $schetNs = $pestar2['ns'];
-    if ($schetNs == '' || $schetNs == '0') {
-        $schetNs = $pestar['god'].$pestar['kto'].$pestar['otdel'].$pestar['kolichschet'];
-    }
+    voovi_schet_request_key(isset($_POST['creation_token']) ? $_POST['creation_token'] : '', $schetFormScope, $userdata);
+    $schetNs = voovi_begin_schet_edit($shetrand);
     $_POST['shetrand'] = $shetrand;
 
 	$aktivn = "INSERT INTO `aktivn` (`data`,`deistvie`,`users`,`gmd`,`tip`) VALUES ('". date("d.m.Y; H:i:s") ."','Счет изменен','".$userdata['users_id']."','".date("Ymd")."','')";
-mysql_query($aktivn) or die(mysql_error($link));
+voovi_schet_query($aktivn);
 
-if($pestar2['del']=='1'){
-	mysql_query("DELETE FROM `schet` WHERE  `del` =  '0' AND rand ='".$_GET['rand']."'");
-
+if (voovi_schet_has_registered_goods($shetrand)) { throw new VooviSchetException('К счёту привязаны товары. Сначала отвяжите их в рег. карте.'); }
+if ((string)$_GET['tip'] === '12') {
+    voovi_update_schet_agency($shetrand, $newschetProductId, $_POST, $userdata['users_id']);
 }
-if($pestar2['del']=='0'){
-	mysql_query("UPDATE `schet` SET  `del` =  '1' WHERE rand ='".$_GET['rand']."'");
-        mysql_query("DELETE FROM `av` WHERE   rand ='".$_GET['rand']."'");
-}
-if($_GET['tip']==12 && $_POST['nomerschetks']!="")
-    {
-        /*echo'<script>alert('.$_POST['dobprod'].')</script>';*/
-        if($_POST['av']==0)
-        {
-            $pagent=$_POST['nomerschetks']."L";
-            $sagent=$_POST['nomerschetks'];
-            $chisrol=2;
-            if($_POST['sht']!="0"&&$_POST['sht']!="")
-            {
-                $dagent=$_POST['nomerschetks'];
-                $shtsert=$_POST['sht'];
-                $chisrol=3;
-            }
-            $dop_yslygi = $_POST['dobusl'];
-            $count = count($dop_yslygi); //это количество элементов массива, для цикла.
-            for ($i=0; $i < $count; $i++)
-            {
-                $azaza = "INSERT INTO `av` (
-			`os_prod`,
-			`dob_usl`,
-			`pagent`,
-			`sagent`,
-			`dagent`,
-			`shtsert`,
-			`chisrol`,
-			`rand`,
-			`schet`,
-			`summschet`,
-			`kto`
-		) VALUES (
-		'$_GET[parent]',
-		'$dop_yslygi[$i]',
-		'$pagent',
-		'$sagent',
-		'$dagent',
-		'$shtsert',
-		'$chisrol',
-		'$_POST[shetrand]',
-		'$_POST[nomerschetks]',
-		'$_POST[priceks]',
-		'".$userdata['users_id']."'
-		)";
-                mysql_query($azaza) or die(mysql_error($link));
-            }
-        }
-        if($_POST['av']==1)
-        {
-            $sagent=$_POST['nomerschetks'];
-            $chisrol=1;
-            if($_POST['sht']!="0"&&$_POST['sht']!="")
-            {
-                $dagent=$_POST['nomerschetks'];
-                $shtsert=$_POST['sht'];
-                $chisrol=2;
-            }
-            $dop_yslygi = $_POST['dobusl'];
-            $count = count($dop_yslygi); //это количество элементов массива, для цикла.
-            for ($i=0; $i < $count; $i++)
-            {
-                $azaza = "INSERT INTO `av` (
-			`os_prod`,
-			`dob_usl`,
-			`pagent`,
-			`sagent`,
-			`dagent`,
-			`shtsert`,
-			`chisrol`,
-			`rand`,
-			`schet`,
-			`summschet`,
-			`kto`
-		) VALUES (
-		'$_GET[parent]',
-		'$dop_yslygi[$i]',
-		'$pagent',
-		'$sagent',
-		'$dagent',
-		'$shtsert',
-		'$chisrol',
-		'$_POST[shetrand]',
-		'$_POST[nomerschetks]',
-		'$_POST[priceks]',
-		'".$userdata['users_id']."'
-		)";
-                mysql_query($azaza) or die(mysql_error($link));
-            }
-        }
-        if($_POST['av']==2)
-        {
-            if($_POST['sht']!="0"&&$_POST['sht']!="")
-            {
-                $dagent=$_POST['nomerschetks'];
-                $shtsert=$_POST['sht'];
-                $chisrol=1;
-            }
-            $dop_yslygi = $_POST['dobusl'];
-            $count = count($dop_yslygi); //это количество элементов массива, для цикла.
-            for ($i=0; $i < $count; $i++)
-            {
-                $azaza = "INSERT INTO `av` (
-			`os_prod`,
-			`dob_usl`,
-			`pagent`,
-			`sagent`,
-			`dagent`,
-			`shtsert`,
-			`chisrol`,
-			`rand`,
-			`schet`,
-			`summschet`,
-			`kto`
-		) VALUES (
-		'$_GET[parent]',
-		'$dop_yslygi[$i]',
-		'$pagent',
-		'$sagent',
-		'$dagent',
-		'$shtsert',
-		'$chisrol',
-		'$_POST[shetrand]',
-		'$_POST[nomerschetks]',
-		'$_POST[priceks]',
-		'".$userdata['users_id']."'
-		)";
-                mysql_query($azaza) or die(mysql_error($link));
-            }
-        }
-        if($_POST['av']=="3")
-        {
-            $pagent="Без АВ";
-            $sagent="Без АВ";
-            $chisrol=2;
-            if($_POST['sht']!="0"&&$_POST['sht']!="")
-            {
-                $dagent="Без АВ";
-                $shtsert=$_POST['sht'];
-                $chisrol=3;
-            }
-            $dop_yslygi = $_POST['dobusl'];
-            $count = count($dop_yslygi); //это количество элементов массива, для цикла.
-            for ($i=0; $i < $count; $i++)
-            {
-                $azaza = "INSERT INTO `av` (
-			`os_prod`,
-			`dob_usl`,
-			`pagent`,
-			`sagent`,
-			`dagent`,
-			`shtsert`,
-			`chisrol`,
-			`rand`,
-			`schet`,
-			`summschet`,
-			`kto`
-		) VALUES (
-		'$_GET[parent]',
-		'$dop_yslygi[$i]',
-		'$pagent',
-		'$sagent',
-		'$dagent',
-		'$shtsert',
-		'$chisrol',
-		'$_POST[shetrand]',
-		'$_POST[nomerschetks]',
-		'$_POST[priceks]',
-		'".$userdata['users_id']."'
-		)";
-                mysql_query($azaza) or die(mysql_error($link));
-            }
-        }
-        $dop_prod = $_POST['dobprod'];
-        $count = count($dop_prod);
-        $avdob = $_POST['avdob'];
-        $shtsertdd=$_POST['shtpr'];
-        if($count!=0)
-        {
-            for ($i=0; $i < $count; $i++)
-            {
-                if($avdob[$i]==0)
-                {
-                    $dobprodschet=$_POST['nomerschetks']."dob";
-                    $pagentd=$_POST['nomerschetks']."L";
-                    $sagentd=$_POST['nomerschetks'];
-                    $chisroldob=2;
-                    if($shtsertdd[$i]!="0"&&$shtsertdd[$i]!="")
-                    {
-                        $dagentd=$_POST['nomerschetks'];
-                        $shtsertd=$shtsertdd[$i];
-                        $chisroldob=3;
-                    }
-                    $dop_yslygi = $_POST['dobuslpr'];
-                    //это количество элементов массива, для цикла.
-
-                    $azaza = "INSERT INTO `av` (
-			`os_prod`,
-			`dob_prod`,
-		`dobprodschet`,
-			`pagent`,
-			`sagent`,
-			`dagent`,
-			`shtsert`,
-			`chisrol`,
-			`rand`,
-			`schet`,
-			`summschet`,
-			`kto`
-		) VALUES (
-		'$_GET[parent]',
-		'$dop_prod[$i]',
-		'$dobprodschet',
-		'$pagentd',
-		'$sagentd',
-		'$dagentd',
-		'$shtsertd',
-		'$chisroldob',
-		'$_POST[shetrand]',
-		'$_POST[nomerschetks]',
-		'$_POST[priceks]',
-		'".$userdata['users_id']."'
-		)";
-                    mysql_query($azaza) or die(mysql_error($link));
-                    $pagentd="";
-                    $sagentd="";
-                    $chisroldob="";
-                    $dagentd="";
-                }
-                if($avdob[$i]==1)
-                {
-                    $dobprodschet=$_POST['nomerschetks']."dob";
-                    $sagentd=$_POST['nomerschetks'];
-                    $chisroldob=1;
-                    if($shtsertdd[$i]!="0"&&$shtsertdd[$i]!="")
-                    {
-                        $dagentd=$_POST['nomerschetks'];
-                        $shtsertd=$shtsertdd[$i];
-                        $chisroldob=2;
-                    }
-                    $azaza = "INSERT INTO `av` (
-			`os_prod`,
-			`dob_prod`,
-		`dobprodschet`,
-			`pagent`,
-			`sagent`,
-			`dagent`,
-			`shtsert`,
-			`chisrol`,
-			`rand`,
-			`schet`,
-			`summschet`,
-			`kto`
-		) VALUES (
-		'$_GET[parent]',
-		'$dop_prod[$i]',
-		'$dobprodschet',
-		'$pagentd',
-		'$sagentd',
-		'$dagentd',
-		'$shtsertd',
-		'$chisroldob',
-		'$_POST[shetrand]',
-		'$_POST[nomerschetks]',
-		'$_POST[priceks]',
-		'".$userdata['users_id']."'
-		)";
-                    mysql_query($azaza) or die(mysql_error($link));
-                    $pagentd="";
-                    $sagentd="";
-                    $chisroldob="";
-                    $dagentd="";
-                }
-                if($avdob[$i]==2)
-                {
-                    $chisroldob=0;
-                    if($shtsertdd[$i]!="0"&&$shtsertdd[$i]!="")
-                    {
-                        $dagentd=$_POST['nomerschetks'];
-                        $shtsertd=$shtsertdd[$i];
-                        $chisroldob=1;
-                    }
-                    $dobprodschet=$_POST['nomerschetks']."dob";
-                    $azaza = "INSERT INTO `av` (
-			`os_prod`,
-			`dob_prod`,
-		`dobprodschet`,
-			`pagent`,
-			`sagent`,
-			`dagent`,
-			`shtsert`,
-			`chisrol`,
-			`rand`,
-			`schet`,
-			`summschet`,
-			`kto`
-		) VALUES (
-		'$_GET[parent]',
-		'$dop_prod[$i]',
-		'$dobprodschet',
-		'$pagentd',
-		'$sagentd',
-		'$dagentd',
-		'$shtsertd',
-		'$chisroldob',
-		'$_POST[shetrand]',
-		'$_POST[nomerschetks]',
-		'$_POST[priceks]',
-		'".$userdata['users_id']."'
-		)";
-                    mysql_query($azaza) or die(mysql_error($link));
-                    $pagentd="";
-                    $sagentd="";
-                    $chisroldob="";
-                    $dagentd="";
-                }
-                if($avdob[$i]=="3")
-                {
-                    $dobprodschet=$_POST['nomerschetks']."dob";
-                    $pagentd="Без АВ";
-                    $sagentd="Без АВ";
-                    $chisroldob=2;
-                    if($shtsertdd[$i]!="0"&&$shtsertdd[$i]!="")
-                    {
-                        $dagentd="Без АВ";
-                        $shtsert=$shtsertdd[$i];
-                        $chisroldob=3;
-                    }
-                    $azaza = "INSERT INTO `av` (
-			`os_prod`,
-			`dob_prod`,
-		`dobprodschet`,
-			`pagent`,
-			`sagent`,
-			`dagent`,
-			`shtsert`,
-			`chisrol`,
-			`rand`,
-			`schet`,
-			`summschet`,
-			`kto`
-		) VALUES (
-		'$_GET[parent]',
-		'$dop_prod[$i]',
-		'$dobprodschet',
-		'$pagentd',
-		'$sagentd',
-		'$dagentd',
-		'$shtsertd',
-		'$chisroldob',
-		'$_POST[shetrand]',
-		'$_POST[nomerschetks]',
-		'$_POST[priceks]',
-		'".$userdata['users_id']."'
-		)";
-                    mysql_query($azaza) or die(mysql_error($link));
-                    $pagentd="";
-                    $sagentd="";
-                    $chisroldob="";
-                    $dagentd="";
-                }
-
-            }
-
-
-
-            /* $dop_yslygi = $_POST['dobuslpr'];
-             $count = count($dop_yslygi); //это количество элементов массива, для цикла.
-                     for ($i=0; $i < $count; $i++)
-             {
-                         $azaza = "INSERT INTO `av` (
-
-
-             `dob_usl`,
-             `kto`
-             ) VALUES (
-
-             '$dop_yslygi[$i]',
-             '".$userdata['users_id']."'
-             )";
-             mysql_query($azaza) or die(mysql_error($link));
-             }*/
-        }
-    }
-
 
 $ogrn = "SELECT * FROM ogrn WHERE id =".$_GET['id'];
-$rogrn = mysql_query($ogrn);
+$rogrn = voovi_schet_query($ogrn);
 $pogrn = mysql_fetch_array($rogrn);
 $inn = $pogrn['inn'];
 $kpp = $pogrn['kpp'];
@@ -2258,125 +1869,36 @@ if($_POST['nsold']!=""&&$_POST['nsold']!="0")
 		{
 			if($_POST['priceks']!=""&&$_POST['priceks']!="0")
 			{
-					$koment = "UPDATE schet SET `prodlens`='1' WHERE ns='".$_POST['nsold']."'";
-		            mysql_query($koment) or die(mysql_error($link));
+					$koment = "UPDATE schet SET `prodlens`='1' WHERE rand='".mysql_real_escape_string($previousSchetRand)."'";
+		            voovi_schet_query($koment);
 			}
 			if($_POST['aallsumm']!=""&&$_POST['aallsumm']!="0")
 			{
-			$komenti = "UPDATE schet SET `prodlenks`='1' WHERE ns='".$_POST['nsold']."'";
-		            mysql_query($komenti) or die(mysql_error($link));
+			$komenti = "UPDATE schet SET `prodlenks`='1' WHERE rand='".mysql_real_escape_string($previousSchetRand)."'";
+		            voovi_schet_query($komenti);
 			}
 		}
-$qazaza = mysql_query(voovi_tarif_schet_query($_GET['parent'], isset($_GET['rand']) ? $_GET['rand'] : ''));
-while($rowazaza = mysql_fetch_array($qazaza)) {
-if($_POST[$rowazaza['id']] == 1){
-	$agent=htmlspecialchars($_POST["agent"]);
-$pkvo = $rowazaza;
-	$azaza = "INSERT INTO `schet` (
-    `ns`,
-	`shetold`,
-	`gen`,
-`idkli`,
-`sortir`,
-`otdel`,
-`filial`,
-`god`,
-`nomerdog`,
-`nomerschet`,
-`kolichschet`,
-`nomerschetks`,
-`kvo`,
-`prod`,
-`kvogorod`,
-`goroddd`,
-`prodlen`,
-`skidka`,
-`price`,
-`priceks`,
-`ogrn`,
-`name`,
-`inn`,
-`kpp`,
-`produkt`,
-`kto`,
-`data`,
-`koment`,
-`d`,
-`m`,
-`y`,
-`time`,
-`rand`,
-`oferta`,
-`tell`,
-`url`,
-`agent`,
-`nds`
-	) VALUES (
-    '".$schetNs."',
-	'$_POST[nsold]',
-	'".$pkvo['gen']."',
-'$_GET[id]',
-'".$var."',
-'".$userdata['otdel']."',
-'".$userdata['filial']."',
-'".$pestar['god']."',
-'".$pestar['nomerdog']."',
-'".$pestar['nomerschet']."',
-'".$pestar['kolichschet']."',
-'$_POST[nomerschetks]',
-'".$_POST["input".$rowazaza['id']]."',
-'".$rowazaza['id']."',
-'$_POST[kvogorod]',
-'$_POST[goroddd]',
-'0',
-'$_POST[skidka]',
-'$_POST[aallsumm]',
-'$_POST[priceks]',
-'".$_GET['ogrn']."',
-'".$naim."',
-'".$inn."',
-'".$kpp."',
-'$_GET[parent]',
-'".$userdata['users_id']."',
-'".$pestar['data']."',
-'".$pestar['koment']."',
-'".$pestar['d']."',
-'".$pestar['m']."',
-'".$pestar['y']."',
-'".$pestar['time']."',
-'$_POST[shetrand]',
-'".$pestar['time']."',
-'$_POST[tel]',
-'$_POST[url]',
-'$agent',
-$nds
-)";
-mysql_query($azaza) or die(mysql_error($link));
-}}
-$data_documents_str = "INSERT INTO `document_data` (
-    `rand`,
-    `d_bill`,
-    `d_contract`,
-    `d_specification`,
-    `d_act`,
-    `d_tn`
-    ) VALUES (
-    '$_POST[shetrand]',
-    '".date("y-m-d")."',
-    '".date("y-m-d")."',
-    '".date("y-m-d")."',
-    '".date("y-m-d")."',
-    '".date("y-m-d")."'
-    )";
+$changes = array('produkt'=>(string)$newschetProductId);
+foreach (array('nsold'=>'shetold','kvogorod'=>'kvogorod','goroddd'=>'goroddd','skidka'=>'skidka',
+    'aallsumm'=>'price','priceks'=>'priceks','nomerschetks'=>'nomerschetks','tel'=>'tell','url'=>'url','agent'=>'agent') as $input=>$field) {
+    if (isset($_POST[$input]) && is_string($_POST[$input])) { $changes[$field] = $_POST[$input]; }
+}
+foreach ($validatedTariffs as &$tariff) { $tariff['quantity'] = str_replace(',', '.', $_POST['input'.$tariff['id']]); }
+unset($tariff);
+voovi_replace_schet_tariffs($shetrand, $validatedTariffs, $changes);
     $messaeLog = ' Пользователь ' . $userdata['users_id'] . ' GET[rand] ' . $_GET['rand'] . ' $shetrand ' . $shetrand . ' $_POST[shetrand] ' . $_POST['shetrand']
         . ' kolichschet ' . $sujmdfhsd . ' $zs ' . $zs . ' $_POST[submitsch] ' . $_POST['submitsch'] . ' $_POST[dog] '
         . $_POST['dog'];
     error_log(date('Y-m-d H:i:s') . ' ' . $messaeLog . PHP_EOL, 3, 'log/voovi.log');
+voovi_schet_commit($shetrand);
 echo '<script type="text/javascript">';
 echo 'window.location.href="/kartklient.php?id='.$_GET['id'].'";';
 echo '</script>';
 
 
+}
+} catch (Exception $error) {
+    voovi_schet_render_error($error);
 }
 
 $depo = "SELECT * FROM schet WHERE del = '0' AND rand ='".$_GET['rand']."'";
@@ -2412,6 +1934,7 @@ if ($newschetOldSchetQuery) {
 
 
 <form method="post" id="schetForm">
+<input type="hidden" name="creation_token" value="<?php echo newschet_h($schetFormToken); ?>">
 
 <div class="newschet-mode-row">
 <label for="idprodkschet">Режим счета</label>
@@ -2424,7 +1947,7 @@ if ($newschetOldSchetQuery) {
     <div class="newschet-old-input-row">
         <div class="newschet-old-input">
             <label for="nsold">Предыдущий счет</label>
-            <input id="nsold" name="nsold" class="form-control" type="text" list="newschetOldSchetList" autocomplete="off" value="<?php echo isset($_GET['oldns']) ? newschet_h($_GET['oldns']) : ''; ?>" placeholder="Введите номер или выберите из подсказок" />
+            <input id="nsold" name="nsold" class="form-control" type="text" list="newschetOldSchetList" autocomplete="off" value="<?php echo isset($_GET['oldns']) ? newschet_h($_GET['oldns']) : (isset($pdepo['shetold']) ? newschet_h($pdepo['shetold']) : ''); ?>" placeholder="Введите номер или выберите из подсказок" />
             <datalist id="newschetOldSchetList">
                 <?php foreach ($newschetOldSchetOptions as $newschetOldSchet) { ?>
                     <option value="<?php echo newschet_h($newschetOldSchet['ns']); ?>"><?php echo newschet_h(trim($newschetOldSchet['nomerschetks'].' '.$newschetOldSchet['data'].' '.$newschetOldSchet['priceks'])); ?></option>
@@ -2481,12 +2004,12 @@ echo $row['name'];
 echo '</td>';
 echo '<td class="newschet-tarif-price">';
 $vowels = array(" "," ");
-$price = str_replace($vowels, "", $row['price']);
+$price = voovi_decimal($row['price']);
 echo $price;
 
 echo '</td>';
 echo '<td class="newschet-tarif-qty">';
-echo '<input id="input'.$row['id'].'" name="input'.$row['id'].'" class="newschet-qty-input" type="number" min="0" step="1" inputmode="numeric" value="';
+echo '<input id="input'.$row['id'].'" name="input'.$row['id'].'" class="newschet-qty-input" type="number" min="0" step="any" inputmode="decimal" value="';
 if(isset($_GET['rand'])){
 $dopschet = "SELECT * FROM schet WHERE del = '0' AND rand ='".$_GET['rand']."' AND prod = '".$row['id']."'";
 $rdopschet = mysql_query($dopschet);
@@ -2509,7 +2032,8 @@ $dopschet = "SELECT * FROM schet WHERE del = '0' AND rand ='".$_GET['rand']."' A
 $rdopschet = mysql_query($dopschet);
 $pdopschet = mysql_fetch_array($rdopschet);
 
-echo $pdopschet['kvo']*$price;
+$linePreview = voovi_money_sql('CAST(ROUND('.voovi_decimal($pdopschet['kvo']).'*'.$price.',2) AS DECIMAL(20,2))');
+echo $linePreview[0];
 
 }else{
 echo '0';
@@ -2524,7 +2048,7 @@ $("input[id=input'.$row['id'].']").keyup(function input'.$row['id'].'(){
 	$("#check'.$row['id'].'").attr("checked", false);
   }
 
-price = '.$price.' * $("#input'.$row['id'].'").val();
+price = new Decimal("'.$price.'").times($("#input'.$row['id'].'").val() || "0").toFixed(2);
 document.getElementById("summ'.$row['id'].'").innerHTML = '.price.';
 });
 
@@ -2540,11 +2064,11 @@ $( "#input'.$row['id'].'" ).click(function() {
 function validate'.$row['id'].'(){
 if (check'.$row['id'].'.checked == 1){
 $("#input'.$row['id'].'").val("1");
-price = '.$price.' * $("#input'.$row['id'].'").val();
+price = new Decimal("'.$price.'").times($("#input'.$row['id'].'").val() || "0").toFixed(2);
 document.getElementById("summ'.$row['id'].'").innerHTML = '.price.';
 } else {
 $("#input'.$row['id'].'").val("0"); 
-price = '.$price.' * $("#input'.$row['id'].'").val();
+price = new Decimal("'.$price.'").times($("#input'.$row['id'].'").val() || "0").toFixed(2);
 document.getElementById("summ'.$row['id'].'").innerHTML = '.price.';
 }
 }
@@ -2593,7 +2117,7 @@ echo'</option>';
 
 <td style="width: 57px;">
 <input id="kmgorod" type="text" value="" style="width: 50px; display: none;">
-<input id="kvogorod" name="kvogorod" type="text" min="0" max="100" step="1" value="1" style="width: 50px;">
+<input id="kvogorod" name="kvogorod" type="text" min="0" max="100" step="1" value="<?php echo newschet_h(isset($pdepo['kvogorod']) ? $pdepo['kvogorod'] : '1'); ?>" style="width: 50px;">
 </td>
 <td style="width: 5px;">
 <p id="gorodd">0</p>
@@ -2611,7 +2135,7 @@ echo'</option>';
 <span>Скидка</span>
 </td>
 <td  style="width: 58px; ">
-<span class="newschet-discount-wrap"><input id="skidka" name="skidka" class="newschet-discount-input" type="number" min="0" max="100" step="1" value="0"><span>%</span></span>
+<span class="newschet-discount-wrap"><input id="skidka" name="skidka" class="newschet-discount-input" type="number" min="0" max="100" step="1" value="<?php echo newschet_h(isset($pdepo['skidka']) ? $pdepo['skidka'] : '0'); ?>"><span>%</span></span>
 </td>
 <td style="width: 50px;">
 <p id="allsumm" class="newschet-total-sum"></p>
@@ -2660,10 +2184,10 @@ echo'" style="width:100%;">
 </td>
 <td  style="padding: 5px;">
 <select name="agent" class="form-control">
-  <option value="0" selected>Выберите агента</option>   
+  <option value="0">Выберите агента</option>
   <?$r=mysql_query("SELECT * from agent ");
    while($res = mysql_fetch_assoc($r)) :?>	  
-  <option value="<?php echo $res['id'];?>"><?php echo htmlspecialchars($res['name']);?></option>
+  <option value="<?php echo $res['id'];?>"<?php if (isset($pdepo['agent']) && (string)$pdepo['agent'] === (string)$res['id']) { echo ' selected'; } ?>><?php echo htmlspecialchars($res['name']);?></option>
     <?php endwhile; ?>
   </select>
 </td></tr>
@@ -2687,48 +2211,32 @@ echo'" style="width:100%;">
 <script >
 setInterval(gorod, 500)
 function gorod(){
-var gorr = $("#gorod").val();
-var kvogorod = $("#kvogorod").val();
-var kmgorod = $("#kmgorod").val();
-
-
-
-if (gorr == 23) {
-$(function() {
-$("input[id='kmgorod']").keyup(function kmgorod(){
-document.getElementById("gorodd").innerHTML = gorr * $("#kmgorod").val()*$("#kvogorod").val() ;
-$("#goroddd").val(gorr * $("#kmgorod").val());
-});
-});
-document.getElementById("gorodd").innerHTML = gorr * kmgorod*$("#kvogorod").val() ;
-$("#goroddd").val(gorr * kmgorod);
-document.getElementById("kmgorod").style.display="block";
-} else if (gorr == 162534) {
-document.getElementById("gorodd").innerHTML = gorr - 162534;
-$("#goroddd").val(gorr);
-} else {
-document.getElementById("gorodd").innerHTML = gorr*$("#kvogorod").val() ;
-$("#goroddd").val(gorr);
-document.getElementById("kmgorod").style.display="none";
-}
-
-
+    var selector = document.getElementById("gorod");
+    if (!selector) return;
+    var travel = new Decimal(selector.value || "0"), amount = new Decimal(0);
+    if (!travel.equals(162534)) {
+        if (travel.equals(23)) travel = travel.times($("#kmgorod").val() || "0");
+        amount = travel.times($("#kvogorod").val() || "0");
+    }
+    $("#goroddd").val(travel.toString());
+    document.getElementById("gorodd").innerHTML = amount.toFixed(2);
+    document.getElementById("kmgorod").style.display = selector.value === "23" ? "block" : "none";
 }
 setInterval(alsum, 500)
 function alsum(){
-    Decimal.config({ precision: 30 });
-<?php $query3 = mysql_query(voovi_tarif_schet_query($_GET['parent'], isset($_GET['rand']) ? $_GET['rand'] : '')); while($row3 = mysql_fetch_array($query3)) { echo 'price'.$row3['id'].' = parseFloat(document.getElementById("summ'.$row3['id'].'").innerHTML);
-'; } ?>
-var allsumm = <?php $query1 = mysql_query(voovi_tarif_schet_query($_GET['parent'], isset($_GET['rand']) ? $_GET['rand'] : '')); while($row1 = mysql_fetch_array($query1)) { echo "price",$row1['id']," + "; } ?> parseFloat(document.getElementById("gorodd").innerHTML);
-skidka = $("#skidka").val();
-sskidka = (new Decimal(skidka)).dividedBy(100).times(new Decimal(allsumm));
-if ($("#gorod").val() == 162534){
-document.getElementById('allsumm').innerHTML = Decimal(allsumm).minus(Decimal(sskidka));
-$("#aallsumm").val(Decimal(allsumm).minus(Decimal(sskidka)));
-}else{
-document.getElementById('allsumm').innerHTML = Decimal(allsumm).minus(Decimal(sskidka));
-$("#aallsumm").val(Decimal(allsumm).minus(Decimal(sskidka)));
+    Decimal.config({ precision: 50, rounding: Decimal.ROUND_HALF_UP });
+    var total = new Decimal(0);
+<?php
+$query1 = mysql_query(voovi_tarif_schet_query($_GET['parent'], isset($_GET['rand']) ? $_GET['rand'] : ''));
+while ($row1 = mysql_fetch_array($query1)) {
+    echo 'total = total.plus(new Decimal("'.voovi_decimal($row1['price']).'").times($("#input'.$row1['id'].'").val() || "0"));'."\n";
 }
+?>
+    var travel = new Decimal($("#goroddd").val() || "0");
+    if (!travel.equals(162534)) total = total.plus(travel.times($("#kvogorod").val() || "0"));
+    var amount = total.times(new Decimal(100).minus($("#skidka").val() || "0")).dividedBy(100).toFixed(2);
+    document.getElementById('allsumm').innerHTML = amount;
+    $("#aallsumm").val(amount);
 }
 </script>
 <?if ($_GET['tip']==12){?>
@@ -2755,7 +2263,7 @@ echo newschet_h($person['name']);
     margin-top: 7px;
     padding-top: 4px;
     padding-bottom: 4px;margin-left: 40px;" id="av" name="av">
-<option value="-1"selected></option>
+<option value="-1" selected><?php echo isset($_GET['rand']) ? 'Не изменять АВ' : ''; ?></option>
 <option value="0">Новый</option>
 <option value="1">Продление</option>
 <option value="2">Удл.личности от контура</option>
@@ -3274,7 +2782,7 @@ error_log(date('Y-m-d H:i:s') . ' ' . $messaeLog . PHP_EOL, 3, 'log/voovi.log');
 
 <script src="/js/jquery-1.11.0.min.js"></script>
 <script src="js/bootstrap.min.js"></script>
-<script src="/js/schet-number-check.js?v=2"></script>
+<script src="/js/schet-number-check.js?v=3"></script>
 <script type="text/javascript">
 (function () {
     function onReady(fn) {

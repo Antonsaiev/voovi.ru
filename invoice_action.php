@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__.'/schet_identity.php';
 
 function checkError($id) {  //Проверка на возможность отгрузить счет или вернуть с отгрузки
     $impid = implode(", ", $id);
@@ -133,20 +134,28 @@ function handleAktZero($oneSchet) {  //Отгрузка счета
 }
 
 function handleAktOne($oneSchet) {  //Возврат из  отгрузки счета
-$Qdelete = mysql_query("UPDATE `schet` SET `akt` = '0', `akt_date` = '' WHERE del = '0' AND rand IN (" . $oneSchet['rand'] . ")") or die("error in delete");
-deleteFromCallCenter($oneSchet['ns']); // удаляется из коллцентра продление
+$Qdelete = mysql_query("UPDATE `schet` SET `akt` = '0', `akt_date` = '' WHERE del = '0' AND rand = '" . mysql_real_escape_string($oneSchet['rand']) . "'") or die("error in delete");
+deleteFromCallCenter($oneSchet); // удаляются продления именно этой группы
 return 'Успешно ' . $oneSchet['name'];
 }
 
 function insertToCallCenter($type, $array_data, $dateField) {  // При отгрузке отправка данных в колл центр
 $dateProd = str_replace("-", "", $array_data[$dateField]);
-$callCentrIns = "INSERT INTO `call_center`(`date`, `4`,`6`,`9`, `10`, `otk`,`ns`,`idogrn`) VALUES ('" . $dateProd . "','" . $array_data['produkt'] . "','" . $type . "','" . $array_data['inn'] . "','" . $array_data['kpp'] . "','0','" . $array_data['ns'] . "','" . $array_data['idkli'] . "')";
+$callCentrIns = "INSERT INTO `call_center`(`date`, `4`,`6`,`9`, `10`, `otk`,`ns`,`idogrn`,`rand`) VALUES ('" . $dateProd . "','" . $array_data['produkt'] . "','" . $type . "','" . $array_data['inn'] . "','" . $array_data['kpp'] . "','0','" . $array_data['ns'] . "','" . $array_data['idkli'] . "','".mysql_real_escape_string($array_data['rand'])."')";
     $error_message = mysql_query($callCentrIns) or die(mysql_error());
     //echo "<script>console.log($error_message);</script>";
 }
 
-function deleteFromCallCenter($ns) {
-    $callCentrDel = "DELETE FROM `call_center` WHERE ns='" . $ns . "'";
+function deleteFromCallCenter($invoice) {
+    $rand = mysql_real_escape_string($invoice['rand']);
+    $where = "rand='".$rand."'";
+    // Старые строки не содержат rand. Не угадываем их принадлежность при совпавшем номере.
+    if (voovi_schet_find_rand($invoice['ns'], $invoice['idkli']) === $invoice['rand']) {
+        $where .= " OR ((rand IS NULL OR rand IN ('','0')) AND ns='".mysql_real_escape_string($invoice['ns']).
+            "' AND idogrn='".mysql_real_escape_string($invoice['idkli'])."' AND `4`='".
+            mysql_real_escape_string($invoice['produkt'])."')";
+    }
+    $callCentrDel = "DELETE FROM `call_center` WHERE ".$where;
     mysql_query($callCentrDel) or die(mysql_error());
 }
 
@@ -359,13 +368,8 @@ function getDateDocuments($rand)
         $resultdschet = mysql_fetch_array(mysql_query($dschet));
         $date_schet_old = $resultdschet['y'].'-'.$resultdschet['m'].'-'.$resultdschet['d'];
         error_log($date_schet_old . PHP_EOL, 3, 'log/voovi.log');
-        if ((int)$resultdschet['y'] >= 2024) {
-            $newDate = "INSERT INTO `document_data`(`rand`, `d_bill`, `d_contract`, `d_specification`, `d_act`, `d_invoice_advance`, `d_upd`, `d_tn`) VALUES ('" . $rand . "','" . $date_schet_old . "','" . $date_schet_old . "','" . $date_schet_old . "','" . $date_schet_old . "','" . $date_schet_old . "','" . $date_schet_old . "','" . $date_schet_old . "')";
-        } else {
-            $typeContract = 'dogovor';
-            if ($resultdschet['budjet_ogrn'] === '1') {$typeContract = 'contract';}
-            $newDate = "INSERT INTO `document_data`(`rand`, `d_bill`, `d_contract`, `d_specification`, `d_act`, `d_invoice_advance`, `d_upd`, `d_tn`, `type_contract`) VALUES ('" . $rand . "','" . $date_schet_old . "','" . $date_schet_old . "','" . $date_schet_old . "','" . $date_schet_old . "','" . $date_schet_old . "','" . $date_schet_old . "','" . $date_schet_old . "','" . $typeContract . "')";
-        }
+        $typeContract = voovi_schet_contract_type($resultdschet['y'], $resultdschet['budjet_ogrn']);
+        $newDate = "INSERT INTO `document_data`(`rand`, `d_bill`, `d_contract`, `d_specification`, `d_act`, `d_invoice_advance`, `d_upd`, `d_tn`, `type_contract`) VALUES ('" . $rand . "','" . $date_schet_old . "','" . $date_schet_old . "','" . $date_schet_old . "','" . $date_schet_old . "','" . $date_schet_old . "','" . $date_schet_old . "','" . $date_schet_old . "','" . $typeContract . "')";
         $message = mysql_query($newDate) or die(mysql_error());
         $dd = "SELECT * FROM `document_data` WHERE rand = '" . $rand . "'";
         return mysql_fetch_array(mysql_query($dd));

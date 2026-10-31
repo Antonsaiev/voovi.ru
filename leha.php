@@ -491,7 +491,7 @@ echo "</div>";
 </thead>
 <tbody id="contentArea" class="clusterize-content">
 <?php $i = 1;
-$query = mysql_query("SELECT DISTINCT nomerschet,kolichschet,ogrn,prodlen,generac,name,lico,rand,otdel,filial,god,nomerschetks,nomerdog,data,produkt,price,priceks,kto,inn,kpp,idkli,otk,koment,oplachen,oplachenks,doljen,gotov,akt,url,groupi,gr,agent FROM schet WHERE del = '0' AND $groupi $getakt $turbo $gotov $goroddd $akt_date $gen_date $postavka $generac $oplachenks $oplachen $neoplachen $doljen $otk ORDER BY id DESC LIMIT $start, $num ");
+$query = mysql_query("SELECT DISTINCT ns,nomerschet,kolichschet,ogrn,prodlen,generac,name,lico,rand,otdel,filial,god,nomerschetks,nomerdog,data,produkt,price,priceks,kto,inn,kpp,idkli,otk,koment,oplachen,oplachenks,doljen,gotov,akt,url,groupi,gr,agent FROM schet WHERE del = '0' AND $groupi $getakt $turbo $gotov $goroddd $akt_date $gen_date $postavka $generac $oplachenks $oplachen $neoplachen $doljen $otk ORDER BY id DESC LIMIT $start, $num ");
 
 while($row = mysql_fetch_array($query)) {
 echo '<tr for="raz'.$row['rand'].'" ';
@@ -677,10 +677,7 @@ echo '</td>';
 
 echo '<td >';
 if($row['nomerschet'] != 'В КС'){
-	echo '<span class="glyphicon glyphicon-bookmark" aria-hidden="true"  style="display: initial;"></span>',$row['god'],$row['kto'],$row['otdel'],$row['kolichschet'].'<br>';
-	if($row['ns']=='0'){
-		mysql_query("UPDATE schet SET ns='".$row['god'].$row['kto'].$row['otdel'].$row['kolichschet']."' WHERE rand =".$row['rand']);
-	}
+	echo '<span class="glyphicon glyphicon-bookmark" aria-hidden="true"  style="display: initial;"></span>',$row['ns'].'<br>';
 }else{
 	
 }

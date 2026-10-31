@@ -27,16 +27,17 @@ else
 include 'conf.php';
 include 'invoice_action.php';
 include 'nds.php';
+require_once 'invoice_money.php';
 
 $id     = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 $kli_id = isset($_GET['kli']) ? (int)$_GET['kli'] : 0;
 
 
-$pav = "SELECT * FROM schet WHERE del = '0' AND rand = $_GET[id]";
+$pav = "SELECT * FROM schet WHERE del = '0' AND rand = '".mysql_real_escape_string((string)$_GET['id'])."' ORDER BY id LIMIT 1";
 $pavresult = mysql_query($pav);
 $pavoir = mysql_fetch_array($pavresult);
 
-$sch = "SELECT DISTINCT nomerschet,kolichschet,oferta,prodlen,generac,name,lico,rand,otdel,filial,god,nomerdog,data,produkt,price,kto,inn,kpp,koment,ogrn,skidka,d,m,y FROM schet WHERE del = '0' AND rand ='".$id."'  ORDER BY id DESC";
+$sch = "SELECT DISTINCT ns,nomerschet,kolichschet,oferta,prodlen,generac,name,lico,rand,otdel,filial,god,nomerdog,data,produkt,price,kto,inn,kpp,koment,ogrn,skidka,d,m,y FROM schet WHERE del = '0' AND rand ='".$id."'  ORDER BY id DESC";
 $schetresult = mysql_query($sch);
 $schet = mysql_fetch_array($schetresult);
 
@@ -57,6 +58,7 @@ $nds_info = nds_parse(isset($pavoir['nds']) ? $pavoir['nds'] : '');
 $nds_code = $nds_info['code'];
 $nds_rate = (float)$nds_info['rate'];
 $nds_col_text = ($nds_rate > 0) ? ('НДС: '.(int)$nds_rate.'%') : 'Без НДС';
+$invoiceAmounts = voovi_invoice_document_amounts($id, $pavoir, $nds_rate);
 
 $fsdhhgf = "SELECT * FROM ogrn WHERE ogrn =".$pavoir['ogrn'];
 $rfsdhhgf = mysql_query($fsdhhgf);
@@ -371,11 +373,11 @@ style="font-size:10.0pt;font-family:"Times","serif";color:black">СЧЕТ-ОФЕ
 $str .=  ;
 }*/
 $date = new DateTime(getDateDocuments($id)['d_bill']);
-$str .= '&nbsp;№&nbsp;'.$schet['god'].$schet['kto'].$schet['otdel'].$schet['kolichschet'].'&nbsp;от&nbsp;'.$date->format('d.m.Y').'</span></b></p>
+$str .= '&nbsp;№&nbsp;'.$schet['ns'].'&nbsp;от&nbsp;'.$date->format('d.m.Y').'</span></b></p>
 
 <p class=MsoNormal align=center style="margin-bottom:0cm;margin-bottom:.0001pt;
 text-align:center;line-height:normal;text-autospace:none"><b><span
-style="font-style: italic;font-size:10.0pt;font-family:"Times","serif"; color:black">Просьба в назначении платежа указать:&nbsp;№&nbsp;'.$schet['god'].$schet['kto'].$schet['otdel'].$schet['kolichschet'].'&nbsp;ИНН&nbsp;'.$klient['inn'].'&nbsp;КПП&nbsp;'.$klient['kpp'].'&nbsp;&nbsp;'.$klient['naim'].'</span></b></p>
+style="font-style: italic;font-size:10.0pt;font-family:"Times","serif"; color:black">Просьба в назначении платежа указать:&nbsp;№&nbsp;'.$schet['ns'].'&nbsp;ИНН&nbsp;'.$klient['inn'].'&nbsp;КПП&nbsp;'.$klient['kpp'].'&nbsp;&nbsp;'.$klient['naim'].'</span></b></p>
 
 <p class=MsoNormal style="margin-bottom:0cm;margin-bottom:.0001pt;line-height:
 normal;text-autospace:none"><span style="font-size:5.0pt;font-family:"Times","serif";
@@ -429,7 +431,7 @@ color:black">&nbsp;</span></p>
   </tr>
  </thead>';
 
-$sum_vat = 0.0;
+$sum_vat = $invoiceAmounts['vat'];
 $i = 1;
 $query = mysql_query("SELECT * FROM schet WHERE del = '0' AND rand = '".$id."'");
 while($row = mysql_fetch_array($query)) {
@@ -438,14 +440,10 @@ $rpod = "SELECT * FROM tarif WHERE id =".$row['prod'];
 $resultrpod = mysql_query($rpod);
 $personrpod = mysql_fetch_array($resultrpod);
 
-$vowels = array(" "," ");
-$price = str_replace($vowels, "", $personrpod['price']);
-$qty = (float)$row['kvo'];
-$unit_gross = (float)str_replace(',', '.', (string)$price);
-$line_gross = round($unit_gross * $qty, 2);
-$line_vat = nds_included_sum($line_gross, $nds_rate);
-$sum_vat += $line_vat;
-//echo number_format($price, 2, '.', ',');
+$lineAmounts = $invoiceAmounts['items'][$row['id']];
+$price = $lineAmounts['price'];
+$line_gross = $lineAmounts['gross'];
+//echo voovi_money_format($price, ',');
 
 $str .=  "<tr><td  width=26 style='width:19.8pt;border:solid black 1.0pt;border-top:none;
   padding:1.4pt 2.8pt 1.4pt 2.8pt'><p class=MsoNormal align=center style='margin-bottom:0cm;margin-bottom:.0001pt;
@@ -462,7 +460,7 @@ $str .=  "<tr><td  width=26 style='width:19.8pt;border:solid black 1.0pt;border-
   style="font-size:8.0pt;font-family:Times;color:black">'.$row['kvo'].'</span></p></td><td  width=26 style="width:19.8pt;border:solid black 1.0pt;border-top:none;
   padding:1.4pt 2.8pt 1.4pt 2.8pt"><p class=MsoNormal align=right style="margin-bottom:0cm;margin-bottom:.0001pt;
   text-align:right;line-height:normal;text-autospace:none"><span
-  style="font-size:8.0pt;font-family:Times;color:black">'.number_format($price, 2, '.', ',').'</span></p></td><td  width=26 style="width:19.8pt;border:solid black 1.0pt;border-top:none;
+  style="font-size:8.0pt;font-family:Times;color:black">'.voovi_money_format($price, ',').'</span></p></td><td  width=26 style="width:19.8pt;border:solid black 1.0pt;border-top:none;
   padding:1.4pt 2.8pt 1.4pt 2.8pt"><p class=MsoNormal align=right style="margin-bottom:0cm;margin-bottom:.0001pt;
   text-align:right;line-height:normal;text-autospace:none"><span
   style="font-size:8.0pt;font-family:Times;color:black">';
@@ -470,7 +468,7 @@ $str .=  "<tr><td  width=26 style='width:19.8pt;border:solid black 1.0pt;border-
 $str .=  '</span></p></td><td  width=26 style="width:19.8pt;border:solid black 1.0pt;border-top:none;
   padding:1.4pt 2.8pt 1.4pt 2.8pt"><p class=MsoNormal align=right style="margin-bottom:0cm;margin-bottom:.0001pt;
   text-align:right;line-height:normal;text-autospace:none"><span
-  style="font-size:8.0pt;font-family:Times;color:black">'.number_format($price * $row['kvo'], 2, '.', ',').'</span></p></td></tr>';
+  style="font-size:8.0pt;font-family:Times;color:black">'.voovi_money_format($line_gross, ',').'</span></p></td></tr>';
 }
 }
 
@@ -487,28 +485,20 @@ $str .=  '</span></p></td><td  width=26 style="width:19.8pt;border:solid black 1
   border-bottom:solid black 1.0pt;border-right:solid black 1.0pt;padding:1.4pt 2.8pt 1.4pt 2.8pt'>
   <p class=MsoNormal style='margin-bottom:0cm;margin-bottom:.0001pt;text-align:
   justify;text-justify:inter-ideograph;line-height:normal;text-autospace:none'><span
-  style='font-size:8.0pt;font-family:Times;color:black'>Выезд</span></p>
+  style='font-size:8.0pt;font-family:Times;color:black'>".voovi_invoice_travel_name($pavoir)."</span></p>
   </td>
   <td width=34 style='width:25.5pt;border-top:none;border-left:none;border-bottom:
   solid black 1.0pt;border-right:solid black 1.0pt;padding:1.4pt 2.8pt 1.4pt 2.8pt'>
   <p class=MsoNormal align=center style='margin-bottom:0cm;margin-bottom:.0001pt;
   text-align:center;line-height:normal;text-autospace:none'><span
-  style='font-size:8.0pt;font-family:Times;color:black'>км</span></p>
+  style='font-size:8.0pt;font-family:Times;color:black'>выезд</span></p>
   </td>
   <td width=53 style='width:65.65pt;border-top:none;border-left:none;
   border-bottom:solid black 1.0pt;border-right:solid black 1.0pt;padding:1.4pt 2.8pt 1.4pt 2.8pt'>
   <p class=MsoNormal align=center style='margin-bottom:0cm;margin-bottom:.0001pt;
   text-align:center;line-height:normal;text-autospace:none'><span
   style='font-size:8.0pt;font-family:Times;color:black'>"; 
-  if($pavoir['goroddd'] == 450){
-  $str .=  "Пятигорск (".$pavoir['kvogorod'].")";
-  } else if($pavoir['goroddd'] == 750){
-  $str .=  "КМВ (".$pavoir['kvogorod'].")";
-  } else if($pavoir['goroddd'] == 1500){
-  $str .=  "Георгиевск (".$pavoir['kvogorod'].")";
-  }else{
-  $str .=  $pavoir['goroddd'] / 23 ."(".$pavoir['kvogorod'].")";
-  }
+  $str .= $invoiceAmounts['items']['travel']['quantity'];
   $str .= "</span></p>
   </td>
   <td width=76 style='width:56.65pt;border-top:none;border-left:none;
@@ -516,15 +506,7 @@ $str .=  '</span></p></td><td  width=26 style="width:19.8pt;border:solid black 1
   <p class=MsoNormal align=right style='margin-bottom:0cm;margin-bottom:.0001pt;
   text-align:right;line-height:normal;text-autospace:none'><span
   style='font-size:8.0pt;font-family:Times;color:black'>"; 
-  if($pavoir['goroddd'] == 450){
-  $str .=  number_format(450, 2, '.', ',');
-  } else if($pavoir['goroddd'] == 750){
-  $str .=  number_format(750, 2, '.', ',');
-  } else if($pavoir['goroddd'] == 1500){
-  $str .=  number_format(1500, 2, '.', ',');
-  }else{
-  $str .=  number_format(23, 2, '.', ',');
-  }
+  $str .=  voovi_money_format($invoiceAmounts['items']['travel']['price'] , ',');
   $str .= "</span></p>
   </td>
   <td width=76 style='width:56.65pt;border-top:none;border-left:none;
@@ -539,8 +521,8 @@ $str .=  '</span></p></td><td  width=26 style="width:19.8pt;border:solid black 1
   text-align:right;line-height:normal;text-autospace:none'><span
   style='font-size:8.0pt;font-family:Times;color:black'>";
 
-$kvogorod = $pavoir['goroddd'] * $pavoir['kvogorod'];
-  $str .=  number_format($kvogorod, 2, '.', ',');
+$kvogorod = $invoiceAmounts['items']['travel']['gross'];
+  $str .=  voovi_money_format($kvogorod, ',');
   
   $str .= "</span></p>
   </td>
@@ -556,7 +538,7 @@ $kvogorod = $pavoir['goroddd'] * $pavoir['kvogorod'];
   border-top:none;padding:1.4pt 2.8pt 1.4pt 2.8pt'>
   <p class=MsoNormal align=right style='margin-bottom:0cm;margin-bottom:.0001pt;
   text-align:right;line-height:normal;text-autospace:none'><b><span
-  style='font-size:8.0pt;font-family:Times;color:black'>Скидка:</span></b></p>
+  style='font-size:8.0pt;font-family:Times;color:black'>Скидка (учтена в позициях):</span></b></p>
   </td>
   <td width=76 style='width:56.65pt;border-top:none;border-left:none;
   border-bottom:solid black 1.0pt;border-right:solid black 1.0pt;padding:1.4pt 2.8pt 1.4pt 2.8pt'>
@@ -580,7 +562,7 @@ $str .= '<tr>
   border-bottom:solid black 1.0pt;border-right:solid black 1.0pt;padding:1.4pt 2.8pt 1.4pt 2.8pt">
   <p class=MsoNormal align=right style="margin-bottom:0cm;margin-bottom:.0001pt;
   text-align:right;line-height:normal;text-autospace:none"><span
-  style="font-size:8.0pt;font-family:"Times","serif";color:black">'.number_format($pavoir['price'], 2, '.', ',').'</span></p>
+  style="font-size:8.0pt;font-family:"Times","serif";color:black">'.voovi_money_format($invoiceAmounts['gross'], ',').'</span></p>
   </td>
  </tr>';
 
@@ -588,7 +570,7 @@ $str .= '<tr>
 if ($nds_code !== 'none' && $nds_rate >= 0) {
     $nds_sum = 0;
     if ($nds_rate > 0) {
-        $nds_sum = round($sum_vat, 2);
+        $nds_sum = $sum_vat;
     }
     $str .= '<tr>
     <td width=604 colspan=6 style="width:453.35pt;border:solid black 1.0pt;
@@ -601,7 +583,7 @@ if ($nds_code !== 'none' && $nds_rate >= 0) {
     border-bottom:solid black 1.0pt;border-right:solid black 1.0pt;padding:1.4pt 2.8pt 1.4pt 2.8pt">
     <p class=MsoNormal align=right style="margin-bottom:0cm;margin-bottom:.0001pt;
     text-align:right;line-height:normal;text-autospace:none"><span
-    style="font-size:8.0pt;font-family:"Times","serif";color:black">'.number_format($nds_sum, 2, '.', ',').'</span></p>
+    style="font-size:8.0pt;font-family:"Times","serif";color:black">'.voovi_money_format($nds_sum, ',').'</span></p>
     </td>
    </tr>';
 }
@@ -646,9 +628,9 @@ $query = [
     'bik'=> $savoir['bik'],
     'innpolu'=> $savoir['inn'],
     /*'uridadress'=> $klient['uridadress'],*/
-    'price'=> number_format($pavoir['price'], 2, '.', ','),
+    'price'=> voovi_money_format($invoiceAmounts['gross'], ','),
     'bank'=> $savoir['bank'],
-    'ns'=>$schet['god'].$schet['kto'].$schet['otdel'].$schet['kolichschet'],
+    'ns'=>$schet['ns'],
 ];
 printf('<img src="genqri.php?%s" style="float: right;margin-top: 20px;width: 150px;">', http_build_query($query));
 if($_GET['p']==0){

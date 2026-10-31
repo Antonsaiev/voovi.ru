@@ -1,0 +1,23 @@
+.kontur-card{margin:12px 15px;padding:14px 16px;border:1px solid #cfe4db;border-radius:8px;background:#f1faf6;color:#26313d}
+.kontur-card>summary{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;list-style:none;cursor:pointer}
+.kontur-card>summary::-webkit-details-marker{display:none}
+.kontur-card .kontur-card-label{display:inline-flex;align-items:center;gap:12px;padding:5px 0;color:#286c9c;font-weight:600}
+.kontur-card-label::before{content:'';width:7px;height:7px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(-45deg);transition:transform .15s;flex-shrink:0}
+.kontur-card[open]>.kontur-card-summary .kontur-card-label::before{transform:rotate(45deg)}
+.kontur-card>summary:hover .kontur-card-label{color:#1d5074}
+.kontur-card>summary:focus-visible{outline:2px solid #3282b9;outline-offset:4px;border-radius:3px}
+.kontur-card-status{color:#58756b}
+.kontur-card-content{margin-top:16px;border-top:1px solid #d7e7df;padding-top:12px}
+.kontur-card-table{overflow-x:auto;background:#fff;border:1px solid #d7e7df;border-radius:6px}
+.kontur-card-table table{width:100%;border-collapse:collapse;font-size:13px}
+.kontur-card-table th,.kontur-card-table td{padding:10px 12px;border-bottom:1px solid #e3ece7;vertical-align:top;text-align:left}
+.kontur-card-table th{background:#f5f9f7;color:#58756b}
+.kontur-card-table .kontur-card-product th{background:#eaf3ef;color:#315e50;font-weight:700;border-top:1px solid #d7e7df}
+.kontur-card-table th:first-child,.kontur-card-table td:first-child{min-width:220px}
+.kontur-card-table th:not(:first-child),.kontur-card-table td:not(:first-child){white-space:nowrap;text-align:right}
+.kontur-card-table tr:last-child td{border-bottom:0}
+.kontur-card-table tfoot th,.kontur-card-table tfoot td{border-top:1px solid #d7e7df;background:#f5f9f7;font-weight:700;color:#26313d}
+.kontur-card-note{display:block;color:#6a7c84;font-size:12px;margin:5px 0 0;font-weight:400}
+.kontur-card-error{color:#963f2b}
+.kontur-card-billing{display:inline-block;white-space:nowrap;font-size:12px}
+@media(max-width:540px){.kontur-card{margin:12px 0;padding:12px}.kontur-card-table th,.kontur-card-table td{padding:8px}.kontur-card-table th:first-child,.kontur-card-table td:first-child{min-width:160px}}

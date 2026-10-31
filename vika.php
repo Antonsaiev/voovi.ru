@@ -12,7 +12,7 @@ $fsdhhgf = "SELECT * FROM ogrn WHERE ogrn =".$pavoir['ogrn'];
 $rfsdhhgf = mysql_query($fsdhhgf);
 $pfsdhhgf = mysql_fetch_array($rfsdhhgf);
 
-$sch = "SELECT DISTINCT nomerschet,kolichschet,prodlen,generac,name,lico,rand,otdel,filial,god,nomerdog,data,produkt,price,kto,inn,kpp,koment,ogrn,skidka,podpisant,d,m,y FROM schet WHERE del = '0' AND rand ='".$_GET['id']."'  ORDER BY id DESC";
+$sch = "SELECT DISTINCT ns,nomerschet,kolichschet,prodlen,generac,name,lico,rand,otdel,filial,god,nomerdog,data,produkt,price,kto,inn,kpp,koment,ogrn,skidka,podpisant,d,m,y FROM schet WHERE del = '0' AND rand ='".$_GET['id']."'  ORDER BY id DESC";
 $schetresult = mysql_query($sch);
 $schet = mysql_fetch_array($schetresult);
 
@@ -381,7 +381,7 @@ color:black'>&nbsp;</span></p>
 
 <p class=MsoNormal align=center style='margin-bottom:0cm;margin-bottom:.0001pt;
 text-align:center;line-height:normal;text-autospace:none'><b><span
-style='font-size:10.0pt;font-family:"Times","serif";color:black'>АКТ&nbsp;№&nbsp;<?php echo $schet['god'].$schet['kto'].$schet['otdel'].$schet['kolichschet'];?></span></b></p>
+style='font-size:10.0pt;font-family:"Times","serif";color:black'>АКТ&nbsp;№&nbsp;<?php echo $schet['ns'];?></span></b></p>
  
 <p class=MsoNormal align=center style='margin-bottom:0cm;margin-bottom:.0001pt;
 text-align:center;line-height:normal;text-autospace:none'><b><span

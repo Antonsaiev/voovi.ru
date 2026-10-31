@@ -42,11 +42,7 @@ if(substr_count($userdata['dotdel'], $row['otdel']) == 1){
     echo '<td style="text-align: left;width: 4%; font-size: 14px;" >';
 
     if($row['nomerschet'] != 'В КС'){
-        //echo '<span class="glyphicon glyphicon-bookmark" aria-hidden="true"  style="display:initial;" ></span>',$row['god'],$row['kto'],$row['otdel'],$row['kolichschet'].'<br>';
-        echo '<a style="font-size: 14px;" href="' . VOOVI_DOC_URL . '/different/diadoc?ns=' . $row['god'],$row['kto'],$row['otdel'],$row['kolichschet'] . '"target="_blank">' . $row['god'],$row['kto'],$row['otdel'],$row['kolichschet'] . '</a><br>';
-        if($row['ns']=='0'){
-            mysql_query("UPDATE schet SET ns='".$row['god'].$row['kto'].$row['otdel'].$row['kolichschet']."' WHERE rand =".$row['rand']);
-        }
+        echo '<a style="font-size: 14px;" href="' . VOOVI_DOC_URL . '/different/diadoc?ns=' . rawurlencode((string)$row['ns']) . '" target="_blank">' . htmlspecialchars((string)$row['ns'], ENT_QUOTES, 'UTF-8') . '</a><br>';
     }else{
 
     }
@@ -91,11 +87,8 @@ if(substr_count($userdata['dotdel'], $row['otdel']) == 1){
     echo '>';
 
     $ns_for_link = $row['ns'];
-    if (($row['ns']) == '0') {
-        $ns_for_link = $row['god'].$row['kto'].$row['otdel'].$row['kolichschet'];
-    }
 
-    echo '<a style="font-size: 14px;" href="' . VOOVI_DOC_URL . '/payments/SearchBill?n_schet=' . $ns_for_link . '">' . $row['name'] . '</a>';
+    echo '<a style="font-size: 14px;" href="' . VOOVI_DOC_URL . '/payments/SearchBill?n_schet=' . rawurlencode((string)$ns_for_link) . '">' . $row['name'] . '</a>';
 
 
 
@@ -817,7 +810,7 @@ $("#generacinfo'.$row['rand'].'").load(" #generacinfo'.$row['rand'].'");
         echo '</td>';
     }
     if (empty($render_kartklient_schet_table)) {
-        echo '<td class="lab"  onclick="f(this)" id='.$row['god'].$row['kto'].$row['otdel'].$row['kolichschet'].'>'.$row['data_napom'];
+        echo '<td class="lab"  onclick="f(this)" id='.$row['ns'].'>'.$row['data_napom'];
         echo'</td>';
     }
     echo'</tr>';

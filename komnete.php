@@ -26,7 +26,7 @@ $fsdhhgf = "SELECT * FROM ogrn WHERE ogrn =".$pavoir['ogrn'];
 $rfsdhhgf = mysql_query($fsdhhgf);
 $pfsdhhgf = mysql_fetch_array($rfsdhhgf);
 $sch = "SELECT DISTINCT 
-nomerschet,
+ns,nomerschet,
 kolichschet,
 nomerschetks,
 priceks,
@@ -70,6 +70,9 @@ groupi,agent,kol_opis,sos_opis
 FROM schet WHERE del = '0' AND rand ='".$_GET['rand']."' ORDER BY id DESC";
 $schetresult = mysql_query($sch);
 $schet = mysql_fetch_array($schetresult);
+// Номер в старом поле может принадлежать другому поставщику; Контур определяется связью.
+$konturCardQuery = mysql_query("SELECT l.id FROM bills_voovi_links l LEFT JOIN bills b ON l.BillId=b.BillId WHERE l.schet_rand = '".mysql_real_escape_string($schet['rand'])."' AND (b.status IS NULL OR b.status <> 'deleted') LIMIT 1");
+$konturCard = $konturCardQuery ? mysql_fetch_assoc($konturCardQuery) : false;
 $kli = "SELECT * FROM ogrn WHERE id =".$_GET['kli'];
 $kliresult = mysql_query($kli);
 $klient = mysql_fetch_array($kliresult);
@@ -182,6 +185,7 @@ if ($komneteInvoiceQuery) {
     <title></title>
     <meta http-equiv="content-type" content="text/html" charset="utf-8" />
     <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/kontur-card.css?v=4" rel="stylesheet">
 
     <!--<link rel="stylesheet" type="text/css" href="css/normalize.css" />
     <link rel="stylesheet" type="text/css" href="css/demo.css" />
@@ -1824,17 +1828,24 @@ if ($komneteInvoiceQuery) {
 
     <div class="komnete-titlebar" style="margin-bottom: 15px;height: 55px;font-size: 21px;background: #26BB84;padding: 8px;color: #fff;">
         <div class="komnete-invoice-meta">
-            <span class="komnete-meta-item"><b>Контур</b><span><?php echo !empty($schet['nomerschetks']) ? $schet['nomerschetks'] : '—'; ?></span></span>
+            <span class="komnete-meta-item"><b id="kontur-header-label">Счёт поставщика</b><span id="kontur-header-reference"><?php
+                $konturHeaderNumber = !empty($schet['nomerschetks']) ? $schet['nomerschetks'] : '—';
+                $konturHeaderUrl = isset($pavoir['url']) ? trim($pavoir['url']) : '';
+                $konturHeaderScheme = strtolower((string)parse_url($konturHeaderUrl, PHP_URL_SCHEME));
+                if (!empty($schet['nomerschetks']) && filter_var($konturHeaderUrl, FILTER_VALIDATE_URL)
+                    && in_array($konturHeaderScheme, array('http', 'https'), true)) {
+                    echo '<a href="'.htmlspecialchars($konturHeaderUrl, ENT_QUOTES, 'UTF-8').'" target="_blank" rel="noopener noreferrer">'.htmlspecialchars($konturHeaderNumber, ENT_QUOTES, 'UTF-8').'</a>';
+                } else {
+                    echo htmlspecialchars($konturHeaderNumber, ENT_QUOTES, 'UTF-8');
+                }
+            ?></span></span>
             <span class="komnete-meta-item"><b>Счет</b><span><?php
                 if($schet['oferta'] == 1){
                     echo '-ОФЕРТА ';
                 }
                 if($schet['nomerschet'] != 'В КС'){
-                    $schetNs = $schet['god'].$schet['kto'].$schet['otdel'].$schet['kolichschet'];
-                    echo 'S_<a href="' . VOOVI_DOC_URL . '/different/diadoc?ns=' . $schetNs . '" target="_blank">' . $schetNs . '</a>';
-                    if($row['ns']=='0'){
-                        mysql_query("UPDATE schet SET ns='".$schetNs."' WHERE rand =".$_GET['rand']);
-                    }
+                    $schetNs = (string)$schet['ns'];
+                    echo 'S_<a href="' . VOOVI_DOC_URL . '/different/diadoc?ns=' . rawurlencode($schetNs) . '" target="_blank">' . htmlspecialchars($schetNs, ENT_QUOTES, 'UTF-8') . '</a>';
                 }else{
                     if(!empty($schet['nomerschetks'])){
                         $nomerschetks = array("№", " ", "С", "ч", "е", "т");
@@ -2081,6 +2092,23 @@ if ($komneteInvoiceQuery) {
 <!--    </div>-->
 
 
+    <?php if (!empty($schet['rand']) && (string)$pavoir['cher'] !== '1') { ?>
+    <?php
+    $konturLookup = $konturCard || (trim((string)$pavoir['nomerschetks']) !== '' && (string)$pavoir['nomerschetks'] !== '0');
+    ?>
+    <?php if ($konturLookup) { ?>
+    <details id="kontur-invoice-card" class="kontur-card" data-rand="<?php echo htmlspecialchars($schet['rand'], ENT_QUOTES, 'UTF-8'); ?>" hidden data-lookup="1">
+        <summary class="kontur-card-summary"><span class="kontur-card-label">Состав счёта Контура</span><span class="kontur-card-status"></span></summary>
+        <div class="kontur-card-content" aria-live="polite"></div>
+    </details>
+    <script src="js/kontur-form-core.js?v=14" defer></script>
+    <script src="js/kontur-card.js?v=9" defer></script>
+    <?php } ?>
+    <div id="kontur-invoice-add" class="kontur-card">
+        <a class="btn btn-success" href="kontur_invoice.php?rand=<?php echo rawurlencode($schet['rand']); ?>" target="_blank" rel="noopener">Добавить счёт Контура</a>
+        <span style="margin-left: 12px; color: #58756b;"></span>
+    </div>
+    <?php } ?>
     <?php include 'docpage.php'; ?>
 
     <div class="col-md-12 komnete-marking-strip">

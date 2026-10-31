@@ -10,6 +10,7 @@ function nds_parse($raw) {
         'vat7'  => 7,
         'vat10' => 10,
         'vat20' => 20,
+        'vat22' => 22,
     );
 
     $code = 'none';

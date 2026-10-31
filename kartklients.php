@@ -331,7 +331,7 @@ color: #fff;">Контакты</h3>
         </tr>
     </thead>
 					<?php
-						$query = mysql_query("SELECT DISTINCT nomerschet,prodlen,generac,name,lico,rand,otdel,filial,god,nomerdog,data,produkt,price,kto,inn,kpp,koment FROM schet WHERE ogrn = '".$person['ogrn']."' ORDER BY id DESC");	
+						$query = mysql_query("SELECT DISTINCT ns,nomerschet,prodlen,generac,name,lico,rand,otdel,filial,god,nomerdog,data,produkt,price,kto,inn,kpp,koment FROM schet WHERE ogrn = '".$person['ogrn']."' ORDER BY id DESC");
 						
 							while($row = mysql_fetch_array($query)) {
 echo '<tr for="raz'.$row['rand'].'" style="font-size: 11px; background: #'.$row['color'].';';
@@ -559,7 +559,7 @@ echo '</td></tr>';
 </tr>
 </thead>
 <?php
-$query = mysql_query("SELECT DISTINCT nomerschet,otdel,filial,god,nomerdog,data,produkt,price,kto,rand FROM schet WHERE ogrn = '".$person['ogrn']."'");
+$query = mysql_query("SELECT DISTINCT ns,nomerschet,otdel,filial,god,nomerdog,data,produkt,price,kto,rand FROM schet WHERE ogrn = '".$person['ogrn']."'");
 while($row = mysql_fetch_array($query)) {
 echo '<tr><td>';
 $ktos = "SELECT * FROM users WHERE users_id =".$row['kto'];
@@ -574,7 +574,7 @@ echo '<td>';
 echo $row['god'],$row['filial'],$row['otdel'],$row['nomerdog'];
 echo '</td>';
 echo '<td>';
-echo $row['god'],$row['filial'],$row['otdel'],$row['nomerschet']; 
+echo $row['ns'];
 echo '</td>';
 echo '<td>';
 $rpod = "SELECT * FROM produkti WHERE id =".$row['produkt'];
@@ -651,7 +651,7 @@ echo '
   
   
 <?php
-$query = mysql_query("SELECT DISTINCT nomerschet,otdel,filial,god,nomerdog,data,produkt,price,kto,rand FROM schet WHERE ogrn = '".$person['ogrn']."'");
+$query = mysql_query("SELECT DISTINCT ns,nomerschet,otdel,filial,god,nomerdog,data,produkt,price,kto,rand FROM schet WHERE ogrn = '".$person['ogrn']."'");
 while($row = mysql_fetch_array($query)) {
 
 
@@ -660,7 +660,7 @@ echo '<div class="modal fade" id="myModal'.$row['rand'].'aa" tabindex="-1" role=
     <div class="modal-content">
       <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-        <h4 class="modal-title" id="myModalLabel">Счет: '.$row['god'].$row['filial'].$row['otdel'].$row['nomerschet'].'</h4>
+        <h4 class="modal-title" id="myModalLabel">Счет: '.$row['ns'].'</h4>
       </div>
       <div class="modal-body">
         ';
@@ -716,7 +716,7 @@ echo '<div class="modal fade" id="myModal'.$row['rand'].'" tabindex="-1" role="d
     <div class="modal-content">
       <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-        <h4 class="modal-title" id="myModalLabel">Счет: '.$row['god'].$row['filial'].$row['otdel'].$row['nomerschet'].'</h4>
+        <h4 class="modal-title" id="myModalLabel">Счет: '.$row['ns'].'</h4>
       </div>
 	  <form  enctype="multipart/form-data"  method="post">
       <div class="modal-body">
@@ -1012,7 +1012,7 @@ $u = "INSERT INTO `kvobop`(
 '$_POST[komm]', 
 '".$row['rand']."', 
 '".$userdata['users_id']."', 
-'".$row['god'].$row['filial'].$row['otdel'].$row['nomerschet']."', 
+'".mysql_real_escape_string((string)$row['ns'])."',
 '".$class413241324."', 
 '".$person['ogrn']."', 
 '".$row['price']."', 
@@ -1067,7 +1067,7 @@ mysql_query($u) or die(mysql_error($link));
 
 
 <?php
-$query = mysql_query("SELECT DISTINCT nomerschet,otdel,filial,god,nomerdog,data,produkt,price,kto,rand,podpisant FROM schet WHERE ogrn = '".$person['ogrn']."'");
+$query = mysql_query("SELECT DISTINCT ns,nomerschet,otdel,filial,god,nomerdog,data,produkt,price,kto,rand,podpisant FROM schet WHERE ogrn = '".$person['ogrn']."'");
 while($row = mysql_fetch_array($query)) {
 echo '<tr><td>';
 $ktos = "SELECT * FROM users WHERE users_id =".$row['kto'];
@@ -1193,7 +1193,7 @@ echo '
 </tr>
 </thead>
 <?php
-$query = mysql_query("SELECT DISTINCT nomerschet,otdel,filial,god,nomerdog,data,produkt,price,kto,rand FROM schet WHERE ogrn = '".$person['ogrn']."'");
+$query = mysql_query("SELECT DISTINCT ns,nomerschet,otdel,filial,god,nomerdog,data,produkt,price,kto,rand FROM schet WHERE ogrn = '".$person['ogrn']."'");
 while($row = mysql_fetch_array($query)) {
 echo '<tr><td>';
 $ktos = "SELECT * FROM users WHERE users_id =".$row['kto'];
@@ -1208,7 +1208,7 @@ echo '<td>';
 echo $row['god'],$row['filial'],$row['otdel'],$row['nomerdog'];
 echo '</td>';
 echo '<td>';
-echo $row['god'],$row['filial'],$row['otdel'],$row['nomerschet']; 
+echo $row['ns'];
 echo '</td>';
 echo '<td>';
 $rpod = "SELECT * FROM produkti WHERE id =".$row['produkt'];
@@ -1271,7 +1271,7 @@ echo '
 </tr>
 </thead>
 <?php
-$query = mysql_query("SELECT DISTINCT nomerschet,otdel,filial,god,nomerdog,data,produkt,price,kto,rand FROM schet WHERE ogrn = '".$person['ogrn']."'");
+$query = mysql_query("SELECT DISTINCT ns,nomerschet,otdel,filial,god,nomerdog,data,produkt,price,kto,rand FROM schet WHERE ogrn = '".$person['ogrn']."'");
 while($row = mysql_fetch_array($query)) {
 echo '<tr><td>';
 $ktos = "SELECT * FROM users WHERE users_id =".$row['kto'];
@@ -1286,7 +1286,7 @@ echo '<td>';
 echo $row['god'],$row['filial'],$row['otdel'],$row['nomerdog'];
 echo '</td>';
 echo '<td>';
-echo $row['god'],$row['filial'],$row['otdel'],$row['nomerschet']; 
+echo $row['ns'];
 echo '</td>';
 echo '<td>';
 $rpod = "SELECT * FROM produkti WHERE id =".$row['produkt'];

@@ -195,7 +195,7 @@ echo $row['god'],$row['kto'],$row['otdel'],$row['nomerdog'];
 echo '</td>';
 $invoiceDetailsId = 'komneteInvoiceDetails'.$row['rand'];
 echo '<td style="font-size: 14px;">';
-echo $row['god'],$row['kto'],$row['otdel'],$row['kolichschet'];
+echo $row['ns'];
 echo ' <button type="button" class="komnete-invoice-toggle" data-target="#'.$invoiceDetailsId.'" aria-expanded="false" aria-controls="'.$invoiceDetailsId.'"><span class="komnete-invoice-toggle-text">Состав</span></button>';
 echo '</td>';
 echo '<td style="font-size: 14px;">';
@@ -291,7 +291,7 @@ echo '<script type="text/javascript">
 //        echo '</td>';
 
 // формируем новые и старые URL
-$billId      = $row['god'] . $row['kto'] . $row['otdel'] . $row['kolichschet'];
+$billId      = $row['ns'];
 $newPdfUrl   = VOOVI_DOC_URL . '/different/dwdocs/' . $billId . '?type=bill_pdf';
 $newPdfSigUrl   = VOOVI_DOC_URL . '/different/dwdocs/' . $billId . '?type=bill_pdf_signature';
 $oldPrintUrl = '/schet.php?id=' . $row['rand'] . '&p=1&kli=' . urlencode($_GET['kli']);
@@ -433,7 +433,7 @@ $(document).ready(function () {
 	 </script>
 
 	<?php
-$query = mysql_query("SELECT DISTINCT nomerschet,otdel,filial,god,nomerdog,data,produkt,price,kto,rand,inn,name FROM schet WHERE del = '0' AND rand = '".$_GET['rand']."'");
+$query = mysql_query("SELECT DISTINCT ns,nomerschet,otdel,filial,god,nomerdog,data,produkt,price,kto,rand,inn,name FROM schet WHERE del = '0' AND rand = '".$_GET['rand']."'");
 while($row = mysql_fetch_array($query)) {
 if(substr_count($userdata['dotdel'], $row['otdel']) == 1){
 
@@ -442,7 +442,7 @@ echo '<div class="modal fade" id="myModal'.$row['rand'].'aa" tabindex="-1" role=
     <div class="modal-content">
       <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-        <h4 class="modal-title" id="myModalLabel">Счет: '.$row['god'].$row['filial'].$row['otdel'].$pfsdhhgf['id'].$row['nomerschet'].'</h4>
+        <h4 class="modal-title" id="myModalLabel">Счет: '.$row['ns'].'</h4>
       </div>
       <div class="modal-body">
         ';
@@ -562,7 +562,7 @@ echo '<div class="modal fade" id="myModal'.$row['rand'].'" tabindex="-1" role="d
     <div class="modal-content">
       <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-        <h4 class="modal-title" id="myModalLabel">Счет: '.$row['god'].$row['filial'].$row['otdel'].$pfsdhhgf['id'].$row['nomerschet'].'</h4>
+        <h4 class="modal-title" id="myModalLabel">Счет: '.$row['ns'].'</h4>
       </div>
 	  <form  enctype="multipart/form-data"  method="post">
       <div class="modal-body">
@@ -851,7 +851,7 @@ $u = "INSERT INTO `kvobop`(
 '$_POST[komm]',
 '".$row['rand']."',
 '".$userdata['users_id']."',
-'".$row['god'].$row['filial'].$row['otdel'].$pfsdhhgf['id'].$row['nomerschet']."',
+'".mysql_real_escape_string((string)$row['ns'])."',
 '".$class413241324."',
 '".$person['ogrn']."',
 '".$row['price']."',
@@ -1220,7 +1220,7 @@ echo'</td></tr>';
 
                // Номер счёта
                echo '<td style="font-size: 14px;">';
-               echo $row['god'],$row['kto'],$row['otdel'],$row['kolichschet'];
+               echo $row['ns'];
                echo '</td>';
 
                // Продукт
@@ -1243,7 +1243,7 @@ echo'</td></tr>';
                // --- ссылки DWDocs для УПД ---
 
                // billId как в счёте
-               $billId = $row['god'].$row['kto'].$row['otdel'].$row['kolichschet'];
+               $billId = $row['ns'];
 
                $updPdfUrl     = VOOVI_DOC_URL . '/different/dwdocs/' . $billId . '?type=upd_pdf';
                $updPdfSigUrl  = VOOVI_DOC_URL . '/different/dwdocs/' . $billId . '?type=upd_pdf_signature';
@@ -1358,7 +1358,7 @@ echo '<td style="font-size: 14px;">';
 echo $row['god'],$row['kto'],$row['otdel'],$row['nomerdog'];
 echo '</td>';
 echo '<td style="font-size: 14px;">';
-echo $row['god'],$row['kto'],$row['otdel'],$row['kolichschet'];
+echo $row['ns'];
 echo '</td>';
 echo '<td style="font-size: 14px;">';
 $rpod = "SELECT * FROM produkti WHERE id =".$row['produkt'];
@@ -1442,7 +1442,7 @@ echo '<td style="font-size: 14px;">';
 echo $row['god'],$row['kto'],$row['otdel'],$row['nomerdog'];
 echo '</td>';
 echo '<td style="font-size: 14px;">';
-echo $row['god'],$row['kto'],$row['otdel'],$row['kolichschet'];
+echo $row['ns'];
 echo '</td>';
 echo '<td style="font-size: 14px;">';
 $rpod = "SELECT * FROM produkti WHERE id =".$row['produkt'];
@@ -1507,7 +1507,7 @@ echo '
 </tr>
 </thead>
 <?php
-$query = mysql_query("SELECT DISTINCT rand,nomerschet,otdel,filial,god,nomerdog,data,produkt,price,inn,priceks,kto,oplachenks,ogrn,d,m,y,kolichschet, url FROM schet WHERE del = '0' AND rand = '".$_GET['rand']."'  ORDER BY id DESC");
+$query = mysql_query("SELECT DISTINCT ns,rand,nomerschet,otdel,filial,god,nomerdog,data,produkt,price,inn,priceks,kto,oplachenks,ogrn,d,m,y,kolichschet, url FROM schet WHERE del = '0' AND rand = '".$_GET['rand']."'  ORDER BY id DESC");
 while($row = mysql_fetch_array($query)) {
 	if(substr_count($userdata['dotdel'], $row['otdel']) == 1){
 echo '<tr><td style="font-size: 14px;">';
@@ -1560,7 +1560,7 @@ echo '<td style="font-size: 14px;">';
 echo $row['god'],$row['kto'],$row['otdel'],$row['nomerdog'];
 echo '</td>';
 echo '<td style="font-size: 14px;">';
-echo $row['god'],$row['kto'],$row['otdel'],$row['kolichschet'];
+echo $row['ns'];
 echo '</td>';
 echo '<td style="font-size: 14px;">';
 $rpod = "SELECT * FROM produkti WHERE id =".$row['produkt'];
@@ -1685,7 +1685,7 @@ echo '<td style="font-size: 14px;">';
 echo $row['god'],$row['kto'],$row['otdel'],$row['nomerdog'];
 echo '</td>';
 echo '<td style="font-size: 14px;">';
-echo $row['god'],$row['kto'],$row['otdel'],$row['kolichschet'];
+echo $row['ns'];
 echo '</td>';
 echo '<td style="font-size: 14px;">';
 $rpod = "SELECT * FROM produkti WHERE id =".$row['produkt'];
@@ -1777,7 +1777,7 @@ echo '<td style="font-size: 14px;">';
 echo $row['god'],$row['kto'],$row['otdel'],$row['nomerdog'];
 echo '</td>';
 echo '<td style="font-size: 14px;">';
-echo $row['god'],$row['kto'],$row['otdel'],$row['kolichschet'];
+echo $row['ns'];
 echo '</td>';
 echo '<td style="font-size: 14px;">';
 $rpod = "SELECT * FROM produkti WHERE id =".$row['produkt'];
@@ -1895,7 +1895,7 @@ echo '<td style="font-size: 14px;">';
 echo $row['god'],$row['kto'],$row['otdel'],$row['nomerdog'];
 echo '</td>';
 echo '<td style="font-size: 14px;">';
-echo $row['god'],$row['kto'],$row['otdel'],$row['kolichschet'];
+echo $row['ns'];
 echo '</td>';
 echo '<td style="font-size: 14px;">';
 $rpod = "SELECT * FROM produkti WHERE id =".$row['produkt'];
@@ -1979,7 +1979,7 @@ echo '<td style="font-size: 14px;">';
 echo $row['god'],$row['kto'],$row['otdel'],$row['nomerdog'];
 echo '</td>';
 echo '<td style="font-size: 14px;">';
-echo $row['god'],$row['kto'],$row['otdel'],$row['kolichschet'];
+echo $row['ns'];
 echo '</td>';
 echo '<td style="font-size: 14px;">';
 $rpod = "SELECT * FROM produkti WHERE id =".$row['produkt'];
@@ -2061,7 +2061,7 @@ echo '<td style="font-size: 14px;">';
 echo $row['god'],$row['kto'],$row['otdel'],$row['nomerdog'];
 echo '</td>';
 echo '<td style="font-size: 14px;">';
-echo $row['god'],$row['kto'],$row['otdel'],$row['kolichschet'];
+echo $row['ns'];
 echo '</td>';
 echo '<td style="font-size: 14px;">';
 $rpod = "SELECT * FROM produkti WHERE id =".$row['produkt'];
@@ -2288,7 +2288,7 @@ echo '<td style="font-size: 14px;">';
 echo $row['god'],$row['kto'],$row['otdel'],$row['nomerdog'];
 echo '</td>';
 echo '<td style="font-size: 14px;">';
-echo $row['god'],$row['kto'],$row['otdel'],$row['kolichschet'];
+echo $row['ns'];
 echo '</td>';
 echo '<td style="font-size: 14px;">';
 $rpod = "SELECT * FROM produkti WHERE id =".$row['produkt'];

@@ -1,6 +1,7 @@
 <?php
 # подключаем конфиг
 include 'conf.php';  
+require_once __DIR__.'/schet_identity.php';
 		$q = "SELECT * FROM ogrn WHERE id =$_GET[kli]";
 		$result = mysql_query($q);
 		$person = mysql_fetch_array($result);
@@ -112,22 +113,18 @@ if(isset($_POST['go'])){
         $tel = str_replace($vowels, "", $_POST['date']);
 
 
-        $koment = "INSERT INTO `call_center`(`date`, `4`,`6`,`9`, `10`, `otk`, `ns`,`idogrn`) VALUES ('" . $tel . "','" . $_POST['produkti'] . "','" . $_POST['tip'] . "','" . $_GET['inn'] . "','" . $_GET['kpp'] . "','" . $_POST['status'] . "','" . $_POST['nsold'] . "','".$_GET['kli']."')";
-        mysql_query($koment) or die(mysql_error($link));
-        $komentu = "INSERT INTO `kol_prodlen`(`ns`, `kol`,`tip`,`date_prodleni`, `randkol`,`status`) VALUES ('" . $_POST['nsold'] . "','" . $_POST['shtprod'] . "','" . $_POST['tip'] . "','" . $_POST['date'] . "','" . $shetrand. "','schet')";
-        mysql_query($komentu) or die(mysql_error($link));
-        if ($_POST['tip'] == "Сертификат") {
-            $query33 = mysql_query("SELECT * from kol_prodlen WHERE ns='" . $_POST['nsold'] . "' and date_prodleni = (SELECT MIN(date_prodleni) FROM kol_prodlen)");
-            $res = mysql_fetch_array($query33) ;
-
-                $komenti = "UPDATE schet SET tipprod='" . $res['tip'] . "',dataprod='" . $res['date_prodleni'] . "' WHERE ns='" . $res['ns'] . "'";
-                mysql_query($komenti) or die(mysql_error($link));
-        }
-        if ($_POST['tip'] == "Поставка") {
-            $query33 = mysql_query("SELECT * from kol_prodlen WHERE ns='" . $_POST['nsold'] . "' and date_prodleni = (SELECT MIN(date_prodleni) FROM kol_prodlen)");
-            $res = mysql_fetch_array($query33) ;
-            $komenti = "UPDATE schet SET tipprod='" . $_POST['tip'] . "',datasert='" . $_POST['date'] . "' WHERE ns='" . $_POST['nsold'] . "'";
-            mysql_query($komenti) or die(mysql_error($link));
+        $invoiceRand = voovi_schet_find_rand($_POST['nsold'], $_GET['kli']);
+        $values = array_map('mysql_real_escape_string', array($tel, $_POST['produkti'], $_POST['tip'],
+            $_GET['inn'], $_GET['kpp'], $_POST['status'], $_POST['nsold'], $_GET['kli'], $invoiceRand === null ? '' : $invoiceRand));
+        $koment = "INSERT INTO call_center (`date`,`4`,`6`,`9`,`10`,otk,ns,idogrn,rand) VALUES ('".implode("','",$values)."')";
+        voovi_schet_query($koment);
+        $values = array_map('mysql_real_escape_string', array($_POST['nsold'], $_POST['shtprod'], $_POST['tip'], $_POST['date'], $shetrand));
+        voovi_schet_query("INSERT INTO kol_prodlen (ns,kol,tip,date_prodleni,randkol,status) VALUES ('".implode("','",$values)."','schet')");
+        if ($invoiceRand !== null && in_array($_POST['tip'], array('Сертификат', 'Поставка'), true)) {
+            // Ручная дата относится только к найденному счёту выбранного клиента.
+            $field = $_POST['tip'] === 'Сертификат' ? 'dataprod' : 'datasert';
+            voovi_schet_query("UPDATE schet SET tipprod='".mysql_real_escape_string($_POST['tip'])."', ".$field.
+                "='".mysql_real_escape_string($_POST['date'])."' WHERE rand='".mysql_real_escape_string($invoiceRand)."' AND `del`='0'");
         }
     }
 	else

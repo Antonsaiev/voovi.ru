@@ -6,7 +6,7 @@ $pavoir = mysql_fetch_array($pavresult);
 $fsdhhgf = "SELECT * FROM ogrn WHERE ogrn =".$pavoir['ogrn'];
 $rfsdhhgf = mysql_query($fsdhhgf);
 $pfsdhhgf = mysql_fetch_array($rfsdhhgf); 
-$sch = "SELECT DISTINCT nomerschet,d,m,y,prodlen,generac,name,lico,rand,otdel,filial,god,nomerdog,data,produkt,price,kto,inn,kpp,koment,ogrn,skidka,podpisant,groupi FROM schet WHERE del = '0' AND rand ='".$_GET['id']."' ORDER BY id DESC";
+$sch = "SELECT DISTINCT ns,nomerschet,d,m,y,prodlen,generac,name,lico,rand,otdel,filial,god,nomerdog,data,produkt,price,kto,inn,kpp,koment,ogrn,skidka,podpisant,groupi FROM schet WHERE del = '0' AND rand ='".$_GET['id']."' ORDER BY id DESC";
 $schetresult = mysql_query($sch);
 $schet = mysql_fetch_array($schetresult); 
 $kli = "SELECT * FROM ogrn WHERE id =".$_GET['kli'];
@@ -26,7 +26,7 @@ $savoir = mysql_fetch_array($savresult); ?>
 </head>
 <body>
 <div style="margin-bottom: 25px;  font-size: 21px;  background: #26BB84;  text-align: center;  padding: 8px;  color: #fff;">
-<?php echo $klient['naim']; ?> <b>(СЧЕТ<?php if($schet['oferta'] == 1){echo  '-ОФЕРТА';} echo ' № '.$schet['god'].$schet['filial'].$schet['otdel'].$pfsdhhgf['id'].$schet['nomerschet'];?>)</b>
+<?php echo $klient['naim']; ?> <b>(СЧЕТ<?php if($schet['oferta'] == 1){echo  '-ОФЕРТА';} echo ' № '.$schet['ns'];?>)</b>
 </div>
 <div class="container">
 <div class="row">
@@ -236,7 +236,7 @@ if($_GET['gr'] > 0){
 }else{
 	$gr = "WHERE gr = '99999999999999999999999999999999'";
 }
-$query = mysql_query("SELECT DISTINCT nomerschet,ogrn,prodlen,generac,name,lico,rand,otdel,filial,god,nomerdog,data,produkt,price,kto,inn,kpp,idkli,koment,oplachen,oplachenks,doljen,gotov,akt,url,groupi,gr FROM schet ".$gr." ORDER BY id DESC");
+$query = mysql_query("SELECT DISTINCT ns,nomerschet,ogrn,prodlen,generac,name,lico,rand,otdel,filial,god,nomerdog,data,produkt,price,kto,inn,kpp,idkli,koment,oplachen,oplachenks,doljen,gotov,akt,url,groupi,gr FROM schet ".$gr." ORDER BY id DESC");
 
 while($row = mysql_fetch_array($query)) {
 
@@ -334,7 +334,7 @@ echo '</td></tr>';
 </tr>
 </thead>
 <?php
-$query = mysql_query("SELECT DISTINCT nomerschet,otdel,filial,god,nomerdog,data,produkt,price,inn,priceks,kto,rand,oplachenks,ogrn,idkli,d,m,y,lico,gr FROM schet WHERE del = '0' AND idkli = '".$klient['id']."'  ORDER BY id DESC");
+$query = mysql_query("SELECT DISTINCT ns,nomerschet,otdel,filial,god,nomerdog,data,produkt,price,inn,priceks,kto,rand,oplachenks,ogrn,idkli,d,m,y,lico,gr FROM schet WHERE del = '0' AND idkli = '".$klient['id']."'  ORDER BY id DESC");
 while($row = mysql_fetch_array($query)) {
 echo '<tr>';
 $fsdhhgf = "SELECT * FROM ogrn WHERE ogrn =".$row['ogrn'];
@@ -353,7 +353,7 @@ echo '<td>';
 echo $row['god'],$row['filial'],$row['otdel'],$pfsdhhgf['id'],$row['nomerdog'];
 echo '</td>';
 echo '<td>';
-echo $row['god'],$row['filial'],$row['otdel'],$pfsdhhgf['id'],$row['nomerschet']; 
+echo $row['ns'];
 echo '</td>';
 echo '<td>';
 $rpod = "SELECT * FROM produkti WHERE id =".$row['produkt'];

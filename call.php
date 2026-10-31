@@ -71,7 +71,7 @@ $yesogrn = mysql_result($issetkomment, 0);
 </head>
 <body style="background: #F5F5F5;color: #666;">
 <div style="margin-bottom: 8px;font-size: 18px;background: #3b5998;padding: 5px 13px;color: #fff;">
-Обзвон клиентов <?php if($schet['oferta'] == 1){echo  '-ОФЕРТА';} echo ' '.$schet['god'].$schet['filial'].$schet['otdel'].$pfsdhhgf['id'].$schet['nomerschet'];?>
+Обзвон клиентов <?php if($schet['oferta'] == 1){echo  '-ОФЕРТА';} echo ' '.$schet['ns'];?>
 </div>
 <div class="container">
 <div class="row">

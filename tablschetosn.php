@@ -1,5 +1,24 @@
 <?
 include 'conf.php';
+require_once 'schet_identity.php';
+$invoiceActionUser = voovi_schet_authenticated_user();
+?>
+<script>
+(function ($) {
+    // Фрагмент таблицы перезагружается: обработчик всегда остаётся в одном экземпляре.
+    $(document).off('ajaxError.vooviInvoiceRefusal').on('ajaxError.vooviInvoiceRefusal', function (event, xhr, settings) {
+        if (!/(^|\/)otkazschet\.php(?:\?|$)/.test(settings.url || '')) return;
+        var data = xhr.responseJSON;
+        if (!data) { try { data = JSON.parse(xhr.responseText); } catch (_) {} }
+        var message = data && typeof data.error === 'string' ? data.error :
+            (xhr.status === 403 ? 'Обновите страницу и войдите в Voovi, чтобы выполнить отказ.' : 'Не удалось получить результат отказа. Обновите список, прежде чем повторять действие.');
+        $('#modal-shadowkube, #kube').hide();
+        window.alert(message);
+    });
+}(jQuery));
+</script>
+<?php
+
 if (!function_exists('schet_tip_text')) {
     function schet_tip_from_tipprod($row) {
         $tip = isset($row['tipprod']) ? trim($row['tipprod']) : '';
@@ -1192,9 +1211,9 @@ document.getElementById('schetzvon<?echo $res['rand'];?>').innerHTML=dat.split('
                             $('.modal-windowm<?echo $res['rand'];?>').hide();
                             $('#prich<?echo $res['rand'];?>').hide();
                             $.ajax({
-                                type: "GET",
+                                type: "POST",
                                 url: "otkazschet.php",
-                                data: "tipotkaz=" + n + "&rand=<?echo $res['rand'];?>&kto=<? echo $_GET['id'];?>&tipschet=prod",
+                                data: "tipotkaz=" + n + "&rand=<?echo $res['rand'];?>&kto=<? echo $_GET['id'];?>&tipschet=prod&creation_token=<?php echo voovi_schet_form_token('otkazschet.php:'.$res['rand'], $invoiceActionUser); ?>",
                                 success: function (html) {
                                     $.ajax({
                                         url: "tablschetosn.php",
@@ -1448,9 +1467,9 @@ document.getElementById('schetzvons<?echo $res['rand'];?>').innerHTML=dat.split(
                                 $('.modal-windowm<?echo $res['rand'];?>').hide();
                                 $('#prich<?echo $res['rand'];?>').hide();
                                 $.ajax({
-                                    type: "GET",
+                                    type: "POST",
                                     url: "otkazschet.php",
-                                    data: "tipotkaz=" + n + "&rand=<?echo $res['rand'];?>&kto=<? echo $_GET['id'];?>&tipschet=prod",
+                                    data: "tipotkaz=" + n + "&rand=<?echo $res['rand'];?>&kto=<? echo $_GET['id'];?>&tipschet=prod&creation_token=<?php echo voovi_schet_form_token('otkazschet.php:'.$res['rand'], $invoiceActionUser); ?>",
                                     success: function (html) {
                                         $.ajax({
                                             url: "tablschetosn.php",
@@ -1691,9 +1710,9 @@ document.getElementById('schetzvonp<?echo $res['rand'];?>').innerHTML=dat.split(
                                 $('.modal-windowmp<?echo $res['rand'];?>').hide();
                                 $('#prichp<?echo $res['rand'];?>').hide();
                                 $.ajax({
-                                    type: "GET",
+                                    type: "POST",
                                     url: "otkazschet.php",
-                                    data: "tipotkaz=" + n + "&rand=<?echo $res['rand'];?>&kto=<? echo $res['id'];?>&tipschet=prod",
+                                    data: "tipotkaz=" + n + "&rand=<?echo $res['rand'];?>&kto=<? echo $res['id'];?>&tipschet=prod&creation_token=<?php echo voovi_schet_form_token('otkazschet.php:'.$res['rand'], $invoiceActionUser); ?>",
                                     success: function (html) {
                                         $.ajax({
                                             url: "tablschetosn.php",
@@ -1939,9 +1958,9 @@ document.getElementById('schetzvon<?echo $res['rand'];?>').innerHTML=dat.split('
                                 $('.modal-windowm<?echo $res['rand'];?>').hide();
                                 $('#prich<?echo $res['rand'];?>').hide();
                                 $.ajax({
-                                    type: "GET",
+                                    type: "POST",
                                     url: "otkazschet.php",
-                                    data: "tipotkaz=" + n + "&rand=<?echo $res['rand'];?>&kto=<? echo $_GET['id'];?>&tipschet=prod",
+                                    data: "tipotkaz=" + n + "&rand=<?echo $res['rand'];?>&kto=<? echo $_GET['id'];?>&tipschet=prod&creation_token=<?php echo voovi_schet_form_token('otkazschet.php:'.$res['rand'], $invoiceActionUser); ?>",
                                     success: function (html) {
                                         $.ajax({
                                             url: "tablschetosn.php",
@@ -2264,9 +2283,9 @@ document.getElementById('schetzvons<?echo $ress['rand'];?>').innerHTML=dat.split
                                 $('.modal-windowm<?echo $ress['rand'];?>').hide();
                                 $('#prich<?echo $ress['rand'];?>').hide();
                                 $.ajax({
-                                    type: "GET",
+                                    type: "POST",
                                     url: "otkazschet.php",
-                                    data: "tipotkaz=" + n + "&rand=<?echo $ress['rand'];?>&kto=<? echo $_GET['id'];?>&tip=<?echo $_GET['tip'];?>&tipschet=schet",
+                                    data: "tipotkaz=" + n + "&rand=<?echo $ress['rand'];?>&kto=<? echo $_GET['id'];?>&tip=<?echo $_GET['tip'];?>&tipschet=schet&creation_token=<?php echo voovi_schet_form_token('otkazschet.php:'.$ress['rand'], $invoiceActionUser); ?>",
                                     success: function (html) {
                                         $.ajax({
                                             url: "tablschetosn.php",
@@ -2533,9 +2552,9 @@ document.getElementById('schetzvons<?echo $ress['rand'];?>').innerHTML=dat.split
                                 $('.modal-windowm<?echo $ress['rand'];?>').hide();
                                 $('#prich<?echo $ress['rand'];?>').hide();
                                 $.ajax({
-                                    type: "GET",
+                                    type: "POST",
                                     url: "otkazschet.php",
-                                    data: "tipotkaz=" + n + "&rand=<?echo $ress['rand'];?>&tip=<?echo $_GET['tip'];?>&kto=<? echo $_GET['id'];?>&tipschet=schet",
+                                    data: "tipotkaz=" + n + "&rand=<?echo $ress['rand'];?>&tip=<?echo $_GET['tip'];?>&kto=<? echo $_GET['id'];?>&tipschet=schet&creation_token=<?php echo voovi_schet_form_token('otkazschet.php:'.$ress['rand'], $invoiceActionUser); ?>",
                                     success: function (html) {
                                         $.ajax({
                                             url: "tablschetosn.php",
@@ -2865,9 +2884,9 @@ document.getElementById('schetzvons<?echo $reso['rand'];?>').innerHTML=dat.split
                                 $('.modal-windowm<?echo $reso['rand'];?>').hide();
                                 $('#prich<?echo $reso['rand'];?>').hide();
                                 $.ajax({
-                                    type: "GET",
+                                    type: "POST",
                                     url: "otkazschet.php",
-                                    data: "tipotkaz=" + n + "&rand=<?echo $reso['rand'];?>&kto=<? echo $_GET['id'];?>&tipschet=oplachen",
+                                    data: "tipotkaz=" + n + "&rand=<?echo $reso['rand'];?>&kto=<? echo $_GET['id'];?>&tipschet=oplachen&creation_token=<?php echo voovi_schet_form_token('otkazschet.php:'.$reso['rand'], $invoiceActionUser); ?>",
                                     success: function (html) {
                                         $.ajax({
                                             url: "tablschetosn.php",
@@ -3190,9 +3209,9 @@ document.getElementById('schetzvons<?echo $reso['rand'];?>').innerHTML=dat.split
                                 $('.modal-windowm<?echo $reso['rand'];?>').hide();
                                 $('#prich<?echo $reso['rand'];?>').hide();
                                 $.ajax({
-                                    type: "GET",
+                                    type: "POST",
                                     url: "otkazschet.php",
-                                    data: "tipotkaz=" + n + "&rand=<?echo $reso['rand'];?>&kto=<? echo $_GET['id'];?>&tipschet=oplachen",
+                                    data: "tipotkaz=" + n + "&rand=<?echo $reso['rand'];?>&kto=<? echo $_GET['id'];?>&tipschet=oplachen&creation_token=<?php echo voovi_schet_form_token('otkazschet.php:'.$reso['rand'], $invoiceActionUser); ?>",
                                     success: function (html) {
                                         $.ajax({
                                             url: "tablschetosn.php",
@@ -3425,9 +3444,9 @@ document.getElementById('schetzvons<?echo $respos['rand'];?>').innerHTML=dat.spl
                                 $('.modal-windowm<?echo $respos['rand'];?>').hide();
                                 $('#prich<?echo $respos['rand'];?>').hide();
                                 $.ajax({
-                                    type: "GET",
+                                    type: "POST",
                                     url: "otkazschet.php",
-                                    data: "tipotkaz=" + n + "&rand=<?echo $respos['rand'];?>&kto=<? echo $_GET['id'];?>&tipschet=postavka",
+                                    data: "tipotkaz=" + n + "&rand=<?echo $respos['rand'];?>&kto=<? echo $_GET['id'];?>&tipschet=postavka&creation_token=<?php echo voovi_schet_form_token('otkazschet.php:'.$respos['rand'], $invoiceActionUser); ?>",
                                     success: function (html) {
                                         $.ajax({
                                             url: "tablschetosn.php",
@@ -3660,9 +3679,9 @@ document.getElementById('schetzvons<?echo $respos['rand'];?>').innerHTML=dat.spl
                                 $('.modal-windowm<?echo $respos['rand'];?>').hide();
                                 $('#prich<?echo $respos['rand'];?>').hide();
                                 $.ajax({
-                                    type: "GET",
+                                    type: "POST",
                                     url: "otkazschet.php",
-                                    data: "tipotkaz=" + n + "&rand=<?echo $respos['rand'];?>&kto=<? echo $_GET['id'];?>&tipschet=postavka",
+                                    data: "tipotkaz=" + n + "&rand=<?echo $respos['rand'];?>&kto=<? echo $_GET['id'];?>&tipschet=postavka&creation_token=<?php echo voovi_schet_form_token('otkazschet.php:'.$respos['rand'], $invoiceActionUser); ?>",
                                     success: function (html) {
                                         $.ajax({
                                             url: "tablschetosn.php",
@@ -3926,9 +3945,9 @@ document.getElementById('schetzvons<?echo $resyv['rand'];?>').innerHTML=dat.spli
                                 $('.modal-windowm<?echo $resyv['rand'];?>').hide();
                                 $('#prich<?echo $resyv['rand'];?>').hide();
                                 $.ajax({
-                                    type: "GET",
+                                    type: "POST",
                                     url: "otkazschet.php",
-                                    data: "tipotkaz=" + n + "&rand=<?echo $resyv['rand'];?>&kto=<? echo $_GET['id'];?>&tipschet=ystanovka",
+                                    data: "tipotkaz=" + n + "&rand=<?echo $resyv['rand'];?>&kto=<? echo $_GET['id'];?>&tipschet=ystanovka&creation_token=<?php echo voovi_schet_form_token('otkazschet.php:'.$resyv['rand'], $invoiceActionUser); ?>",
                                     success: function (html) {
                                         $.ajax({
                                             url: "tablschetosn.php",
@@ -4191,9 +4210,9 @@ document.getElementById('schetzvons<?echo $resyv['rand'];?>').innerHTML=dat.spli
                                 $('.modal-windowm<?echo $resyv['rand'];?>').hide();
                                 $('#prich<?echo $resyv['rand'];?>').hide();
                                 $.ajax({
-                                    type: "GET",
+                                    type: "POST",
                                     url: "otkazschet.php",
-                                    data: "tipotkaz=" + n + "&rand=<?echo $resyv['rand'];?>&kto=<? echo $_GET['id'];?>&tipschet=ystanovka",
+                                    data: "tipotkaz=" + n + "&rand=<?echo $resyv['rand'];?>&kto=<? echo $_GET['id'];?>&tipschet=ystanovka&creation_token=<?php echo voovi_schet_form_token('otkazschet.php:'.$resyv['rand'], $invoiceActionUser); ?>",
                                     success: function (html) {
                                         $.ajax({
                                             url: "tablschetosn.php",
@@ -4457,9 +4476,9 @@ document.getElementById('schetzvons<?echo $resrna['rand'];?>').innerHTML=dat.spl
                                 $('.modal-windowm<?echo $resrna['rand'];?>').hide();
                                 $('#prich<?echo $resrna['rand'];?>').hide();
                                 $.ajax({
-                                    type: "GET",
+                                    type: "POST",
                                     url: "otkazschet.php",
-                                    data: "tipotkaz=" + n + "&rand=<?echo $resrna['rand'];?>&kto=<? echo $_GET['id'];?>&tipschet=naatk",
+                                    data: "tipotkaz=" + n + "&rand=<?echo $resrna['rand'];?>&kto=<? echo $_GET['id'];?>&tipschet=naatk&creation_token=<?php echo voovi_schet_form_token('otkazschet.php:'.$resrna['rand'], $invoiceActionUser); ?>",
                                     success: function (html) {
                                         $.ajax({
                                             url: "tablschetosn.php",
@@ -4722,9 +4741,9 @@ document.getElementById('schetzvons<?echo $resrna['rand'];?>').innerHTML=dat.spl
                                 $('.modal-windowm<?echo $resrna['rand'];?>').hide();
                                 $('#prich<?echo $resrna['rand'];?>').hide();
                                 $.ajax({
-                                    type: "GET",
+                                    type: "POST",
                                     url: "otkazschet.php",
-                                    data: "tipotkaz=" + n + "&rand=<?echo $resrna['rand'];?>&kto=<? echo $_GET['id'];?>&tipschet=naatk",
+                                    data: "tipotkaz=" + n + "&rand=<?echo $resrna['rand'];?>&kto=<? echo $_GET['id'];?>&tipschet=naatk&creation_token=<?php echo voovi_schet_form_token('otkazschet.php:'.$resrna['rand'], $invoiceActionUser); ?>",
                                     success: function (html) {
                                         $.ajax({
                                             url: "tablschetosn.php",
@@ -4957,9 +4976,9 @@ document.getElementById('schetzvons<?echo $resatk['rand'];?>').innerHTML=dat.spl
                                 $('.modal-windowm<?echo $resatk['rand'];?>').hide();
                                 $('#prich<?echo $resatk['rand'];?>').hide();
                                 $.ajax({
-                                    type: "GET",
+                                    type: "POST",
                                     url: "otkazschet.php",
-                                    data: "tipotkaz=" + n + "&rand=<?echo $resatk['rand'];?>&kto=<? echo $_GET['id'];?>&tipschet=atk",
+                                    data: "tipotkaz=" + n + "&rand=<?echo $resatk['rand'];?>&kto=<? echo $_GET['id'];?>&tipschet=atk&creation_token=<?php echo voovi_schet_form_token('otkazschet.php:'.$resatk['rand'], $invoiceActionUser); ?>",
                                     success: function (html) {
                                         $.ajax({
                                             url: "tablschetosn.php",
@@ -5192,9 +5211,9 @@ document.getElementById('schetzvons<?echo $resatk['rand'];?>').innerHTML=dat.spl
                                 $('.modal-windowm<?echo $resatk['rand'];?>').hide();
                                 $('#prich<?echo $resatk['rand'];?>').hide();
                                 $.ajax({
-                                    type: "GET",
+                                    type: "POST",
                                     url: "otkazschet.php",
-                                    data: "tipotkaz=" + n + "&rand=<?echo $resatk['rand'];?>&kto=<? echo $_GET['id'];?>&tipschet=atk",
+                                    data: "tipotkaz=" + n + "&rand=<?echo $resatk['rand'];?>&kto=<? echo $_GET['id'];?>&tipschet=atk&creation_token=<?php echo voovi_schet_form_token('otkazschet.php:'.$resatk['rand'], $invoiceActionUser); ?>",
                                     success: function (html) {
                                         $.ajax({
                                             url: "tablschetosn.php",
@@ -5427,9 +5446,9 @@ document.getElementById('schetzvons<?echo $resotk['rand'];?>').innerHTML=dat.spl
                                 $('.modal-windowm<?echo $resotk['rand'];?>').hide();
                                 $('#prich<?echo $resotk['rand'];?>').hide();
                                 $.ajax({
-                                    type: "GET",
+                                    type: "POST",
                                     url: "otkazschet.php",
-                                    data: "tipotkaz=" + n + "&rand=<?echo $resotk['rand'];?>&kto=<? echo $_GET['id'];?>&tipschet=otk",
+                                    data: "tipotkaz=" + n + "&rand=<?echo $resotk['rand'];?>&kto=<? echo $_GET['id'];?>&tipschet=otk&creation_token=<?php echo voovi_schet_form_token('otkazschet.php:'.$resotk['rand'], $invoiceActionUser); ?>",
                                     success: function (html) {
                                         $.ajax({
                                             url: "tablschetosn.php",
@@ -5663,9 +5682,9 @@ document.getElementById('schetzvons<?echo $resotk['rand'];?>').innerHTML=dat.spl
                                 $('.modal-windowm<?echo $resotk['rand'];?>').hide();
                                 $('#prich<?echo $resotk['rand'];?>').hide();
                                 $.ajax({
-                                    type: "GET",
+                                    type: "POST",
                                     url: "otkazschet.php",
-                                    data: "tipotkaz=" + n + "&rand=<?echo $resotk['rand'];?>&kto=<? echo $_GET['id'];?>&tipschet=otk",
+                                    data: "tipotkaz=" + n + "&rand=<?echo $resotk['rand'];?>&kto=<? echo $_GET['id'];?>&tipschet=otk&creation_token=<?php echo voovi_schet_form_token('otkazschet.php:'.$resotk['rand'], $invoiceActionUser); ?>",
                                     success: function (html) {
                                         $.ajax({
                                             url: "tablschetosn.php",
@@ -5898,9 +5917,9 @@ document.getElementById('schetzvons<?echo $rescher['rand'];?>').innerHTML=dat.sp
                                 $('.modal-windowm<?echo $rescher['rand'];?>').hide();
                                 $('#prich<?echo $rescher['rand'];?>').hide();
                                 $.ajax({
-                                    type: "GET",
+                                    type: "POST",
                                     url: "otkazschet.php",
-                                    data: "tipotkaz=" + n + "&rand=<?echo $rescher['rand'];?>&kto=<? echo $_GET['id'];?>&tipschet=cher",
+                                    data: "tipotkaz=" + n + "&rand=<?echo $rescher['rand'];?>&kto=<? echo $_GET['id'];?>&tipschet=cher&creation_token=<?php echo voovi_schet_form_token('otkazschet.php:'.$rescher['rand'], $invoiceActionUser); ?>",
                                     success: function (html) {
                                         $.ajax({
                                             url: "tablschetosn.php",
@@ -6134,9 +6153,9 @@ document.getElementById('schetzvons<?echo $rescher['rand'];?>').innerHTML=dat.sp
                                 $('.modal-windowm<?echo $rescher['rand'];?>').hide();
                                 $('#prich<?echo $rescher['rand'];?>').hide();
                                 $.ajax({
-                                    type: "GET",
+                                    type: "POST",
                                     url: "otkazschet.php",
-                                    data: "tipotkaz=" + n + "&rand=<?echo $rescher['rand'];?>&kto=<? echo $_GET['id'];?>&tipschet=cher",
+                                    data: "tipotkaz=" + n + "&rand=<?echo $rescher['rand'];?>&kto=<? echo $_GET['id'];?>&tipschet=cher&creation_token=<?php echo voovi_schet_form_token('otkazschet.php:'.$rescher['rand'], $invoiceActionUser); ?>",
                                     success: function (html) {
                                         $.ajax({
                                             url: "tablschetosn.php",
@@ -6378,9 +6397,9 @@ document.getElementById('schetzvons<?echo $resvoz['rand'];?>').innerHTML=dat.spl
                                 $('.modal-windowm<?echo $resvoz['rand'];?>').hide();
                                 $('#prich<?echo $resvoz['rand'];?>').hide();
                                 $.ajax({
-                                    type: "GET",
+                                    type: "POST",
                                     url: "otkazschet.php",
-                                    data: "tipotkaz=" + n + "&rand=<?echo $resvoz['rand'];?>&kto=<? echo $_GET['id'];?>&tipschet=vozvrat",
+                                    data: "tipotkaz=" + n + "&rand=<?echo $resvoz['rand'];?>&kto=<? echo $_GET['id'];?>&tipschet=vozvrat&creation_token=<?php echo voovi_schet_form_token('otkazschet.php:'.$resvoz['rand'], $invoiceActionUser); ?>",
                                     success: function (html) {
                                         $.ajax({
                                             url: "tablschetosn.php",
@@ -6621,9 +6640,9 @@ document.getElementById('schetzvons<?echo $resvoz['rand'];?>').innerHTML=dat.spl
                                 $('.modal-windowm<?echo $resvoz['rand'];?>').hide();
                                 $('#prich<?echo $resvoz['rand'];?>').hide();
                                 $.ajax({
-                                    type: "GET",
+                                    type: "POST",
                                     url: "otkazschet.php",
-                                    data: "tipotkaz=" + n + "&rand=<?echo $resvoz['rand'];?>&kto=<? echo $_GET['id'];?>&tipschet=vozvrat",
+                                    data: "tipotkaz=" + n + "&rand=<?echo $resvoz['rand'];?>&kto=<? echo $_GET['id'];?>&tipschet=vozvrat&creation_token=<?php echo voovi_schet_form_token('otkazschet.php:'.$resvoz['rand'], $invoiceActionUser); ?>",
                                     success: function (html) {
                                         $.ajax({
                                             url: "tablschetosn.php",
@@ -6865,9 +6884,9 @@ document.getElementById('schetzvons<?echo $respere['rand'];?>').innerHTML=dat.sp
                                 $('.modal-windowm<?echo $respere['rand'];?>').hide();
                                 $('#prich<?echo $respere['rand'];?>').hide();
                                 $.ajax({
-                                    type: "GET",
+                                    type: "POST",
                                     url: "otkazschet.php",
-                                    data: "tipotkaz=" + n + "&rand=<?echo $respere['rand'];?>&kto=<? echo $_GET['id'];?>&tipschet=pereplata",
+                                    data: "tipotkaz=" + n + "&rand=<?echo $respere['rand'];?>&kto=<? echo $_GET['id'];?>&tipschet=pereplata&creation_token=<?php echo voovi_schet_form_token('otkazschet.php:'.$respere['rand'], $invoiceActionUser); ?>",
                                     success: function (html) {
                                         $.ajax({
                                             url: "tablschetosn.php",
@@ -7109,9 +7128,9 @@ document.getElementById('schetzvons<?echo $respere['rand'];?>').innerHTML=dat.sp
                                 $('.modal-windowm<?echo $respere['rand'];?>').hide();
                                 $('#prich<?echo $respere['rand'];?>').hide();
                                 $.ajax({
-                                    type: "GET",
+                                    type: "POST",
                                     url: "otkazschet.php",
-                                    data: "tipotkaz=" + n + "&rand=<?echo $respere['rand'];?>&kto=<? echo $_GET['id'];?>&tipschet=pereplata",
+                                    data: "tipotkaz=" + n + "&rand=<?echo $respere['rand'];?>&kto=<? echo $_GET['id'];?>&tipschet=pereplata&creation_token=<?php echo voovi_schet_form_token('otkazschet.php:'.$respere['rand'], $invoiceActionUser); ?>",
                                     success: function (html) {
                                         $.ajax({
                                             url: "tablschetosn.php",
@@ -7522,9 +7541,9 @@ if ($_GET['tipi']=="1") {
                                         $('.modal-windowm<?echo $resschetall['rand'];?>').hide();
                                         $('#prich<?echo $resschetall['rand'];?>').hide();
                                         $.ajax({
-                                            type: "GET",
+                                            type: "POST",
                                             url: "otkazschet.php",
-                                            data: "tipotkaz=" + n + "&rand=<?echo $resschetall['rand'];?>&kto=<? echo $_GET['id'];?>&tipschet=pereplata",
+                                            data: "tipotkaz=" + n + "&rand=<?echo $resschetall['rand'];?>&kto=<? echo $_GET['id'];?>&tipschet=pereplata&creation_token=<?php echo voovi_schet_form_token('otkazschet.php:'.$resschetall['rand'], $invoiceActionUser); ?>",
                                             success: function (html) {
                                                 $.ajax({
                                                     url: "tablschetosn.php",
@@ -7948,9 +7967,9 @@ if ($_GET['tipi']=="1") {
                                         $('.modal-windowm<?echo $resschetall['rand'];?>').hide();
                                         $('#prich<?echo $resschetall['rand'];?>').hide();
                                         $.ajax({
-                                            type: "GET",
+                                            type: "POST",
                                             url: "otkazschet.php",
-                                            data: "tipotkaz=" + n + "&rand=<?echo $_GET['rand'];?>&tipschet=pereplata",
+                                            data: "tipotkaz=" + n + "&rand=<?echo $_GET['rand'];?>&tipschet=pereplata&creation_token=<?php echo voovi_schet_form_token('otkazschet.php:'.$_GET['rand'], $invoiceActionUser); ?>",
                                             success: function (html) {
                                                 $.ajax({
                                                     url: "tablschetosn.php",
@@ -8184,9 +8203,9 @@ if ($_GET['tipi']=="1") {
                                 $('.modal-windowm<?echo $resschetall['rand'];?>').hide();
                                 $('#prich<?echo $resschetall['rand'];?>').hide();
                                 $.ajax({
-                                    type: "GET",
+                                    type: "POST",
                                     url: "otkazschet.php",
-                                    data: "tipotkaz=" + n + "&rand=<?echo $resschetall['rand'];?>&kto=<?echo $_GET['id']?>&tipschet=pereplata",
+                                    data: "tipotkaz=" + n + "&rand=<?echo $resschetall['rand'];?>&kto=<?echo $_GET['id']?>&tipschet=pereplata&creation_token=<?php echo voovi_schet_form_token('otkazschet.php:'.$resschetall['rand'], $invoiceActionUser); ?>",
                                     success: function (html) {
                                         $.ajax({
                                             url: "tablschetosn.php",
@@ -8420,9 +8439,9 @@ if ($_GET['tipi']=="1") {
                                         $('.modal-windowm<?echo $resschetall['rand'];?>').hide();
                                         $('#prich<?echo $resschetall['rand'];?>').hide();
                                         $.ajax({
-                                            type: "GET",
+                                            type: "POST",
                                             url: "otkazschet.php",
-                                            data: "tipotkaz=" + n + "&rand=<?echo $resschetall['rand'];?>&kto=<?echo $_GET['id']?>&tipschet=pereplata",
+                                            data: "tipotkaz=" + n + "&rand=<?echo $resschetall['rand'];?>&kto=<?echo $_GET['id']?>&tipschet=pereplata&creation_token=<?php echo voovi_schet_form_token('otkazschet.php:'.$resschetall['rand'], $invoiceActionUser); ?>",
                                             success: function (html) {
                                                 $.ajax({
                                                     url: "tablschetosn.php",
@@ -12716,9 +12735,9 @@ else {
                                         $('.modal-windowm<?echo $resschetall['rand'];?>').hide();
                                         $('#prich<?echo $resschetall['rand'];?>').hide();
                                         $.ajax({
-                                            type: "GET",
+                                            type: "POST",
                                             url: "otkazschet.php",
-                                            data: "tipotkaz=" + n + "&rand=<?echo $resschetall['rand'];?>&tipschet=pereplata",
+                                            data: "tipotkaz=" + n + "&rand=<?echo $resschetall['rand'];?>&tipschet=pereplata&creation_token=<?php echo voovi_schet_form_token('otkazschet.php:'.$resschetall['rand'], $invoiceActionUser); ?>",
                                             success: function (html) {
                                                 $.ajax({
                                                     url: "tablschetosn.php",
@@ -13136,9 +13155,9 @@ else {
                                     $('.modal-windowm<?echo $resschetall['rand'];?>').hide();
                                     $('#prich<?echo $resschetall['rand'];?>').hide();
                                     $.ajax({
-                                        type: "GET",
+                                        type: "POST",
                                         url: "otkazschet.php",
-                                        data: "tipotkaz=" + n + "&rand=<?echo $resschetall['rand'];?>&tipschet=pereplata",
+                                        data: "tipotkaz=" + n + "&rand=<?echo $resschetall['rand'];?>&tipschet=pereplata&creation_token=<?php echo voovi_schet_form_token('otkazschet.php:'.$resschetall['rand'], $invoiceActionUser); ?>",
                                         success: function (html) {
                                             $.ajax({
                                                 url: "tablschetosn.php",
@@ -13361,9 +13380,9 @@ else {
                                         $('.modal-windowm<?echo $resschetall['rand'];?>').hide();
                                         $('#prich<?echo $resschetall['rand'];?>').hide();
                                         $.ajax({
-                                            type: "GET",
+                                            type: "POST",
                                             url: "otkazschet.php",
-                                            data: "tipotkaz=" + n + "&rand=<?echo $resschetall['rand'];?>&tipschet=pereplata",
+                                            data: "tipotkaz=" + n + "&rand=<?echo $resschetall['rand'];?>&tipschet=pereplata&creation_token=<?php echo voovi_schet_form_token('otkazschet.php:'.$resschetall['rand'], $invoiceActionUser); ?>",
                                             success: function (html) {
                                                 $.ajax({
                                                     url: "tablschetosn.php",
@@ -13588,9 +13607,9 @@ else {
                                     $('.modal-windowm<?echo $resschetall['rand'];?>').hide();
                                     $('#prich<?echo $resschetall['rand'];?>').hide();
                                     $.ajax({
-                                        type: "GET",
+                                        type: "POST",
                                         url: "otkazschet.php",
-                                        data: "tipotkaz=" + n + "&rand=<?echo $resschetall['rand'];?>&tipschet=pereplata",
+                                        data: "tipotkaz=" + n + "&rand=<?echo $resschetall['rand'];?>&tipschet=pereplata&creation_token=<?php echo voovi_schet_form_token('otkazschet.php:'.$resschetall['rand'], $invoiceActionUser); ?>",
                                         success: function (html) {
                                             $.ajax({
                                                 url: "tablschetosn.php",
