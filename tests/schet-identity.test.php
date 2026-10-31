@@ -58,7 +58,8 @@ function identity_test_reset()
         specification_message_id VARCHAR(256) NULL,act_message_id VARCHAR(256) NULL,tn_message_id VARCHAR(256) NULL,
         invoice_advance_message_id VARCHAR(256) NULL,upd_message_id VARCHAR(256) NULL) ENGINE=InnoDB");
     identity_test_query('DROP TABLE IF EXISTS bills_voovi_links');
-    identity_test_query("CREATE TABLE bills_voovi_links (id BIGINT AUTO_INCREMENT PRIMARY KEY,schet_rand VARCHAR(366) NOT NULL UNIQUE,
+    // Полные ключи production используют ASCII и укладываются в лимит InnoDB MariaDB 5.5.
+    identity_test_query("CREATE TABLE bills_voovi_links (id BIGINT AUTO_INCREMENT PRIMARY KEY,schet_rand VARCHAR(366) CHARACTER SET ascii COLLATE ascii_general_ci NOT NULL UNIQUE,
         BillId VARCHAR(128) NULL,legacy_number_before VARCHAR(366) NULL,legacy_amount_before VARCHAR(366) NULL,
         legacy_published_at DATETIME(6) NULL) ENGINE=InnoDB");
     identity_test_query('DROP TABLE IF EXISTS bills');
@@ -77,7 +78,9 @@ function identity_test_reset()
         UNIQUE KEY uq_schetnum_god (god)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     identity_test_query("CREATE TABLE schet_identity_keys (
-        kind VARCHAR(4) NOT NULL, value VARCHAR(366) NOT NULL, schet_rand VARCHAR(366) NULL, schet_ns VARCHAR(366) NULL, schet_client VARCHAR(366) NULL,
+        kind VARCHAR(4) CHARACTER SET ascii COLLATE ascii_general_ci NOT NULL,
+        value VARCHAR(366) CHARACTER SET ascii COLLATE ascii_general_ci NOT NULL,
+        schet_rand VARCHAR(366) NULL, schet_ns VARCHAR(366) NULL, schet_client VARCHAR(366) NULL,
         PRIMARY KEY (kind,value)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     identity_test_query("CREATE TABLE schet (
