@@ -387,7 +387,8 @@ if ($row['id'] === 'travel') {
     $personrpod = mysql_fetch_array($resultrpod);
 }
 
-$lineAmounts = $invoiceAmounts['items'][$row['id']];
+$summ += $invoiceAmounts['items'][$row['id']]['quantity'];
+foreach (voovi_invoice_print_parts($invoiceAmounts['items'][$row['id']], 'net') as $lineAmounts) {
 $qty = $lineAmounts['quantity'];
 $line_gross = $lineAmounts['gross'];
 $line_vat = $lineAmounts['vat'];
@@ -406,7 +407,6 @@ if ($nds_rate > 0) {
 $unit_net = $lineAmounts['unit_net'];
 
 // --- накопление итогов ---
-$summ     += $qty;          // у тебя это "количество" в Итого
 $str .=  '<tr class=xl7125266 height=53 style="mso-height-source:userset;height:39.75pt">
   <td colspan=2 height=53 class=xl13925266 style="height:39.75pt;    vertical-align: middle;">'.$i++.'</td>
   
@@ -427,7 +427,7 @@ $str .=  '<tr class=xl7125266 height=53 style="mso-height-source:userset;height:
   <td colspan=2 class=xl14825266 style="border-left:none">&nbsp;</td>
   <td colspan=2 class=xl14925266 style="border-left:none">&nbsp;</td>
   
-  <td colspan=3 class=xl14925266 kol style="border-left:none">'.$row['kvo'].'</td>
+  <td colspan=3 class=xl14925266 kol style="border-left:none">'.$qty.'</td>
   
   <td colspan=3 class=xl14925266 style="border-left:none">'.voovi_money_format($unit_net).'</td>
   
@@ -437,6 +437,7 @@ $str .=  '<tr class=xl7125266 height=53 style="mso-height-source:userset;height:
   <td colspan=3 class=xl15225266>'.$nds_cell_sum.'</td>
   <td colspan=4 class=xl14925266 style="border-left:none" >'.voovi_money_format($line_gross).'</td>
  </tr>';
+}
 }
 }
 // --- итоги = сумма по строкам ---

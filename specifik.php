@@ -158,6 +158,10 @@ $i = 1;
 $query = mysql_query("SELECT * FROM schet WHERE del = '0' AND rand = '".$_GET['id']."'");
 while($row = mysql_fetch_array($query)) {
 	if(!empty($row['prod'])){
+$rpod = "SELECT * FROM tarif WHERE id =".$row['prod'];
+$resultrpod = mysql_query($rpod);
+$personrpod = mysql_fetch_array($resultrpod);
+foreach (voovi_invoice_print_parts($invoiceAmounts['items'][$row['id']]) as $lineAmounts) {
 echo "<tr><td  width=26 style='width:19.8pt;border:solid black 1.0pt;border-top:none;
   padding:1.4pt 2.8pt 1.4pt 2.8pt'><p class=MsoNormal align=center style='margin-bottom:0cm;margin-bottom:.0001pt;
   text-align:center;line-height:normal;text-autospace:none'><span
@@ -170,9 +174,6 @@ echo '<td  width=26 style="width:19.8pt;border:solid black 1.0pt;border-top:none
   justify;text-justify:inter-ideograph;line-height:normal;text-autospace:none"><span
   style="font-size:8.0pt;font-family:Times;color:black">';
   
-$rpod = "SELECT * FROM tarif WHERE id =".$row['prod'];
-$resultrpod = mysql_query($rpod);
-$personrpod = mysql_fetch_array($resultrpod);
 echo $personrpod['name'];
   
 echo '</span></p></td>';
@@ -186,14 +187,13 @@ echo "<td  width=26 style='width:19.8pt;border:solid black 1.0pt;border-top:none
   padding:1.4pt 2.8pt 1.4pt 2.8pt'><p class=MsoNormal align=center style='margin-bottom:0cm;margin-bottom:.0001pt;
   text-align:center;line-height:normal;text-autospace:none'><span
   style='font-size:8.0pt;font-family:Times;color:black'>";
-echo $row['kvo'];
+echo $lineAmounts['quantity'];
 echo '</span></p></td>';
 echo "<td  width=26 style='width:19.8pt;border:solid black 1.0pt;border-top:none;
   padding:1.4pt 2.8pt 1.4pt 2.8pt'><p class=MsoNormal align=right style='margin-bottom:0cm;margin-bottom:.0001pt;
   text-align:right;line-height:normal;text-autospace:none'><span
   style='font-size:8.0pt;font-family:Times;color:black'>";
   
-$lineAmounts = $invoiceAmounts['items'][$row['id']];
 echo voovi_money_format($lineAmounts['price']);
 $line_gross = $lineAmounts['gross'];
 
@@ -213,18 +213,20 @@ echo voovi_money_format($line_gross);
 echo '</span></p></td></tr>';
 }
 }
+}
 
 
 ?>
  <?php 
-  if ($pavoir['goroddd'] > 0 && $pavoir['goroddd'] != 162534){
+  if (isset($invoiceAmounts['items']['travel'])) {
+  foreach (voovi_invoice_print_parts($invoiceAmounts['items']['travel']) as $travelAmounts) {
   echo "
  <tr>
   <td width=26 style='width:19.8pt;border:solid black 1.0pt;border-top:none;
   padding:1.4pt 2.8pt 1.4pt 2.8pt'>
   <p class=MsoNormal align=center style='margin-bottom:0cm;margin-bottom:.0001pt;
   text-align:center;line-height:normal;text-autospace:none'><span
-  style='font-size:8.0pt;font-family:Times;color:black'>-</span></p>
+  style='font-size:8.0pt;font-family:Times;color:black'>".$i++."</span></p>
   </td>
   <td width=340 style='width:255.1pt;border-top:none;border-left:none;
   border-bottom:solid black 1.0pt;border-right:solid black 1.0pt;padding:1.4pt 2.8pt 1.4pt 2.8pt'>
@@ -243,7 +245,7 @@ echo '</span></p></td></tr>';
   <p class=MsoNormal align=center style='margin-bottom:0cm;margin-bottom:.0001pt;
   text-align:center;line-height:normal;text-autospace:none'><span
   style='font-size:8.0pt;font-family:Times;color:black'>"; 
-  echo $invoiceAmounts['items']['travel']['quantity'];
+  echo $travelAmounts['quantity'];
   echo"</span></p>
   </td>
   <td width=76 style='width:56.65pt;border-top:none;border-left:none;
@@ -251,7 +253,7 @@ echo '</span></p></td></tr>';
   <p class=MsoNormal align=right style='margin-bottom:0cm;margin-bottom:.0001pt;
   text-align:right;line-height:normal;text-autospace:none'><span
   style='font-size:8.0pt;font-family:Times;color:black'>"; 
-  echo voovi_money_format($invoiceAmounts['items']['travel']['price']);
+  echo voovi_money_format($travelAmounts['price']);
   echo"</span></p>
   </td>
   <td width=76 style='width:56.65pt;border-top:none;border-left:none;
@@ -264,13 +266,14 @@ echo '</span></p></td></tr>';
   <p class=MsoNormal align=right style='margin-bottom:0cm;margin-bottom:.0001pt;
   text-align:right;line-height:normal;text-autospace:none'><span
   style='font-size:8.0pt;font-family:Times;color:black'>";
-      $line_gross = $invoiceAmounts['items']['travel']['gross'];
+      $line_gross = $travelAmounts['gross'];
 
       echo voovi_money_format($line_gross);
   echo"</span></p>
   </td>
  </tr>
  ";
+  }
   }
   ?>
   <?php 

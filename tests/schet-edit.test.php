@@ -48,6 +48,11 @@ while ($row = mysql_fetch_assoc($query)) {
     $expected['gen'] = $row['prod'] === '55' ? '1' : '0';
     $expected['price'] = '720.00'; $expected['skidka'] = '10'; $expected['produkt'] = '1';
     $expected['tell'] = "test's phone";
+    $cost = json_decode($row['summa'], true);
+    identity_test_require(is_array($cost) && $cost['v'] === 1 && $cost['p'] === $row['prod'] &&
+        $cost['q'] === $row['kvo'] && $cost['a'] === ($row['prod'] === '55' ? '180.00' : '540.00'),
+        'Редактирование не зафиксировало стоимость строки');
+    $expected['summa'] = $row['summa'];
     identity_test_require($row === $expected, 'Изменились флаги, даты, автор или метаданные позиции '.$row['prod']);
 }
 identity_test_require((int)identity_test_scalar("SELECT COUNT(*) FROM document_data WHERE rand='".$sourceSql."'") === 1 &&
@@ -111,7 +116,14 @@ identity_test_query("UPDATE tarif SET price='999' WHERE id=55");
 $document = voovi_invoice_document_amounts($source['rand'], $header, 20);
 identity_test_require($document['gross'] === '720.00' && array_sum(array_map('voovi_money_cents', array_column($document['lines'],'gross'))) === 72000,
     'Изменение каталога изменило итог исторического документа');
+identity_test_require(array_column($document['lines'], 'gross') === array('180.00','540.00'),
+    'Изменение каталога изменило сохранённые суммы отдельных строк');
 identity_test_query("UPDATE tarif SET price='100' WHERE id=55");
+// Старая история действительно не содержит снимка; не подменяем параметры нового снимка при печати.
+$printSnapshots = array();
+$query = identity_test_query("SELECT id,summa FROM schet WHERE rand='".$sourceSql."' AND `del`='0'");
+while ($row = mysql_fetch_assoc($query)) { $printSnapshots[$row['id']] = $row['summa']; }
+identity_test_query("UPDATE schet SET summa='0' WHERE rand='".$sourceSql."' AND `del`='0'");
 $travelHeader = array_merge($header, array('price'=>'900.00','goroddd'=>'450','kvogorod'=>'2'));
 $document = voovi_invoice_document_amounts($source['rand'], $travelHeader, 20);
 identity_test_require(isset($document['items']['travel']) && $document['gross'] === '900.00' &&
@@ -120,6 +132,62 @@ identity_test_require(isset($document['items']['travel']) && $document['gross'] 
 $travelHeader['goroddd'] = '162534';
 $document = voovi_invoice_document_amounts($source['rand'], $travelHeader, 20);
 identity_test_require(!isset($document['items']['travel']), 'Служебное значение отображается как платный выезд');
+foreach ($printSnapshots as $id=>$snapshot) {
+    identity_test_query("UPDATE schet SET summa='".mysql_real_escape_string($snapshot)."' WHERE id=".(int)$id);
+}
+foreach (array(array('450','0'), array('450',''), array('162534','2'), array('162534.00','2')) as $case) {
+    $withoutTravel = array_merge($header, array('goroddd'=>$case[0], 'kvogorod'=>$case[1]));
+    $document = voovi_invoice_document_amounts($source['rand'], $withoutTravel, 20);
+    identity_test_require(!isset($document['items']['travel']) && $document['gross'] === '720.00',
+        'Нулевой или служебный выезд попал в рассчитанный состав');
+}
+
+// В смешанной истории JSON остаётся первичным, старые строки получают только остаток итога.
+$priceIds = array_keys($printSnapshots); sort($priceIds, SORT_NUMERIC);
+identity_test_require(count($priceIds) === 2, 'Для проверки смешанных цен нужны две строки');
+$firstPriceId = (int)$priceIds[0]; $secondPriceId = (int)$priceIds[1];
+$legacyHeader = $header; $legacyHeader['price'] = '700.00';
+identity_test_query("UPDATE schet SET summa='999999' WHERE id=".$firstPriceId);
+$document = voovi_invoice_document_amounts($source['rand'], $legacyHeader, 20);
+identity_test_require(array_column($document['lines'],'gross') === array('160.00','540.00') &&
+    $document['gross'] === '700.00', 'Legacy summa ошибочно заменяет прайс или изменяет JSON-сумму');
+
+// Если первая строка без JSON, выезд также распределяется по старым весам ровно один раз.
+$legacyHeader['price'] = '900.00'; $legacyHeader['goroddd'] = '450'; $legacyHeader['kvogorod'] = '2';
+$document = voovi_invoice_document_amounts($source['rand'], $legacyHeader, 20);
+identity_test_require(array_column($document['lines'],'gross') === array('65.45','540.00','294.55') &&
+    $document['items']['travel']['quantity'] === '2', 'Legacy тариф и выезд неверно делят остаток JSON-счёта');
+
+// JSON первой строки фиксирует и свой тариф, и свой выезд, даже если другая строка старая.
+$firstSnapshot = json_decode($printSnapshots[$firstPriceId], true);
+$firstSnapshot['t'] = array('810.00','2','450');
+identity_test_query("UPDATE schet SET summa='".mysql_real_escape_string(json_encode($firstSnapshot))."' WHERE id=".$firstPriceId);
+identity_test_query("UPDATE schet SET summa='0' WHERE id=".$secondPriceId);
+$legacyHeader['price'] = '1530.00';
+$document = voovi_invoice_document_amounts($source['rand'], $legacyHeader, 20);
+identity_test_require(array_column($document['lines'],'gross') === array('180.00','540.00','810.00'),
+    'Старая строка изменила JSON-стоимость тарифа или выезда');
+
+$rejectLegacyDocument = function($invoice, $fragment) use ($source) {
+    $message = '';
+    try { voovi_invoice_document_amounts($source['rand'], $invoice, 20); }
+    catch (Exception $error) { $message = $error->getMessage(); }
+    identity_test_require(strpos($message, $fragment) !== false,
+        'Повреждённая смешанная история не остановлена: '.$fragment);
+};
+identity_test_query("UPDATE schet SET summa='0' WHERE id=".$firstPriceId);
+identity_test_query("UPDATE schet SET summa='".mysql_real_escape_string($printSnapshots[$secondPriceId])."' WHERE id=".$secondPriceId);
+$legacyHeader = $header; $legacyHeader['price'] = '500.00';
+$rejectLegacyDocument($legacyHeader, 'превышают итог');
+$legacyHeader['price'] = '700.00';
+identity_test_query("UPDATE tarif SET price='0' WHERE id=55");
+$rejectLegacyDocument($legacyHeader, 'стоимость старых строк');
+identity_test_query("UPDATE tarif SET price='100' WHERE id=55");
+identity_test_query("UPDATE schet SET summa='{broken' WHERE id=".$firstPriceId);
+$rejectLegacyDocument($legacyHeader, 'повреждён');
+foreach ($printSnapshots as $id=>$snapshot) {
+    identity_test_query("UPDATE schet SET summa='".mysql_real_escape_string($snapshot)."' WHERE id=".(int)$id);
+}
 
 // После вставки первой новой позиции вторая ломается: старые строки и АВ остаются прежними.
 identity_test_query("INSERT INTO av(rand) VALUES ('".$sourceSql."')");
@@ -196,6 +264,10 @@ foreach (array(array('',''), array('s-fixture','https://billy-partners.kontur.ru
         identity_test_require($row['nomerschetks'] === $external[0] && $row['url'] === $external[1] &&
             $row['price'] === '720.00' && $row['priceks'] === '1500' && $row['kto'] === '3',
             'PHP-счёт изменил внешние реквизиты, сумму или автора');
+        $cost = json_decode($row['summa'], true);
+        identity_test_require(is_array($cost) && $cost['v'] === 1 && $cost['p'] === $row['prod'] &&
+            $cost['a'] === ($row['prod'] === '55' ? '180.00' : '540.00'),
+            'Создание PHP-счёта не сохранило стоимость строки');
     }
     $createdRandSql = mysql_real_escape_string($first['rand']);
     identity_test_require((int)identity_test_scalar("SELECT COUNT(*) FROM document_data WHERE rand='".$createdRandSql."'") === 1,

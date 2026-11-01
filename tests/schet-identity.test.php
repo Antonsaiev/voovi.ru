@@ -427,7 +427,7 @@ try {
 
     // Реальный обработчик отказа: повторный POST и сбой второй строки клона.
     identity_test_reset();
-    $extraFields = array('akt','kto','otdel','sortir','filial','nomerdog','nomerschet','nomerschetks','kvo','prod','goroddd','kvogorod','nds',
+    $extraFields = array('akt','kto','otdel','sortir','filial','nomerdog','nomerschet','nomerschetks','kvo','prod','summa','goroddd','kvogorod','nds',
         'prodlen','skidka','priceks','price','ogrn','name','inn','kpp','produkt','data','d','m','y','time',
         'lico','vladelec','oferta','url','shetold','oplachenks','cher','prichotk','ktootkaz','dateotkaz','koment','prodlens','prodlenks');
     foreach ($extraFields as $field) { identity_test_query("ALTER TABLE schet ADD COLUMN `".$field."` VARCHAR(366) NOT NULL DEFAULT ''"); }
@@ -439,6 +439,8 @@ try {
     identity_test_query("UPDATE schet SET akt='1',kto='10',otdel='A',y='2026',m='10',d='25',
         nomerschetks='s-fixture',priceks='1500',url='https://example.test/bill',prod=IF(id=100,'good','fail'),
         nds='vat22',goroddd='230',kvogorod='2'");
+    $savedCost = mysql_real_escape_string('{"v":1,"p":"historical","q":"1","d":"0","a":"100.00","t":[]}');
+    identity_test_query("UPDATE schet SET summa='".$savedCost."'");
     identity_test_query("INSERT INTO bills VALUES ('shared-bill')");
     identity_test_query("INSERT INTO bills_voovi_links(schet_rand,BillId,legacy_number_before,legacy_amount_before,legacy_published_at)
         VALUES ('".mysql_real_escape_string($source['rand'])."','shared-bill','s-fixture','1500','2026-10-25 12:00:00')");
@@ -467,6 +469,8 @@ try {
     identity_test_require((int)identity_test_scalar("SELECT COUNT(*) FROM schet WHERE rand='".$cloneSql.
         "' AND nds='vat22' AND goroddd='230' AND kvogorod='2'") === 2,
         'Отказной клон потерял НДС или количество выездов');
+    identity_test_require((int)identity_test_scalar("SELECT COUNT(*) FROM schet WHERE rand='".$cloneSql.
+        "' AND summa='".$savedCost."'") === 2, 'Отказной клон потерял сохранённую стоимость строк');
     identity_test_require(identity_test_scalar("SELECT BillId FROM bills_voovi_links WHERE schet_rand='".$cloneSql."'") === 'shared-bill',
         'Клон не получил связь с общим документом Контура');
     identity_test_require((int)identity_test_scalar('SELECT COUNT(*) FROM bills') === 1, 'Документ Контура продублирован');
@@ -542,6 +546,7 @@ try {
 
     require __DIR__.'/schet-number-display.test.php';
     require __DIR__.'/supplier-invoice-display.test.php';
+    require __DIR__.'/schet-document-id.test.php';
     echo "Schet identity integration: 48 concurrent allocations, 4 concurrent form retries, goods links, linked refusal rollback — OK\n";
     $identityTestFinished = true;
 } catch (Exception $error) {

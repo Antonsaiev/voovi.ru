@@ -29,11 +29,16 @@ include 'invoice_action.php';
 include 'nds.php';
 require_once 'invoice_money.php';
 
-$id     = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+$id = isset($_GET['id']) && is_scalar($_GET['id']) ? (string)$_GET['id'] : '';
+// rand — строковый ключ: ведущие нули нужны и для запросов, и для каталога документа.
+if (!preg_match('/^[0-9]{1,366}$/D', $id)) {
+    http_response_code(400);
+    exit('Некорректный идентификатор счёта.');
+}
 $kli_id = isset($_GET['kli']) ? (int)$_GET['kli'] : 0;
 
 
-$pav = "SELECT * FROM schet WHERE del = '0' AND rand = '".mysql_real_escape_string((string)$_GET['id'])."' ORDER BY id LIMIT 1";
+$pav = "SELECT * FROM schet WHERE del = '0' AND rand = '".mysql_real_escape_string($id)."' ORDER BY id LIMIT 1";
 $pavresult = mysql_query($pav);
 $pavoir = mysql_fetch_array($pavresult);
 
@@ -440,7 +445,7 @@ $rpod = "SELECT * FROM tarif WHERE id =".$row['prod'];
 $resultrpod = mysql_query($rpod);
 $personrpod = mysql_fetch_array($resultrpod);
 
-$lineAmounts = $invoiceAmounts['items'][$row['id']];
+foreach (voovi_invoice_print_parts($invoiceAmounts['items'][$row['id']]) as $lineAmounts) {
 $price = $lineAmounts['price'];
 $line_gross = $lineAmounts['gross'];
 //echo voovi_money_format($price, ',');
@@ -457,7 +462,7 @@ $str .=  "<tr><td  width=26 style='width:19.8pt;border:solid black 1.0pt;border-
   style="font-size:8.0pt;font-family:Times;color:black">'.$personrpod['shtuk'].'</span></p></td><td  width=26 style="width:19.8pt;border:solid black 1.0pt;border-top:none;
   padding:1.4pt 2.8pt 1.4pt 2.8pt"><p class=MsoNormal align=center style="margin-bottom:0cm;margin-bottom:.0001pt;
   text-align:center;line-height:normal;text-autospace:none"><span
-  style="font-size:8.0pt;font-family:Times;color:black">'.$row['kvo'].'</span></p></td><td  width=26 style="width:19.8pt;border:solid black 1.0pt;border-top:none;
+  style="font-size:8.0pt;font-family:Times;color:black">'.$lineAmounts['quantity'].'</span></p></td><td  width=26 style="width:19.8pt;border:solid black 1.0pt;border-top:none;
   padding:1.4pt 2.8pt 1.4pt 2.8pt"><p class=MsoNormal align=right style="margin-bottom:0cm;margin-bottom:.0001pt;
   text-align:right;line-height:normal;text-autospace:none"><span
   style="font-size:8.0pt;font-family:Times;color:black">'.voovi_money_format($price, ',').'</span></p></td><td  width=26 style="width:19.8pt;border:solid black 1.0pt;border-top:none;
@@ -471,15 +476,17 @@ $str .=  '</span></p></td><td  width=26 style="width:19.8pt;border:solid black 1
   style="font-size:8.0pt;font-family:Times;color:black">'.voovi_money_format($line_gross, ',').'</span></p></td></tr>';
 }
 }
+}
 
-  if ($pavoir['goroddd'] > 0 && $pavoir['goroddd'] != 162534){
+  if (isset($invoiceAmounts['items']['travel'])) {
+  foreach (voovi_invoice_print_parts($invoiceAmounts['items']['travel']) as $travelAmounts) {
   $str .=  "
  <tr>
   <td width=26 style='width:19.8pt;border:solid black 1.0pt;border-top:none;
   padding:1.4pt 2.8pt 1.4pt 2.8pt'>
   <p class=MsoNormal align=center style='margin-bottom:0cm;margin-bottom:.0001pt;
   text-align:center;line-height:normal;text-autospace:none'><span
-  style='font-size:8.0pt;font-family:Times;color:black'>-</span></p>
+  style='font-size:8.0pt;font-family:Times;color:black'>".$i++."</span></p>
   </td>
   <td width=340 style='width:255.1pt;border-top:none;border-left:none;
   border-bottom:solid black 1.0pt;border-right:solid black 1.0pt;padding:1.4pt 2.8pt 1.4pt 2.8pt'>
@@ -498,7 +505,7 @@ $str .=  '</span></p></td><td  width=26 style="width:19.8pt;border:solid black 1
   <p class=MsoNormal align=center style='margin-bottom:0cm;margin-bottom:.0001pt;
   text-align:center;line-height:normal;text-autospace:none'><span
   style='font-size:8.0pt;font-family:Times;color:black'>"; 
-  $str .= $invoiceAmounts['items']['travel']['quantity'];
+  $str .= $travelAmounts['quantity'];
   $str .= "</span></p>
   </td>
   <td width=76 style='width:56.65pt;border-top:none;border-left:none;
@@ -506,7 +513,7 @@ $str .=  '</span></p></td><td  width=26 style="width:19.8pt;border:solid black 1
   <p class=MsoNormal align=right style='margin-bottom:0cm;margin-bottom:.0001pt;
   text-align:right;line-height:normal;text-autospace:none'><span
   style='font-size:8.0pt;font-family:Times;color:black'>"; 
-  $str .=  voovi_money_format($invoiceAmounts['items']['travel']['price'] , ',');
+  $str .=  voovi_money_format($travelAmounts['price'] , ',');
   $str .= "</span></p>
   </td>
   <td width=76 style='width:56.65pt;border-top:none;border-left:none;
@@ -521,13 +528,14 @@ $str .=  '</span></p></td><td  width=26 style="width:19.8pt;border:solid black 1
   text-align:right;line-height:normal;text-autospace:none'><span
   style='font-size:8.0pt;font-family:Times;color:black'>";
 
-$kvogorod = $invoiceAmounts['items']['travel']['gross'];
+$kvogorod = $travelAmounts['gross'];
   $str .=  voovi_money_format($kvogorod, ',');
   
   $str .= "</span></p>
   </td>
  </tr>
  ";
+  }
   }
  
   if ($pavoir['skidka'] > 0){

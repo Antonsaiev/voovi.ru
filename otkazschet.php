@@ -40,7 +40,7 @@ try {
     if (!$shipped) { $changes .= ",cher='1',prichotk=".$reason; }
     voovi_schet_query("UPDATE schet SET ".$changes." WHERE rand='".$escapedRand."' AND `del`='0'");
     if ($shipped) {
-        $fields = array('idkli','sortir','otdel','filial','nomerdog','nomerschet','nomerschetks','kvo','prod','goroddd','kvogorod','nds',
+        $fields = array('idkli','sortir','otdel','filial','nomerdog','nomerschet','nomerschetks','kvo','prod','summa','goroddd','kvogorod','nds',
             'prodlen','skidka','priceks','price','ogrn','name','inn','kpp','produkt','kto','data','d','m','y','time',
             'lico','vladelec','oferta','url');
         foreach ($source as $row) {

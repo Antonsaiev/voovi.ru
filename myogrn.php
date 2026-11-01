@@ -1475,7 +1475,8 @@ if(isset($_POST['submitsch'])){
             . ' kolichschet ' . $sujmdfhsd . ' $zs ' . $zs . ' $_POST[submitsch] ' . $_POST['submitsch'] . ' $_POST[dog] '
             . $_POST['dog'];
         error_log(date('Y-m-d H:i:s') . $messaeLog . PHP_EOL, 3, 'log/voovi.log');
-		voovi_schet_commit($shetrand);
+            voovi_capture_invoice_prices($shetrand, $validatedTariffs);
+			voovi_schet_commit($shetrand);
         echo '<script type="text/javascript">';
 		echo 'window.location.href="/kartklient.php?id='.$_GET['id'].'";'; 
 		echo '</script>';
@@ -1670,6 +1671,7 @@ if(isset($_POST['submitsch'])){
             . ' kolichschet ' . $sujmdfhsd . ' $zs ' . $zs . ' $_POST[submitsch] ' . $_POST['submitsch'] . ' $_POST[dog] '
             . $_POST['dog'];
         error_log(date('Y-m-d H:i:s') . $messaeLog . PHP_EOL, 3, 'log/voovi.log');
+        voovi_capture_invoice_prices($shetrand, $validatedTariffs);
         voovi_schet_commit($shetrand);
         echo '<script type="text/javascript">';
         echo 'window.location.href="/kartklient.php?id='.$_GET['id'].'";';
@@ -1824,6 +1826,7 @@ if(isset($_POST['submitsch'])){
                 . ' kolichschet ' . $sujmdfhsd . ' $zs ' . $zs . ' $_POST[submitsch] ' . $_POST['submitsch'] . ' $_POST[dog] '
                 . $_POST['dog'];
             error_log(date('Y-m-d H:i:s') . $messaeLog . PHP_EOL, 3, 'log/voovi.log');
+            voovi_capture_invoice_prices($shetrand, $validatedTariffs);
             voovi_schet_commit($shetrand);
         echo '<script type="text/javascript">';
             echo 'window.location.href="/kartklient.php?id='.$_GET['id'].'";';
@@ -1890,6 +1893,7 @@ voovi_replace_schet_tariffs($shetrand, $validatedTariffs, $changes);
         . ' kolichschet ' . $sujmdfhsd . ' $zs ' . $zs . ' $_POST[submitsch] ' . $_POST['submitsch'] . ' $_POST[dog] '
         . $_POST['dog'];
     error_log(date('Y-m-d H:i:s') . ' ' . $messaeLog . PHP_EOL, 3, 'log/voovi.log');
+voovi_capture_invoice_prices($shetrand, $validatedTariffs);
 voovi_schet_commit($shetrand);
 echo '<script type="text/javascript">';
 echo 'window.location.href="/kartklient.php?id='.$_GET['id'].'";';
