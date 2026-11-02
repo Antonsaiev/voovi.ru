@@ -459,7 +459,28 @@ try {
         identity_test_require(is_array($result),'Не получен ответ тестового обработчика отказа');
         return $result;
     };
-    $clone = $runRefusal($action);
+    $forms = array();
+    for ($index=0; $index<2; $index++) {
+        $payload=$action;
+        $payload['creation_token']=voovi_schet_form_token($actionScope,$actionUser);
+        $command=escapeshellarg(PHP_BINARY).' -d short_open_tag=1 '.escapeshellarg(__FILE__).
+            ' --refusal-worker '.escapeshellarg(base64_encode(json_encode($payload)));
+        $process=proc_open($command,array(0=>array('pipe','r'),1=>array('pipe','w'),2=>array('pipe','w')),$pipes,__DIR__);
+        identity_test_require(is_resource($process),'Не запущена параллельная форма отказа');
+        fclose($pipes[0]);
+        $forms[]=array($process,$pipes);
+    }
+    $clone=null; $parallelResults=array();
+    foreach ($forms as $form) {
+        $result=json_decode(stream_get_contents($form[1][1]),true);
+        $error=stream_get_contents($form[1][2]);
+        fclose($form[1][1]); fclose($form[1][2]);
+        identity_test_require(proc_close($form[0])===0 && isset($result['rand']), 'Ошибка параллельного отказа: '.$error);
+        $parallelResults[]=$result;
+        if (!$result['reused']) $clone=$result;
+    }
+    identity_test_require($clone !== null && $parallelResults[0]['rand'] === $parallelResults[1]['rand'],
+        'Параллельные формы создали разные отказы');
     identity_test_require(isset($clone['rand']) && !$clone['reused'], 'Отказ не создал клон');
     identity_test_require((int)identity_test_scalar("SELECT COUNT(*) FROM schet WHERE rand='".
         mysql_real_escape_string($clone['rand'])."'") === 2, 'Не сохранены обе строки клона');
@@ -483,7 +504,31 @@ try {
     identity_test_require((int)identity_test_scalar('SELECT COUNT(*) FROM schet') === 4, 'Повтор отказа добавил строки');
     identity_test_require((int)identity_test_scalar('SELECT COUNT(*) FROM bills_voovi_links') === 2 &&
         (int)identity_test_scalar('SELECT COUNT(*) FROM document_data') === 2, 'Повтор отказа продублировал связанные данные');
-    identity_test_query("UPDATE schet SET prodlens='0',prodlenks='0' WHERE rand='".mysql_real_escape_string($source['rand'])."'");
+    // Another independently opened form has a different token but the same action.
+    $newForm = $action;
+    $newForm['creation_token'] = voovi_schet_form_token($actionScope,$actionUser);
+    $newForm['tipotkaz'] = '2';
+    $fromOtherForm = $runRefusal($newForm);
+    identity_test_require($fromOtherForm['reused'] && $fromOtherForm['rand'] === $clone['rand'],
+        'Отдельная форма создала второй отказ');
+    identity_test_require((int)identity_test_scalar('SELECT COUNT(*) FROM schet') === 4,
+        'Отдельная форма добавила строки отказа');
+    $refuseAgain = array('rand'=>$clone['rand'], 'tipotkaz'=>'2', 'tipschet'=>'prod',
+        'creation_token'=>voovi_schet_form_token('otkazschet.php:'.$clone['rand'],$actionUser));
+    $alreadyRefused=$runRefusal($refuseAgain);
+    identity_test_require($alreadyRefused['reused'] && $alreadyRefused['rand']===$clone['rand'],
+        'Повтор неотгруженного отказа не распознан');
+    identity_test_require((int)identity_test_scalar("SELECT COUNT(*) FROM schet WHERE rand='".$cloneSql."' AND prichotk='1'")===2,
+        'Повторная форма переписала причину отказа');
+    // Reset only the scratch operation marker to exercise rollback / metadata
+    // cases below as independent first-time actions, using the same source fixture.
+    $resetRefusalFixture = function() use ($source) {
+        identity_test_query("DELETE FROM schet_identity_keys WHERE kind='post' AND value='".
+            hash('sha256','voovi.refusal:'.$source['rand'])."'");
+        identity_test_query("UPDATE schet SET prodlens='0',prodlenks='0',dateotkaz='0000-00-00',ktootkaz='0' WHERE rand='".
+            mysql_real_escape_string($source['rand'])."'");
+    };
+    $resetRefusalFixture();
     identity_test_query("CREATE TRIGGER fixture_fail_clone BEFORE INSERT ON schet FOR EACH ROW BEGIN IF NEW.rand<>'".
         mysql_real_escape_string($source['rand'])."' AND NEW.prod='fail' THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='fixture clone failure'; END IF; END");
     $action['creation_token'] = voovi_schet_form_token($actionScope,$actionUser);
@@ -513,6 +558,7 @@ try {
     identity_test_require(isset($pending['rand']) && (int)identity_test_scalar("SELECT COUNT(*) FROM bills_voovi_links WHERE schet_rand='".
         mysql_real_escape_string($pending['rand'])."' AND BillId IS NULL") === 1, 'Не перенесена ожидающая привязка Контура');
 
+    $resetRefusalFixture();
     // Без связи номер может быть от другого поставщика: копируем реквизиты, но не придумываем Контур.
     identity_test_query("DELETE FROM bills_voovi_links WHERE schet_rand='".mysql_real_escape_string($source['rand'])."'");
     identity_test_query("DELETE FROM document_data WHERE rand='".mysql_real_escape_string($source['rand'])."'");
@@ -532,6 +578,7 @@ try {
 
     // Исторические документы до 2024 года не превращаются в оферту при отказе.
     foreach (array(array('2023','0','dogovor'), array('23','1','contract'), array('2024','1','oferta')) as $case) {
+        $resetRefusalFixture();
         identity_test_query("UPDATE schet SET y='".$case[0]."',m='12',d='31' WHERE rand='".mysql_real_escape_string($source['rand'])."'");
         identity_test_query("UPDATE ogrn SET budjet_ogrn='".$case[1]."' WHERE id=1");
         $action['creation_token'] = voovi_schet_form_token($actionScope,$actionUser);

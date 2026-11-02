@@ -162,9 +162,17 @@ function voovi_schet_request_key($token, $scope, $user)
     return hash('sha256', $scope.'|'.$user['users_id'].'|'.$token);
 }
 
-function voovi_begin_schet_creation($token, $scope, $user, $clientId = null, $numberManager = null, $numberDepartment = null)
+function voovi_begin_schet_creation($token, $scope, $user, $clientId = null, $numberManager = null, $numberDepartment = null, $operationKey = null)
 {
     $key = voovi_schet_request_key($token, $scope, $user);
+    // Some transitions (refusal) belong to the source invoice, not to a browser
+    // form. The caller supplies this server-derived key after token validation.
+    if ($operationKey !== null) {
+        if (!is_string($operationKey) || !preg_match('/^[a-f0-9]{64}$/D', $operationKey)) {
+            throw new VooviSchetException('Некорректный ключ операции');
+        }
+        $key = $operationKey;
+    }
     voovi_schet_require_transactions();
     $lock = 'voovi.create.'.substr($key, 0, 48);
     $locked = mysql_fetch_row(voovi_schet_query("SELECT GET_LOCK('".$lock."', 20)"));

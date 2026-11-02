@@ -1,5 +1,9 @@
 <?
-include 'conf.php'; 
+include 'conf.php';
+require_once 'company_invoice_filters.php';
+list($_GET['datas'], $_GET['dataf']) = company_invoice_period(isset($_GET['datas']) ? $_GET['datas'] : '', isset($_GET['dataf']) ? $_GET['dataf'] : '');
+$_GET['tip'] = isset($_GET['tip']) && $_GET['tip'] === '1' ? '1' : '2';
+$_GET['ogrn'] = isset($_GET['ogrn']) ? (string)(int)$_GET['ogrn'] : '0';
 $manfss=date("m", strtotime($_GET['datas']));
 $yearss=date("Y", strtotime($_GET['datas']));
 $days=date("d", strtotime($_GET['datas']));
@@ -42,11 +46,10 @@ if($_GET['ogrn']!="0")
 $dataproms=$ds;
 $datapromf=$df;
 
-if($_GET['tip']=="2")
-{
-	$r = mysql_query("SELECT schet.ns,COUNT(*) as count FROM `schet` left join produkti on schet.produkt=produkti.id left join uslugi on produkti.parent=uslugi.id WHERE $uslugiogrn schet.del!='1'and  schet.tipprod!='' and schet.tipprod!='Нет'and schet.shetold='' and schet.prodlens='0' and schet.prodlenks='0'and schet.cher='0'and schet.otk='0' and (schet.dataprod BETWEEN'$ds' and '$df' or schet.datasert BETWEEN '$ds'and '$df') group by schet.rand");
-    $res = mysql_num_rows($r) ;
-	
+if ($_GET['tip'] === '2') {
+    $pendingWhere = company_pending_renewals_sql($ds, $df);
+    $r = mysql_query("SELECT schet.rand FROM schet LEFT JOIN produkti ON schet.produkt=produkti.id LEFT JOIN uslugi ON produkti.parent=uslugi.id WHERE $uslugiogrn $pendingWhere GROUP BY schet.rand");
+    $res = mysql_num_rows($r);
 }
 
 if($_GET['tip']=="1")
@@ -265,11 +268,10 @@ if($_GET['tip']=="1")
     $rallschet= mysql_query("SELECT schet.ns, COUNT(*) as count FROM `schet` left join produkti on schet.produkt=produkti.id left join uslugi on produkti.parent=uslugi.id WHERE $uslugiogrn schet.del='0' and schet.shetold='' and schet.akt!='1' and schet.cher!='1' and schet.otk!='1' and CONCAT(schet.y,'-',schet.m,'-',schet.d) between '".$dataproms."' and '".$datapromf."' group by schet.ns");
     $resallschet = mysql_num_rows($rallschet) ;
 }
-if($_GET['tip']=="2")
-{
-
-    $rallschet= mysql_query("SELECT schet.ns, COUNT(*) as count FROM `schet` left join produkti on schet.produkt=produkti.id left join uslugi on produkti.parent=uslugi.id WHERE $uslugiogrn schet.del='0' and schet.shetold!='' and schet.akt!='1' and schet.cher!='1' and schet.otk!='1' and CONCAT(schet.y,'-',schet.m,'-',schet.d) between '".$dataproms."' and '".$datapromf."' group by schet.ns");
-    $resallschet = mysql_num_rows($rallschet) ;
+if ($_GET['tip'] === '2') {
+    $openRenewalsWhere = company_open_renewals_sql($ds, $df);
+    $rallschet = mysql_query("SELECT schet.rand FROM schet LEFT JOIN produkti ON schet.produkt=produkti.id LEFT JOIN uslugi ON produkti.parent=uslugi.id WHERE $uslugiogrn $openRenewalsWhere GROUP BY schet.rand");
+    $resallschet = mysql_num_rows($rallschet);
 }
 ?>
 
@@ -329,7 +331,7 @@ if($_GET['tip']=="2")
 <p>Переплата</p>
 </div>
 <div class="tipschet" id="tipallschet" style="margin-left: 50px;border: 1px solid #d3d3d3;">
-    <p><?php echo $resallschet+$res?></p>
+    <p><?php echo $_GET['tip'] === '2' ? $resallschet : $resallschet+$res; ?></p>
     <p>шт.</p>
     <p>Все счета</p>
 </div>

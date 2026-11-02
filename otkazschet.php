@@ -21,7 +21,8 @@ try {
     if ($shipped) {
         voovi_schet_require_transactions(array('bills_voovi_links'));
         // Автор и отдел исходного счёта сохраняются; повтор действия возвращает прежний клон.
-        $identity = voovi_begin_schet_creation($_POST['creation_token'], $scope, $user, $first['idkli'], $first['kto'], $first['otdel']);
+        $identity = voovi_begin_schet_creation($_POST['creation_token'], $scope, $user, $first['idkli'], $first['kto'], $first['otdel'],
+            hash('sha256', 'voovi.refusal:'.$rand));
         if ($identity['reused']) { echo json_encode(array('rand'=>$identity['rand'], 'reused'=>true)); exit; }
         voovi_schet_query("SELECT id FROM schet WHERE rand='".$escapedRand."' AND `del`='0' FOR UPDATE");
         voovi_schet_stored_number($rand);
@@ -32,6 +33,14 @@ try {
     $source = array();
     while ($row = mysql_fetch_assoc($rows)) {
         if (((string)$row['akt'] === '1') !== $shipped) { throw new RuntimeException('Состояние счёта изменилось. Обновите список.'); }
+        if ((string)$row['cher'] === '1' && (int)$row['prichotk'] > 0) {
+            // A second form must not replace the original reason/author/date.
+            voovi_schet_rollback();
+            echo json_encode(array('rand'=>$rand, 'reused'=>true)); exit;
+        }
+        if ($shipped && !empty($row['dateotkaz']) && $row['dateotkaz'] !== '0000-00-00') {
+            throw new RuntimeException('Отказ по этому счёту уже оформлен. Обновите список.');
+        }
         $source[] = $row;
     }
     if (!$source) { throw new RuntimeException('Счёт больше не доступен. Обновите список.'); }

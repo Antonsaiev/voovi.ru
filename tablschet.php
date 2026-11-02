@@ -1,29 +1,19 @@
 <?php
 # подключаем конфиг
 include 'conf.php';  
+require_once 'company_invoice_filters.php';
 session_start();
-	/*$ogrn=$_SESSION['ogrn'];
-	$tips=$_SESSION['tip'];
-	*/
-	$ogrn=$_COOKIE['ogrn'];
-	$tips=$_COOKIE['tip'];
-	$dss=$_SESSION['ds'];
-$dff=$_SESSION['df'];
+$ogrn = isset($_COOKIE['ogrn']) && ctype_digit((string)$_COOKIE['ogrn']) ? $_COOKIE['ogrn'] : '0';
+$tips = isset($_COOKIE['tip']) && in_array($_COOKIE['tip'], array('1','2'), true) ? $_COOKIE['tip'] : '2';
+list($dss, $dff) = company_invoice_period(isset($_COOKIE['datas']) ? $_COOKIE['datas'] : '', isset($_COOKIE['dataf']) ? $_COOKIE['dataf'] : '');
+$idogrn = '0';
+$nameogrn = 'Все организации';
+if ($ogrn !== '0') {
+    $selectedOrg = mysql_fetch_assoc(mysql_query("SELECT uslugi.id,uslugi.name FROM uslugi JOIN users_access ON users_access.uslugi=uslugi.id WHERE users_access.users=".(int)$_GET['id']." AND uslugi.id=".(int)$ogrn." AND uslugi.del!='1' LIMIT 1"));
+    if ($selectedOrg) { $idogrn = $selectedOrg['id']; $nameogrn = $selectedOrg['name']; }
+}
+session_write_close();
 
-	if($ogrn!="0")
-	{
-	$udosrpod = "SELECT uslugi.id,uslugi.name,users_access.users from uslugi left join users_access on uslugi.id=users_access.uslugi where users_access.users='".$_GET['id']."' and uslugi.id='".$ogrn."'";
-	$udosresultrpod = mysql_query($udosrpod);
-	$udospersonrpod = mysql_fetch_array($udosresultrpod);
-	$idogrn=$udospersonrpod['id'];
-	$nameogrn=$udospersonrpod['name'];
-	}
-	else
-	{
-		$idogrn="0";
-		$nameogrn="Все организации";
-	}
-	
 ?>
 <?php include_once 'voovi_spinner.php'; ?>
 
@@ -45,13 +35,13 @@ $dff=$_SESSION['df'];
 </select>
 </div>
 <div class='statdate' style="width:150px;float: left;">
-<input class='form-control firstDate' id="datestart" type="date" value="<?echo $_COOKIE['datas'];?>">
+<input class='form-control firstDate' id="datestart" type="date" value="<?echo $dss;?>">
 </div>
 <div class='statdate' style="width:150px;float: left;">
-<input class='form-control secondDate' id="datefinish" type="date" value="<?echo $_COOKIE['dataf'];?>">
+<input class='form-control secondDate' id="datefinish" type="date" value="<?echo $dff;?>">
 </div>
 <div class='statdate' style="width:400px;float: left;">
-<input class="check"id="scales"name="scales" type="checkbox" checked="" style="height: 25px;
+<input class="check"id="scales"name="scales" type="checkbox" style="height: 25px;
     width: 25px;
     margin-top: 5px;
     padding-top: 15px;
@@ -69,9 +59,8 @@ $dff=$_SESSION['df'];
     height: 53px;
 	border: none;
 ">
-<option value="<?echo $tips;?>" selected><?if($tips=="2"){echo "Продление";}if($tips=="1"){echo "Новый";}?></option>
-<option value="1">Новый</option>
-<option value="2">Продлениe</option>
+<option value="1" <?php if ($tips === "1") echo "selected"; ?>>Новый</option>
+<option value="2" <?php if ($tips === "2") echo "selected"; ?>>Продление</option>
 </select>
 </div>
 <div id="tablschetog">
@@ -81,165 +70,8 @@ $dff=$_SESSION['df'];
 <div id="tablosn" style="width:100%; float:left;margin-top: 10px;">
 </div>
 
+<script src="js/company-invoice-filters.js"></script>
 <script>
-    ogrn=document.getElementById('getOrg').value;
-	tip=document.getElementById('tip').value;
-	datastart=document.getElementsByClassName("firstDate")[0].value;
-	datafinish=document.getElementsByClassName("secondDate")[0].value;
-	
-$.ajax({
-				type: "GET",
-				url: "tablschetog.php",
-				data: "users=<?echo $_GET['id'];?>&ogrn=<?echo $ogrn;?>&tip="+tip+"&datas=<?echo $dss;?>&dataf=<?echo $dff;?>",
-				success: function(html){
-					 $("#tablschetog").html(html);
-				}
-			});
-			var chkBox = document.querySelector('#scales');
- if(chkBox.checked==true)
- {
-	document.getElementById('scalesl').style.color='#536570';
-	
- }
- else
- {
-	document.getElementById('scalesl').style.color='#d3d3d3'; 
- }
-chkBox.onchange = function(){
-    document.getElementById('tablosn').innerHTML = "";
- if(chkBox.checked==true)
- {
-	document.getElementById('scalesl').style.color='#536570';
-	document.getElementById('datestart').removeAttribute('disabled');
-	document.getElementById('datefinish').removeAttribute('disabled');
- }
- else
- {
-	 document.getElementById('modal-shadowkube').style.display="block";
-     document.getElementById('kube').style.display="block";
-	 	var date = new Date(); 
-y = date.getFullYear();
- m = date.getMonth();
- var firstDay = new Date(y, m, 2);
-var lastDay = new Date(y, m + 1, 1);
-    document.getElementById('datestart').valueAsDate = firstDay;
-         document.getElementById('datefinish').valueAsDate = lastDay;
-	document.getElementById('scalesl').style.color='#d3d3d3'; 
-	document.getElementById('datestart').setAttribute("disabled", "disabled");
-	document.getElementById('datefinish').setAttribute("disabled", "disabled");
-		ogrn=document.getElementById('getOrg').value;
-	tip=document.getElementById('tip').value;
-	datastart=document.getElementsByClassName("firstDate")[0].value;
-	datafinish=document.getElementsByClassName("secondDate")[0].value;
-	$.ajax({
-				type: "GET",
-				url: "tablschetog.php",
-				data: "users=<?echo $_GET['id'];?>&ogrn="+ogrn+"&tip="+tip+"&datas="+datastart+"&dataf="+datafinish+"&chenge=1",
-				success: function(html){
-					 $("#tablschetog").html(html);
-					 document.getElementById('modal-shadowkube').style.display="none";
-                    document.getElementById('kube').style.display="none";
-				}
-			});
- }
-};
-var date = new Date(); 
-y = date.getFullYear();
- m = date.getMonth();
- var  mon = date.getMonth();
- var firstDay = new Date(y, m, 2);
-var lastDay = new Date(y, m + 1, 1);
-    if(document.getElementById('datestart').value=="") {
-        document.getElementById('datestart').valueAsDate = firstDay;
-    }
-    if(document.getElementById('datefinish').value=="") {
-        document.getElementById('datefinish').valueAsDate = lastDay;
-    }
-  /*  var moni=<?echo $_COOKIE['manfs'];?>;
-if(moni!=(mon+1))
-{
-    document.getElementById('datestart').valueAsDate = firstDay;
-    document.getElementById('datefinish').valueAsDate = lastDay;
-}*/
-$( "#getOrg" ).change(function () {
-	ogrn=document.getElementById('getOrg').value;
-	tip=document.getElementById('tip').value;
-	datastart=document.getElementsByClassName("firstDate")[0].value;
-	datafinish=document.getElementsByClassName("secondDate")[0].value;
-			$.ajax({
-				type: "GET",
-				url: "tablschetog.php",
-				data: "users=<?echo $_GET['id'];?>&ogrn="+ogrn+"&tip="+tip+"&datas="+datastart+"&dataf="+datafinish+"",
-				success: function(html){
-					 $("#tablschetog").html(html);
-				}
-			});
-		});
-		$( "#tip" ).change(function () {
-		datastart=document.getElementsByClassName("firstDate")[0].value;
-	datafinish=document.getElementsByClassName("secondDate")[0].value;
-	ogrn=document.getElementById('getOrg').value;
-	tip=document.getElementById('tip').value;
-			$.ajax({
-				type: "GET",
-				url: "tablschetog.php",
-				data: "users=<?echo $_GET['id'];?>&ogrn="+ogrn+"&tip="+tip+"&datas="+datastart+"&dataf="+datafinish+"",
-				success: function(html){
-					 $("#tablschetog").html(html);
-				}
-			});
-           /* $.ajax({
-				type: "GET",
-				url: "tablschetosn.php",
-				data: "users=<?echo $_GET['id'];?>&ogr="+ogrn+"&tip="+tip+"&datas="+datastart+"&dataf="+datafinish+"",
-				success: function(html){
-					 $("#tablosn").html(html);
-				}
-			});*/
-		});
-
-</script>
-<script>
-
-$( "#datestart" ).change(function () {
-	document.getElementById('modal-shadowkube').style.display="block";
-    document.getElementById('kube').style.display="block";
-		ogrn=document.getElementById('getOrg').value;
-	tip=document.getElementById('tip').value;
-	datastart=document.getElementsByClassName("firstDate")[0].value;
-	datafinish=document.getElementsByClassName("secondDate")[0].value;
-    document.getElementById('tablosn').innerHTML = "";
-	$.ajax({
-				type: "GET",
-				url: "tablschetog.php",
-				data: "users=<?echo $_GET['id'];?>&ogrn="+ogrn+"&tip="+tip+"&datas="+datastart+"&dataf="+datafinish+"&chenge=1",
-				success: function(html){
-					 $("#tablschetog").html(html);
-					  document.getElementById('modal-shadowkube').style.display="none";
-                    document.getElementById('kube').style.display="none";
-				}
-			});
-		});
-</script>
-<script>
-$( "#datefinish" ).change(function () {
-	document.getElementById('modal-shadowkube').style.display="block";
-    document.getElementById('kube').style.display="block";
-		ogrn=document.getElementById('getOrg').value;
-	tip=document.getElementById('tip').value;
-	datastart=document.getElementsByClassName("firstDate")[0].value;
-	datafinish=document.getElementsByClassName("secondDate")[0].value;
-    document.getElementById('tablosn').innerHTML = "";
-	$.ajax({
-				type: "GET",
-				url: "tablschetog.php",
-				data: "users=<?echo $_GET['id'];?>&ogrn="+ogrn+"&tip="+tip+"&datas="+datastart+"&dataf="+datafinish+"&chenge=1",
-				success: function(html){
-					 $("#tablschetog").html(html);
-					 document.getElementById('modal-shadowkube').style.display="none";
-                    document.getElementById('kube').style.display="none";
-				}
-			});
-		});
+VooviCompanyInvoiceFilters(jQuery, <?php echo json_encode((string)(int)$_GET['id']); ?>);
 </script>
 <script src="https://mottie.github.io/tablesorter/js/jquery.tablesorter.js"></script>
