@@ -282,7 +282,9 @@ $(document).ready(function(){
     if (isset($row['status'], $persons2['status']) && $row['status'] != $persons2['status']) {
         include_once 'send_mail.php';
 //        echo "<script>console.log('sendErrorStatusSchet');</script>";
-        sendErrorStatusSchet(json_encode((string)$row['ns']), $row['status'], $persons2['status']);
+        // Просмотр карточки не запускает рассылку по историческим расхождениям.
+        // Проверка при изменении статуса остаётся в getstatusschet.php с защитой от повторов.
+        // sendErrorStatusSchet((string)$row['ns'], $row['status'], $persons2['status'], (string)$row['rand']);
     }
 
 //    echo "<script>console.log('OK');</script>";

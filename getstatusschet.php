@@ -64,7 +64,7 @@ echo "\nСтатус строки счета: " . $status_schet['status'] . "\n�
 
 if ($status_schet['status'] !== $status_schet['status_join_table']) {
     include 'send_mail.php';
-    sendErrorStatusSchet($status_schet['ns'], $status_schet['status'], $status_schet['status_join_table']);
+    sendErrorStatusSchet($status_schet['ns'], $status_schet['status'], $status_schet['status_join_table'], (string)$_GET['schet']);
 }
 
 echo $_GET['status'];
