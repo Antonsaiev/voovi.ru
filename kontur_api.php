@@ -6,7 +6,7 @@ session_start();
 $rand = isset($_GET['rand']) ? $_GET['rand'] : '';
 list($user, $invoice) = kontur_context($rand);
 $action = isset($_GET['action']) ? $_GET['action'] : 'state';
-$methods = array('state' => 'GET', 'status' => 'GET', 'catalog' => 'GET', 'availability' => 'GET', 'account' => 'POST', 'calculate' => 'POST', 'issue' => 'POST', 'search' => 'GET', 'attach' => 'POST');
+$methods = array('state' => 'GET', 'status' => 'GET', 'catalog' => 'GET', 'availability' => 'GET', 'account' => 'POST', 'subscriber' => 'POST', 'calculate' => 'POST', 'issue' => 'POST', 'search' => 'GET', 'attach' => 'POST');
 if (!is_string($action) || !isset($methods[$action]) || $_SERVER['REQUEST_METHOD'] !== $methods[$action]) {
     kontur_fail('Неверное действие или метод', 405);
 }

@@ -558,6 +558,10 @@
   }); });
   run(async function () {
     var data = await api('state');
+    if (data.payer_missing) {
+      message('Подготавливаем клиента в Контуре…', 'wait');
+      data = await api('subscriber', {});
+    }
     payerId = data.payer ? data.payer.abonentId : null;
     products = (data.products || []).map(function (p) { return {id: p.productId, title: p.fullProductName || p.productName}; });
     products.sort(function (a, b) { return a.title.localeCompare(b.title, 'ru'); });

@@ -392,16 +392,36 @@ body.newschet-modern {
     gap: 10px;
     margin-bottom: 12px;
 }
-.newschet-mode-row label {
+.newschet-mode-label {
     margin: 0;
     color: #526170;
     font-size: 13px;
     font-weight: 700;
 }
-.newschet-mode-row #idprodkschet {
-    width: auto;
-    min-width: 190px;
+.newschet-mode-switch {
+    display: inline-flex;
+    padding: 3px;
+    gap: 3px;
+    border: 1px solid #d6dfe8;
+    border-radius: 8px;
+    background: #eef2f6;
 }
+.newschet-mode-button {
+    min-width: 110px;
+    padding: 8px 16px;
+    border: 0;
+    border-radius: 5px;
+    background: transparent;
+    color: #526170;
+    font-size: 14px;
+    font-weight: 600;
+}
+.newschet-mode-button[aria-pressed="true"] {
+    background: #2f7fb8;
+    color: #fff;
+    box-shadow: 0 1px 3px #26313d26;
+}
+.newschet-mode-button:focus-visible { outline: 2px solid #236b9d; outline-offset: 2px; }
 .newschet-old-input-row {
     display: flex;
     align-items: flex-end;
@@ -429,38 +449,111 @@ body.newschet-modern {
     color: #526170;
     font-size: 13px;
 }
-.newschet-old-suggestions {
+.newschet-create-actions {
     display: flex;
     flex-wrap: wrap;
+    gap: 12px;
+    width: 100%;
+    margin: 16px 0;
+}
+.newschet-create-actions .btn {
+    flex: 1 1 300px;
+    min-height: 54px;
+    padding: 14px 20px;
+    font-size: 16px;
+    font-weight: 600;
+    white-space: normal;
+}
+.newschet-old-suggestions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
     gap: 8px;
     margin-top: 12px;
 }
-.newschet-old-option {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    max-width: 100%;
-    padding: 7px 10px;
+.newschet-old-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 10px;
     border: 1px solid #cfd8e3;
-    border-radius: 6px;
+    border-radius: 8px;
     background: #fff;
-    color: #26313d;
-    font-size: 13px;
-    font-weight: 700;
-    line-height: 1.25;
-    text-align: left;
 }
-.newschet-old-option span {
+.newschet-old-details { flex: 1; min-width: 0; }
+.newschet-old-details summary {
+    position: relative;
+    padding-left: 18px;
+    cursor: pointer;
+    list-style: none;
+    font-size: 13px;
+    color: #26313d;
+}
+/* Номера и суммы идут в одну строку, пока хватает ширины карточки. */
+.newschet-old-details summary {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 6px 18px;
+    min-height: 28px;
+}
+.newschet-old-details summary::-webkit-details-marker { display: none; }
+.newschet-old-details summary::before {
+    content: "";
+    position: absolute;
+    left: 2px;
+    top: 4px;
+    width: 6px;
+    height: 6px;
+    border-right: 2px solid #526170;
+    border-bottom: 2px solid #526170;
+    transform: rotate(-45deg);
+}
+.newschet-old-details[open] summary::before { transform: rotate(45deg); }
+.newschet-old-details span {
+    display: block;
+    margin-top: 6px;
     color: #526170;
-    font-weight: 400;
     overflow-wrap: anywhere;
 }
-.newschet-old-option:hover,
-.newschet-old-option:focus {
-    border-color: #2f7fb8;
-    color: #2f7fb8;
-    outline: 0;
+.newschet-old-details summary span { margin-top: 0; }
+.newschet-old-details summary .newschet-invoice-pair {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 16px;
+    padding: 5px 9px;
+    border-radius: 5px;
+    background: #edf3fa;
+    color: #274c72;
 }
+.newschet-old-details summary .newschet-invoice-kontur {
+    background: #edf6f3;
+    color: #286556;
+}
+.newschet-old-details summary .newschet-invoice-amount {
+    display: inline;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+    color: inherit;
+}
+.newschet-old-details summary { gap: 6px 10px; }
+.newschet-old-details summary::before { top: 10px; }
+
+.newschet-old-detail-body { padding: 8px 0 0 18px; font-size: 13px; }
+.newschet-old-tariff { border-top: 1px solid #e3e9ef; padding-top: 7px; }
+.newschet-old-option {
+    flex: 0 0 auto;
+    padding: 5px 9px;
+    border: 1px solid #cfd8e3;
+    border-radius: 5px;
+    background: #fff;
+    color: #236b9d;
+    font-size: 13px;
+}
+.newschet-old-option:hover,
+.newschet-old-option:focus,
+.newschet-old-option[aria-pressed="true"] { background: #edf6fc; border-color: #2f7fb8; }
+.newschet-old-open { display: inline-block; margin-top: 10px; font-size: 13px; }
 .newschet-tarif-row {
     transition: background 0.15s ease, box-shadow 0.15s ease;
 }
@@ -698,7 +791,7 @@ body.newschet-modern {
         align-items: stretch;
         flex-direction: column;
     }
-    .newschet-mode-row #idprodkschet,
+    .newschet-mode-switch,
     .newschet-old-input,
     .newschet-old-status {
         width: 100%;
@@ -845,8 +938,12 @@ if(isset($_POST['submitsch'])){
 		else
 		{
         $schetIdentity = voovi_begin_schet_creation(isset($_POST['creation_token']) ? $_POST['creation_token'] : '', $schetFormScope, $userdata, $newschetClientId);
+        // Форму Контура открываем только после успешного сохранения счёта Voovi.
+        $newschetAfterCreateUrl = isset($_POST['submitsch']) && $_POST['submitsch'] === 'kontur'
+            ? '/kontur_invoice.php?'.http_build_query(array('rand'=>$schetIdentity['rand']))
+            : '/kartklient.php?id='.$newschetClientId;
         if ($schetIdentity['reused']) {
-            echo '<script>window.location.href="/kartklient.php?id='.(int)$_GET['id'].'";</script>';
+            echo '<script>window.location.href='.json_encode($newschetAfterCreateUrl).';</script>';
             exit;
         }
         $shetrand = $schetIdentity['rand'];
@@ -1478,7 +1575,7 @@ if(isset($_POST['submitsch'])){
             voovi_capture_invoice_prices($shetrand, $validatedTariffs);
 			voovi_schet_commit($shetrand);
         echo '<script type="text/javascript">';
-		echo 'window.location.href="/kartklient.php?id='.$_GET['id'].'";'; 
+		echo 'window.location.href='.json_encode($newschetAfterCreateUrl).';';
 		echo '</script>';
 	}
     else{
@@ -1674,7 +1771,7 @@ if(isset($_POST['submitsch'])){
         voovi_capture_invoice_prices($shetrand, $validatedTariffs);
         voovi_schet_commit($shetrand);
         echo '<script type="text/javascript">';
-        echo 'window.location.href="/kartklient.php?id='.$_GET['id'].'";';
+        echo 'window.location.href='.json_encode($newschetAfterCreateUrl).';';
         echo '</script>';
 
 		$mamba = voovi_tarif_schet_query($_GET['parent'], isset($_GET['rand']) ? $_GET['rand'] : '');
@@ -1829,7 +1926,7 @@ if(isset($_POST['submitsch'])){
             voovi_capture_invoice_prices($shetrand, $validatedTariffs);
             voovi_schet_commit($shetrand);
         echo '<script type="text/javascript">';
-            echo 'window.location.href="/kartklient.php?id='.$_GET['id'].'";';
+            echo 'window.location.href='.json_encode($newschetAfterCreateUrl).';';
             echo '</script>';
 		//---------------------------------------------------------------------------
 		}
@@ -1911,8 +2008,10 @@ $pdepo = mysql_fetch_array($rdepo);
 
 $newschetOldSchetOptions = array();
 $newschetOldSchetQuery = mysql_query(
-    "SELECT s.ns, s.nomerschet, s.nomerschetks, s.data, s.priceks, s.name, s.rand
+    "SELECT s.ns, s.nomerschetks, s.data, s.price, s.priceks, s.rand,
+            TRIM(CONCAT_WS(' ', u.f_name, u.l_name, u.o_name)) AS manager_name
      FROM schet s
+     LEFT JOIN users u ON u.users_id = s.kto
      INNER JOIN (
          SELECT MAX(id) AS max_id
          FROM schet
@@ -1922,6 +2021,7 @@ $newschetOldSchetQuery = mysql_query(
            AND ns IS NOT NULL
            AND ns != ''
          GROUP BY ns
+         HAVING MAX(CASE WHEN prodlens = '1' OR prodlenks = '1' THEN 1 ELSE 0 END) = 0
      ) last_schet ON last_schet.max_id = s.id
      ORDER BY s.id DESC
      LIMIT 20"
@@ -1929,6 +2029,25 @@ $newschetOldSchetQuery = mysql_query(
 if ($newschetOldSchetQuery) {
     while ($newschetOldSchet = mysql_fetch_assoc($newschetOldSchetQuery)) {
         $newschetOldSchetOptions[] = $newschetOldSchet;
+    }
+}
+$newschetOldSchetLines = array();
+if (count($newschetOldSchetOptions) > 0) {
+    $newschetOldRands = array();
+    foreach ($newschetOldSchetOptions as $newschetOldSchet) {
+        $newschetOldRands[] = "'".mysql_real_escape_string($newschetOldSchet['rand'])."'";
+    }
+    $newschetOldLinesQuery = mysql_query(
+        "SELECT s.rand, s.kvo, s.datasert, s.dataprod, t.name AS tariff_name
+         FROM schet s LEFT JOIN tarif t ON t.id = s.prod
+         WHERE s.`del` = '0' AND s.idkli = '".$newschetClientId."'
+           AND s.produkt = '".$newschetProductId."'
+           AND s.rand IN (".implode(',', $newschetOldRands).") ORDER BY s.id"
+    );
+    if ($newschetOldLinesQuery) {
+        while ($newschetOldLine = mysql_fetch_assoc($newschetOldLinesQuery)) {
+            $newschetOldSchetLines[$newschetOldLine['rand']][] = $newschetOldLine;
+        }
     }
 }
 
@@ -1941,11 +2060,13 @@ if ($newschetOldSchetQuery) {
 <input type="hidden" name="creation_token" value="<?php echo newschet_h($schetFormToken); ?>">
 
 <div class="newschet-mode-row">
-<label for="idprodkschet">Режим счета</label>
-<select id="idprodkschet" class="form-control">
-<option value="2">Продление</option>
-<option value="1">Новый</option>
-</select>
+<span class="newschet-mode-label" id="newschet-mode-label">Режим счёта</span>
+<?php $newschetInitialMode = count($newschetOldSchetOptions) > 0 ? '2' : '1'; ?>
+<input type="hidden" id="idprodkschet" value="<?php echo $newschetInitialMode; ?>">
+<div class="newschet-mode-switch" role="group" aria-labelledby="newschet-mode-label">
+    <button type="button" class="newschet-mode-button" data-mode="1" aria-pressed="<?php echo $newschetInitialMode === '1' ? 'true' : 'false'; ?>">Новый</button>
+    <button type="button" class="newschet-mode-button" data-mode="2" aria-pressed="<?php echo $newschetInitialMode === '2' ? 'true' : 'false'; ?>">Продление</button>
+</div>
 </div>
 <div id="oldns" style="display:none;">
     <div class="newschet-old-input-row">
@@ -1954,7 +2075,7 @@ if ($newschetOldSchetQuery) {
             <input id="nsold" name="nsold" class="form-control" type="text" list="newschetOldSchetList" autocomplete="off" value="<?php echo isset($_GET['oldns']) ? newschet_h($_GET['oldns']) : (isset($pdepo['shetold']) ? newschet_h($pdepo['shetold']) : ''); ?>" placeholder="Введите номер или выберите из подсказок" />
             <datalist id="newschetOldSchetList">
                 <?php foreach ($newschetOldSchetOptions as $newschetOldSchet) { ?>
-                    <option value="<?php echo newschet_h($newschetOldSchet['ns']); ?>"><?php echo newschet_h(trim($newschetOldSchet['nomerschetks'].' '.$newschetOldSchet['data'].' '.$newschetOldSchet['priceks'])); ?></option>
+                    <option value="<?php echo newschet_h($newschetOldSchet['ns']); ?>"><?php echo newschet_h('от '.$newschetOldSchet['data'].' · Савоир: '.number_format((float)$newschetOldSchet['price'], 2, ',', ' ').' ₽ · '.$newschetOldSchet['manager_name']); ?></option>
                 <?php } ?>
             </datalist>
         </div>
@@ -1963,10 +2084,45 @@ if ($newschetOldSchetQuery) {
     <?php if (count($newschetOldSchetOptions) > 0) { ?>
         <div class="newschet-old-suggestions">
             <?php foreach ($newschetOldSchetOptions as $newschetOldSchet) { ?>
-                <button type="button" class="newschet-old-option" data-ns="<?php echo newschet_h($newschetOldSchet['ns']); ?>">
-                    № <?php echo newschet_h($newschetOldSchet['ns']); ?>
-                    <span><?php echo newschet_h(trim($newschetOldSchet['nomerschetks'].' '.$newschetOldSchet['data'])); ?></span>
-                </button>
+                <div class="newschet-old-card">
+                    <details class="newschet-old-details">
+                        <summary>
+                            <span class="newschet-invoice-pair newschet-invoice-savoir" title="Счёт Савоира" aria-label="Счёт Савоира">
+                                <strong><?php echo newschet_h($newschetOldSchet['ns']); ?></strong>
+                                <span class="newschet-invoice-amount"><?php echo newschet_h(number_format((float)$newschetOldSchet['price'], 2, ',', ' ')); ?> ₽</span>
+                            </span>
+                            <?php if (trim($newschetOldSchet['nomerschetks']) !== '' || ($newschetOldSchet['priceks'] !== null && $newschetOldSchet['priceks'] !== '')) { ?>
+                                <span class="newschet-invoice-pair newschet-invoice-kontur" title="Счёт Контура" aria-label="Счёт Контура">
+                                    <?php if (trim($newschetOldSchet['nomerschetks']) !== '') { ?><strong><?php echo newschet_h($newschetOldSchet['nomerschetks']); ?></strong><?php } ?>
+                                    <?php if ($newschetOldSchet['priceks'] !== null && $newschetOldSchet['priceks'] !== '') { ?><span class="newschet-invoice-amount"><?php echo newschet_h(number_format((float)$newschetOldSchet['priceks'], 2, ',', ' ')); ?> ₽</span><?php } ?>
+                                </span>
+                            <?php } ?>
+                        </summary>
+                        <div class="newschet-old-detail-body">
+                            <span>От <?php echo newschet_h($newschetOldSchet['data']); ?></span>
+                            <?php if (trim($newschetOldSchet['manager_name']) !== '') { ?>
+                                <span>Менеджер: <?php echo newschet_h($newschetOldSchet['manager_name']); ?></span>
+                            <?php } ?>
+                        <?php foreach (isset($newschetOldSchetLines[$newschetOldSchet['rand']]) ? $newschetOldSchetLines[$newschetOldSchet['rand']] : array() as $newschetOldLine) { ?>
+                            <span class="newschet-old-tariff"><?php echo newschet_h($newschetOldLine['tariff_name'] ? $newschetOldLine['tariff_name'] : 'Тариф не указан'); ?> · <?php echo newschet_h($newschetOldLine['kvo']); ?> шт.</span>
+                            <?php
+                            // Показываем обе даты отдельно: у поставки и сертификата сроки могут различаться.
+                            foreach (array('dataprod'=>'Продление поставки', 'datasert'=>'Продление сертификата') as $dateField=>$dateLabel) {
+                                $renewalDate = $newschetOldLine[$dateField];
+                                if ($renewalDate && $renewalDate !== '0000-00-00') {
+                                    if (preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $renewalDate, $dateParts)) {
+                                        $renewalDate = $dateParts[3].'.'.$dateParts[2].'.'.$dateParts[1];
+                                    }
+                                    ?><span><?php echo newschet_h($dateLabel.': '.$renewalDate); ?></span><?php
+                                }
+                            }
+                            ?>
+                        <?php } ?>
+                    <a class="newschet-old-open" href="komnete.php?<?php echo newschet_h(http_build_query(array('rand'=>$newschetOldSchet['rand'], 'kli'=>$newschetClientId, 'produkt'=>$newschetProductId))); ?>" target="_blank" rel="noopener">Открыть счёт ↗</a>
+                        </div>
+                    </details>
+                    <button type="button" class="newschet-old-option" aria-pressed="false" data-ns="<?php echo newschet_h($newschetOldSchet['ns']); ?>" aria-label="<?php echo newschet_h('Выбрать счёт '.$newschetOldSchet['ns']); ?>">Выбрать</button>
+                </div>
             <?php } ?>
         </div>
     <?php } ?>
@@ -2485,7 +2641,10 @@ echo newschet_h($person['name']);
 if(!isset($_GET['rand'])){ 
 echo '
 <input type="text" style="display:none;" name="shetrand" id="shetrand" value="'.$shetrand.'"><br>
-<input type="submit" name="submitsch" value="Создать" class="btn btn-success col-md-12" /><br>';
+<div class="newschet-create-actions">
+<button type="submit" name="submitsch" value="save" class="btn btn-default">Сохранить счёт</button>
+<button type="submit" name="submitsch" value="kontur" class="btn btn-success">Сохранить и создать счёт Контура</button>
+</div>';
 }else{
 echo '
 <input type="text" style="display:none;" name="shetrand" id="shetrand" value="'.$shetrand.'"><br>
@@ -2512,6 +2671,9 @@ echo '
 
     function newschetSetMode() {
         var mode = $("#idprodkschet").val();
+        $(".newschet-mode-button").each(function () {
+            $(this).attr("aria-pressed", $(this).attr("data-mode") === mode ? "true" : "false");
+        });
         if (mode === "1") {
             $("#prodkschet").show();
             $("#oldns").hide();
@@ -2541,6 +2703,9 @@ echo '
 
     function newschetCheckOldSchet() {
         var ns = $.trim($("#nsold").val());
+        $(".newschet-old-option").each(function () {
+            $(this).attr("aria-pressed", $(this).attr("data-ns") === ns ? "true" : "false");
+        });
         if (ns === "") {
             $("#oldschet").text("");
             $("#prodkschet").hide();
@@ -2721,6 +2886,13 @@ echo '
 
         newschetSetMode();
         newschetRefreshTarifRows();
+
+        $(".newschet-mode-button").on("click", function () {
+            var mode = $(this).attr("data-mode");
+            if ($("#idprodkschet").val() !== mode) {
+                $("#idprodkschet").val(mode).trigger("change");
+            }
+        });
 
         $("#idprodkschet").on("change", function () {
             newschetSetMode();

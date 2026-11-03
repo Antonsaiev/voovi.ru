@@ -55,4 +55,4 @@ $back = 'komnete.php?'.http_build_query(array('rand' => $rand, 'kli' => $invoice
 <div class="issue-area">
 <button id="issue" type="button" disabled>Выставить счёт Контур</button>
 </div></div></section>
-</main><script src="/js/kontur-form-core.js?v=14" defer></script><script src="/js/kontur-invoice.js?v=27" defer></script></body></html>
+</main><script src="/js/kontur-form-core.js?v=14" defer></script><script src="/js/kontur-invoice.js?v=28" defer></script></body></html>
