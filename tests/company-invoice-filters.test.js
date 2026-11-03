@@ -52,6 +52,12 @@ requests[0].options.success('stale summary');
 assert.notEqual(node('#tablschetog').content,'stale summary');
 requests[2].options.success('current summary');
 assert.equal(node('#tablschetog').content,'current summary');
+const beforeReturn=requests.length;
+node('#tablosn').content='source before renewal';
+doc.hidden=false;
+node(doc).events['visibilitychange.companyInvoices']();
+assert.equal(requests.length,beforeReturn+1);
+assert.equal(node('#tablosn').content,'');
 // A later category request cancels the previous category, too.
 const first=$.ajax({url:'tablschetosn.php',success() { delivered++; }});
 $.ajax({url:'tablschetosn.php',success() { delivered++; }});

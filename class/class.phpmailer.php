@@ -341,6 +341,10 @@ class PHPMailer
      * @return bool
      */
     function Send() {
+        // В локальном DEBUG не создаём SMTP-соединение.
+        if (in_array(strtolower((string)getenv('DEBUG')), array('1', 'true'), true)) {
+            return false;
+        }
         $header = "";
         $body = "";
         $result = true;

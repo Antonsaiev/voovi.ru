@@ -40,19 +40,20 @@
             });
         }
         $('#getOrg, #tip, #datestart, #datefinish').off('change.companyInvoices').on('change.companyInvoices', reload);
-        $('#scales').off('change.companyInvoices').on('change.companyInvoices', function () {
-            if (this.checked) {
-                var now = new Date(), year = now.getFullYear(), month = now.getMonth();
-                function day(value) { return value < 10 ? '0' + value : String(value); }
-                $('#datestart').val(year + '-' + day(month + 1) + '-01');
-                $('#datefinish').val(year + '-' + day(month + 1) + '-' + day(new Date(year, month + 1, 0).getDate()));
-            }
-            $('#datestart, #datefinish').prop('disabled', this.checked);
+        $('#currentMonth').off('click.companyInvoices').on('click.companyInvoices', function () {
+            var now = new Date(), year = now.getFullYear(), month = now.getMonth();
+            function day(value) { return value < 10 ? '0' + value : String(value); }
+            $('#datestart').val(year + '-' + day(month + 1) + '-01');
+            $('#datefinish').val(year + '-' + day(month + 1) + '-' + day(new Date(year, month + 1, 0).getDate()));
             reload();
         });
-        $('#scalesl').css('color', '#536570');
         $(document).off('ajaxSuccess.companyInvoices').on('ajaxSuccess.companyInvoices', function (_, xhr, options) {
             if (/(^|\/)otkazschet\.php(?:\?|$)/.test(options.url || '') && $('#getOrg').length) reload();
+        });
+        // Renewal creation opens another tab. Returning here must not leave
+        // the old source invoice actionable in a cached detail list.
+        $(document).off('visibilitychange.companyInvoices').on('visibilitychange.companyInvoices', function () {
+            if (!document.hidden && $('#getOrg').length) reload();
         });
         reload();
     };

@@ -117,6 +117,10 @@ class phpmailer {
 	 * @returns bool
 	 */
 	function Send() {
+        // Local DEBUG must not connect to a real SMTP server.
+        if (in_array(strtolower((string)getenv('DEBUG')), array('1', 'true'), true)) {
+            return false;
+        }
 		global $use_sendmail;
 		if(count($this->to)+count($this->cc)+count($this->bcc) == 0) {
 			$this->error_handler("You must provide at least one recipient email address");

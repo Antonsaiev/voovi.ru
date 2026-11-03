@@ -41,12 +41,7 @@ session_write_close();
 <input class='form-control secondDate' id="datefinish" type="date" value="<?echo $dff;?>">
 </div>
 <div class='statdate' style="width:400px;float: left;">
-<input class="check"id="scales"name="scales" type="checkbox" style="height: 25px;
-    width: 25px;
-    margin-top: 5px;
-    padding-top: 15px;
-    margin-right: 5px;">
-<label style="position: relative;font-size: 14pt;color: #d3d3d3;font-weight: normal;bottom: 5px;" id="scalesl"for="scales">Показать текущий месяц</label>
+<button type="button" class="btn btn-default" id="currentMonth">Текущий месяц</button>
 </div>
 </div>
 <div class="by amt" style="

@@ -17,18 +17,30 @@ function company_invoice_period($from, $to)
 function company_pending_renewals_sql($from, $to)
 {
     list($from, $to) = company_invoice_period($from, $to);
-    return "schet.del='0' AND schet.tipprod NOT IN ('','Нет') AND schet.cher='0' AND schet.otk='0' AND " .
-        "((schet.prodlens='0' AND schet.dataprod BETWEEN '$from' AND '$to') OR " .
-        "(schet.prodlenks='0' AND schet.datasert BETWEEN '$from' AND '$to'))";
+    return "schet.del='0' AND schet.cher='0' AND schet.otk='0' AND schet.prodlens='0' AND schet.prodlenks='0' AND " .
+        "(schet.dateotkaz IS NULL OR schet.dateotkaz IN ('','0000-00-00')) AND " .
+        "((schet.tipprod IN ('Сертификат','Сер/Пос') AND schet.prodlens='0' AND schet.dataprod BETWEEN '$from' AND '$to') OR " .
+        "(schet.tipprod IN ('Поставка','Сер/Пос') AND schet.prodlenks='0' AND schet.datasert BETWEEN '$from' AND '$to')) AND " .
+        // A new bill already closes the source's waiting-for-renewal stage,
+        // regardless of payment or the date of that new bill. Refusal clones
+        // also carry shetold. Drafts and deleted bills do not close this stage.
+        "NOT EXISTS (SELECT 1 FROM schet AS renewal WHERE renewal.idkli=schet.idkli " .
+        "AND renewal.del='0' AND renewal.otk='0' AND renewal.shetold=schet.ns AND renewal.rand<>schet.rand)";
 }
 
 function company_pending_parts($row, $from, $to)
 {
+    // Current business rule for all three types: either completed flag closes
+    // the whole source invoice, even if the other component is still pending.
+    if (!isset($row['prodlens'], $row['prodlenks']) ||
+        (string)$row['prodlens'] !== '0' || (string)$row['prodlenks'] !== '0') { return array(); }
     list($from, $to) = company_invoice_period($from, $to);
     $parts = array();
-    foreach (array('dataprod'=>array('prodlens','Поставка'), 'datasert'=>array('prodlenks','Сертификат')) as $date=>$part) {
+    foreach (array('dataprod'=>array('prodlens','Сертификат'), 'datasert'=>array('prodlenks','Поставка')) as $date=>$part) {
         $value = isset($row[$date]) ? $row[$date] : '';
-        if (isset($row[$part[0]]) && (string)$row[$part[0]] === '0' && $value >= $from && $value <= $to) {
+        $type = isset($row['tipprod']) ? $row['tipprod'] : '';
+        if (($type === $part[1] || $type === 'Сер/Пос') && isset($row[$part[0]]) &&
+            (string)$row[$part[0]] === '0' && $value >= $from && $value <= $to) {
             $parts[$part[1]] = $value;
         }
     }
