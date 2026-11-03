@@ -1,0 +1,245 @@
+/* Карточка счёта: стили ограничены этой страницей, обработчики полей прежние. */
+body.komnete-modern {
+    --invoice-ink: #344d60;
+    --invoice-muted: #596d7b;
+    --invoice-accent: #3d6d62;
+    --invoice-header: #e1eaf4;
+    --invoice-mint: #dceee5;
+    --invoice-line: #dce4ec;
+    --invoice-canvas: #f4f6fa;
+    --invoice-paper: #ffffff;
+    padding: 28px; color: var(--invoice-ink); background: var(--invoice-canvas);
+    font-family: "Segoe UI", Verdana, sans-serif; font-size: 15px; line-height: 1.5;
+}
+body.komnete-modern .komnete-page {
+    display: grid; grid-template-columns: minmax(280px, 1fr) minmax(0, 2.5fr);
+    gap: 18px; max-width: 1480px; padding: 0 0 32px !important;
+}
+body.komnete-modern .komnete-page::before,
+body.komnete-modern .komnete-page::after { display: none; }
+body.komnete-modern .komnete-page > * { min-width: 0; grid-column: 1 / -1; }
+body.komnete-modern .komnete-page > .col-md-12,
+body.komnete-modern .komnete-page > .col-md-3,
+body.komnete-modern .komnete-page > .col-md-9 { float: none !important; width: 100% !important; margin: 0 !important; }
+body.komnete-modern .komnete-page > .komnete-sidebar { grid-column: 1; grid-row: span 3; align-self: start; }
+body.komnete-modern .komnete-page > #zv,
+body.komnete-modern .komnete-page > #vs,
+body.komnete-modern .komnete-page > .komnete-extra-column { grid-column: 2; align-self: start; }
+body.komnete-modern .komnete-page > br,
+body.komnete-modern .komnete-page > hr,
+body.komnete-modern .komnete-page > .col-md-12:has(> .col-md-12:empty) { display: none; }
+body.komnete-modern .komnete-topline {
+    height: auto !important; min-height: 0; padding: 22px 24px !important;
+    margin: 0 !important; text-align: left; white-space: normal !important;
+    overflow-wrap: anywhere; border: 1px solid #dce5ee; border-radius: 10px;
+    font-size: 24px !important; line-height: 1.35; box-shadow: none;
+}
+body.komnete-modern .komnete-titlebar {
+    height: auto !important; min-height: 0; margin: 0 !important; padding: 18px 24px !important;
+    gap: 24px; border-radius: 10px; box-shadow: none; flex-wrap: wrap;
+}
+body.komnete-modern .komnete-invoice-meta { display: flex; flex-wrap: wrap; gap: 18px 24px; min-width: 0; }
+body.komnete-modern .komnete-meta-item { flex-wrap: wrap; overflow-wrap: anywhere; }
+body.komnete-modern .komnete-status-area { min-width: 0; }
+body.komnete-modern .kontur-card { margin: 0 !important; border-radius: 8px; }
+body.komnete-modern .komnete-document-tabs,
+body.komnete-modern .komnete-document-content {
+    min-width: 0; border: 1px solid #dce5ee; border-radius: 8px;
+    background: #fff; box-shadow: none; padding: 14px !important;
+}
+body.komnete-modern .komnete-document-tabs .nav-tabs { display: flex; flex-wrap: wrap; gap: 4px; border: 0; }
+body.komnete-modern .komnete-document-tabs .nav-tabs > li { float: none; margin: 0; }
+body.komnete-modern .komnete-document-tabs .nav-tabs > li:empty { display: none; }
+body.komnete-modern .komnete-document-tabs .nav-tabs > li > a { margin: 0; padding: 10px 16px; border-radius: 8px; }
+body.komnete-modern .komnete-document-content .tab-content { min-width: 0; width: 100%; }
+body.komnete-modern .komnete-document-content .tab-pane { overflow-x: auto; max-width: 100%; }
+body.komnete-modern .komnete-document-content table { min-width: 1060px; width: 100%; margin: 0; display: table; white-space: normal; }
+body.komnete-modern .komnete-document-content th,
+body.komnete-modern .komnete-document-content td { padding: 12px 10px; vertical-align: middle; font-size: 14px !important; }
+body.komnete-modern .komnete-document-content td:first-child { min-width: 180px; max-width: 240px; }
+body.komnete-modern .komnete-document-content td:not(:first-child) { white-space: nowrap; }
+body.komnete-modern .komnete-marking-strip { border-radius: 8px; box-shadow: none; }
+body.komnete-modern .komnete-sidebar {
+    padding: 20px !important; border: 1px solid #dce5ee; border-radius: 10px;
+    background: #fff; overflow-wrap: anywhere; box-shadow: none;
+}
+body.komnete-modern .komnete-sidebar > p { margin: 16px 0; line-height: 1.6; }
+body.komnete-modern .komnete-sidebar > p > b { display: block; margin-bottom: 6px; font-size: 13px; color: #596c7d; }
+body.komnete-modern .komnete-sidebar input:not([type=checkbox]):not([type=radio]),
+body.komnete-modern .komnete-sidebar select { display: block; width: 100% !important; max-width: 100%; min-width: 0; float: none; height: 38px; margin: 0; }
+body.komnete-modern .komnete-sidebar .container { width: auto; padding: 0; }
+body.komnete-modern .komnete-sidebar label { max-width: 100%; line-height: 1.5; }
+body.komnete-modern .komnete-sidebar label:has(> select) { display: block; }
+body.komnete-modern .komnete-sidebar-contact { margin-bottom: 20px; border-radius: 10px; box-shadow: none; }
+body.komnete-modern .komnete-sidebar-contact-body { padding: 14px; }
+body.komnete-modern .komnete-legacy-pointer { display: none; }
+body.komnete-modern .komnete-page > #zv,
+body.komnete-modern .komnete-page > #vs,
+body.komnete-modern .komnete-page > .komnete-extra-column { padding: 20px !important; border-radius: 10px; box-shadow: none; }
+body.komnete-modern .komnete-current-comment,
+body.komnete-modern .komnete-comment-history { border-radius: 0; box-shadow: none; overflow-wrap: anywhere; }
+body.komnete-modern .komnete-signature-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; font-size: 14px !important; padding: 18px !important; }
+body.komnete-modern .komnete-signature-fields p { margin: 0; }
+body.komnete-modern .komnete-signature-fields b { display: block; margin-bottom: 6px; color: #596c7d; font-size: 13px; }
+body.komnete-modern .komnete-signature-fields b i { display: none; }
+body.komnete-modern .komnete-signature-fields input,
+body.komnete-modern .komnete-signature-fields select { width: 100%; height: 38px; border: 1px solid #ccd8e3 !important; border-radius: 7px; padding: 6px 10px; background: #fff !important; }
+body.komnete-modern .komnete-extra-panel { padding: 18px !important; font-size: 14px !important; }
+body.komnete-modern .komnete-extra-row { grid-template-columns: minmax(140px, .65fr) minmax(0, 1fr); }
+body.komnete-modern .komnete-extra-row input,
+body.komnete-modern .komnete-extra-row select,
+body.komnete-modern .komnete-extra-row textarea { max-width: 100%; min-width: 0; }
+body.komnete-modern :is(button, a, input, select, textarea):focus-visible { outline: 3px solid #96c8ef; outline-offset: 2px; }
+@media (max-width: 1000px) {
+    body.komnete-modern { padding: 16px; }
+    body.komnete-modern .komnete-page { grid-template-columns: minmax(250px, 1fr) minmax(0, 1.7fr); gap: 14px; }
+}
+@media (max-width: 760px) {
+    body.komnete-modern { padding: 12px; }
+    body.komnete-modern .komnete-page { display: flex; flex-direction: column; gap: 12px; }
+    body.komnete-modern .komnete-page > * { max-width: 100%; }
+    body.komnete-modern .komnete-topline { font-size: 21px !important; padding: 18px !important; }
+    body.komnete-modern .komnete-titlebar { padding: 16px !important; gap: 16px; }
+    body.komnete-modern .komnete-sidebar { padding: 16px !important; }
+    body.komnete-modern .komnete-signature-fields { grid-template-columns: minmax(0, 1fr); }
+    body.komnete-modern .komnete-extra-row { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* Иерархия документа: одна выразительная шапка, спокойные рабочие разделы. */
+body.komnete-modern .komnete-page { background: var(--invoice-canvas) !important; }
+body.komnete-modern .komnete-topline {
+    background: var(--invoice-header) !important; color: var(--invoice-ink) !important;
+    border: 0; border-radius: 10px 10px 0 0; padding: 22px 26px !important;
+    margin-bottom: -18px !important; font-weight: 600; letter-spacing: -.3px;
+}
+body.komnete-modern .komnete-titlebar {
+    border-radius: 0 0 10px 10px; border-top: 0; padding: 20px 26px !important;
+    align-items: center;
+}
+body.komnete-modern .komnete-invoice-meta { gap: 18px 30px; align-items: center; }
+body.komnete-modern .komnete-meta-item { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; }
+body.komnete-modern .komnete-meta-item > b,
+body.komnete-modern .komnete-status-label { text-transform: none; letter-spacing: 0; font-size: 12px; font-weight: 500; color: var(--invoice-muted); }
+body.komnete-modern .komnete-meta-item > span { font-size: 15px; font-weight: 600; }
+body.komnete-modern .komnete-meta-item:nth-child(2) { order: -1; padding-right: 28px; border-right: 1px solid var(--invoice-line); }
+body.komnete-modern .komnete-meta-item:nth-child(2) > span { font-size: 22px; line-height: 1.3; font-weight: 650; }
+body.komnete-modern .komnete-meta-item a { color: var(--invoice-ink); }
+body.komnete-modern .komnete-status-area { flex: 0 1 390px; }
+body.komnete-modern .komnete-status-field { align-items: center; }
+body.komnete-modern #status { background: #f0f5f7 !important; color: var(--invoice-ink) !important; border: 1px solid #bdcdd6 !important; border-radius: 6px !important; min-height: 38px; }
+body.komnete-modern .komnete-status-toggle { border-color: #bdcdd6 !important; color: var(--invoice-ink) !important; border-radius: 6px !important; }
+body.komnete-modern .kontur-card { border-color: #c7ded9; background: #f5faf8; }
+body.komnete-modern .kontur-card a { color: var(--invoice-accent); }
+body.komnete-modern #kontur-invoice-add a { background: var(--invoice-mint) !important; color: var(--invoice-accent) !important; border-radius: 6px; padding: 9px 16px; font-size: 14px; }
+body.komnete-modern .komnete-document-tabs { border-radius: 8px 8px 0 0; border-bottom: 0; padding: 8px 16px 0 !important; margin-bottom: -18px !important; }
+body.komnete-modern .komnete-document-content { border-radius: 0 0 8px 8px; border-top: 0; padding: 16px !important; }
+body.komnete-modern .komnete-document-tabs .nav-tabs { gap: 6px; border-bottom: 1px solid var(--invoice-line); }
+body.komnete-modern .komnete-document-tabs .nav-tabs > li > a {
+    color: var(--invoice-muted); background: transparent; border: 0 !important;
+    border-radius: 0 !important; padding: 13px 14px; font-size: 14px; font-weight: 500 !important;
+}
+body.komnete-modern .komnete-document-tabs .nav-tabs > li.active > a {
+    background: transparent !important; color: var(--invoice-ink) !important;
+    box-shadow: inset 0 -3px #a6cbbd; font-weight: 650 !important;
+}
+body.komnete-modern .komnete-document-content th { text-transform: none !important; background: #f0f5f7; color: var(--invoice-muted); font-size: 12px !important; font-weight: 600; }
+body.komnete-modern .komnete-document-content td { font-variant-numeric: tabular-nums; line-height: 1.5; }
+body.komnete-modern .komnete-document-content tbody > tr:hover { background: #f8fbfc; }
+body.komnete-modern .komnete-document-content td:first-child { color: var(--invoice-muted); font-size: 13px !important; }
+body.komnete-modern .komnete-marking-strip { opacity: 1; background: #f8fafb; }
+body.komnete-modern .komnete-marking-strip div#konttakt { background: #f8fafb !important; color: var(--invoice-muted); font-size: 13px; font-weight: 500; }
+body.komnete-modern .komnete-sidebar-contact { border: 0; border-radius: 0; margin: 0 0 22px; }
+body.komnete-modern .komnete-sidebar-contact-title { padding: 0 0 10px; background: transparent; border: 0; font-size: 16px; color: var(--invoice-ink); }
+body.komnete-modern .komnete-sidebar-contact-body { padding: 0; background: transparent; border: 0; }
+body.komnete-modern .komnete-sidebar > p { padding-bottom: 14px; border-bottom: 1px solid #edf1f3; }
+body.komnete-modern .komnete-current-comment-header,
+body.komnete-modern .komnete-current-comment-body { border: 0; border-radius: 0; padding: 0; background: transparent; box-shadow: none; }
+body.komnete-modern .komnete-current-comment-header { font-size: 17px; }
+body.komnete-modern .komnete-current-comment-body { margin-top: 16px; min-height: 48px; max-width: 75ch; font-size: 15px; line-height: 1.65; }
+body.komnete-modern .komnete-comments-history { border-top: 1px solid var(--invoice-line); padding-top: 16px; }
+body.komnete-modern .komnete-page #zv .komnete-section-title { background: transparent; border: 0; border-radius: 0; padding: 0; font-size: 14px; }
+body.komnete-modern .komnete-extra-column > div#vladelec { background: transparent !important; padding: 0 0 14px !important; border: 0 !important; border-radius: 0; font-size: 17px !important; color: var(--invoice-ink) !important; }
+body.komnete-modern .komnete-page div#vladelec + .komnete-signature-fields,
+body.komnete-modern .komnete-page div#vladelec + .komnete-extra-panel { border: 0 !important; border-radius: 0 !important; padding: 0 !important; box-shadow: none !important; }
+body.komnete-modern .komnete-page div#vladelec + .komnete-signature-fields { padding-bottom: 24px !important; margin-bottom: 22px !important; border-bottom: 1px solid var(--invoice-line) !important; }
+body.komnete-modern .komnete-extra-row { padding: 14px 0; }
+body.komnete-modern .komnete-extra-row label { color: var(--invoice-muted); font-weight: 500; font-size: 13px; }
+body.komnete-modern .komnete-extra-row select,
+body.komnete-modern .komnete-extra-row input { min-height: 38px; }
+@media (max-width: 760px) {
+    body.komnete-modern .komnete-topline { margin-bottom: -12px !important; }
+    body.komnete-modern .komnete-titlebar { align-items: stretch; }
+    body.komnete-modern .komnete-invoice-meta { gap: 16px 24px; }
+    body.komnete-modern .komnete-meta-item:nth-child(2) { border: 0; padding: 0; flex-basis: 100%; }
+    body.komnete-modern .komnete-status-area { flex-basis: 100%; }
+    body.komnete-modern .komnete-status-label { text-align: left; align-self: flex-start; }
+    body.komnete-modern .komnete-document-tabs { margin-bottom: -12px !important; }
+    body.komnete-modern .komnete-document-tabs .nav-tabs > li > a { padding: 12px 10px; }
+}
+
+/* Пастельные акценты сохраняют контраст текста и доступный фокус. */
+body.komnete-modern .komnete-comment-edit,
+body.komnete-modern .komnete-comments-toggle,
+body.komnete-modern .komnete-status-toggle {
+    background: #edf2f9 !important; color: var(--invoice-ink) !important;
+    border-color: #cbd8e8 !important;
+}
+body.komnete-modern .komnete-document-content .komnete-invoice-toggle {
+    background: #edf2f9; color: var(--invoice-ink); border-color: #cbd8e8;
+}
+
+/* Нативный select сохраняет управление с клавиатуры; стрелка имеет отступ. */
+body.komnete-modern .komnete-page select:not([multiple]):not([size]),
+body.komnete-modern #invoice-manager-select,
+body.komnete-modern #status {
+    -webkit-appearance: none; appearance: none;
+    padding-right: 36px !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath d='m4 6 4 4 4-4' fill='none' stroke='%23526875' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") !important;
+    background-position: right 12px center !important;
+    background-repeat: no-repeat !important;
+    background-size: 16px 16px !important;
+}
+body.komnete-modern .komnete-document-content .komnete-date-edit {
+    display: inline-flex; align-items: center; justify-content: center;
+    float: none !important; vertical-align: middle; margin-left: 8px;
+    width: 30px; height: 30px; padding: 0; line-height: 1 !important;
+    color: var(--invoice-ink); background: #edf2f9;
+    border: 1px solid #cbd8e8; border-radius: 6px;
+}
+body.komnete-modern .komnete-date-edit:hover { background: #e1eaf4; }
+/* Руководитель меняет менеджера в отдельном окне с явным подтверждением. */
+body.komnete-modern .komnete-manager-edit {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 30px; height: 30px; margin-left: 8px; border: 1px solid #cbd8e8;
+    border-radius: 6px; background: #edf2f9; color: var(--invoice-ink);
+}
+body.komnete-modern #invoice-manager-modal .modal-content { border: 0; border-radius: 10px; }
+body.komnete-modern #invoice-manager-modal .modal-header { background: var(--invoice-header); border-radius: 10px 10px 0 0; padding: 20px 24px; }
+body.komnete-modern #invoice-manager-modal .modal-title { font-size: 20px; font-weight: 600; }
+body.komnete-modern #invoice-manager-modal .modal-body { padding: 22px 24px; }
+body.komnete-modern #invoice-manager-modal .modal-footer { padding: 16px 24px; }
+body.komnete-modern #invoice-manager-modal .komnete-manager-note { margin-top: 16px; color: var(--invoice-muted); font-size: 13px; line-height: 1.6; }
+body.komnete-modern #invoice-manager-modal .komnete-manager-warning { margin-top: 18px; padding: 14px; border: 1px solid #e6d6b6; border-radius: 6px; background: #fff9ec; }
+body.komnete-modern #invoice-manager-modal [hidden] { display: none !important; }
+body.komnete-modern #invoice-manager-modal select { height: 42px; }
+body.komnete-modern #invoice-manager-modal #invoice-manager-save { background: var(--invoice-mint); color: var(--invoice-accent); border-color: #b5d2c6; }
+
+body.komnete-modern #invoice-manager-modal .close {
+    display: block; color: var(--invoice-ink); opacity: .8; background: transparent;
+    width: 28px; height: 28px; font-size: 24px; line-height: 1; border: 0;
+}
+body.komnete-modern #invoice-manager-modal .btn-default { background: #edf2f9; color: var(--invoice-ink); border: 1px solid #cbd8e8; }
+body.komnete-modern .komnete-autosave-status { display: block; min-height: 18px; margin-top: 5px; font-size: 12px; color: var(--invoice-muted); }
+body.komnete-modern .komnete-autosave-status.is-error { color: #a33a47; cursor: pointer; }
+body.komnete-modern #fadres { resize: vertical; min-height: 72px; line-height: 1.5; }
+body.komnete-modern .komnete-renewal-group {
+    min-width: 0; margin: 20px 0; padding: 4px 14px 14px;
+    border: 1px solid #d3dfea; border-radius: 8px; background: #f5f8fc;
+}
+body.komnete-modern .komnete-renewal-group legend {
+    width: auto; padding: 0 6px; margin: 0 0 6px;
+    border: 0; color: var(--invoice-ink); font-size: 15px; font-weight: 600;
+}
+body.komnete-modern .komnete-renewal-group > p { margin: 12px 0 0; }
+body.komnete-modern .komnete-renewal-group b { display: block; margin-bottom: 6px; font-size: 13px; color: var(--invoice-muted); }
+body.komnete-modern .komnete-renewal-group [hidden] { display: none !important; }

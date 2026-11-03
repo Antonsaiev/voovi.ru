@@ -20,7 +20,7 @@ if ($schetRow && $schetRow['nds'] !== '' && $schetRow['nds'] != 'vat0' && $schet
     $showAtkTab = false;
 }
 
-?><div class="col-md-12" style=" overflow: hidden;">
+?><div class="col-md-12 komnete-document-tabs" style=" overflow: hidden;">
 <!-- Nav tabs -->
 <ul class="nav nav-tabs" role="tablist">
   <li class="active"><a style="font-weight: bold;" href="#scheta" role="tab" data-toggle="tab">Cчета</a></li>
@@ -39,7 +39,7 @@ if ($schetRow && $schetRow['nds'] !== '' && $schetRow['nds'] != 'vat0' && $schet
 </ul>
 <!-- Tab panes -->
 </div>
-<div class="col-md-12" style="margin-top: 10px;">
+<div class="col-md-12 komnete-document-content" style="margin-top: 10px;">
    <div class="tab-content">
 
 <!-------------------------------------------------------------------- СЧЕТ ------------------------------------------------>
@@ -150,13 +150,11 @@ $date = new DateTime(getDateDocuments($_GET['rand'])['d_bill']);
 echo $date->format('d.m.Y');
 
 
-echo '<button type="button" class="btn btn-worning btn-xs" data-toggle="modal" data-target="#myModald'.$row['rand'].'" style="
+echo '<button type="button" class="btn btn-worning btn-xs komnete-date-edit" title="Изменить дату" aria-label="Изменить дату" data-toggle="modal" data-target="#myModald'.$row['rand'].'" style="
     float: right;
     line-height: 10px;
     font-size: 14px;
-">
-  Изменить
-</button>
+"><span class="glyphicon glyphicon-pencil" aria-hidden="true"></span></button>
 
 <!-- Modal -->
 <div class="modal fade" id="myModald'.$row['rand'].'" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
@@ -968,7 +966,7 @@ echo '<td style="font-size: 14px;">';
 $dogDate = new DateTime(getDateDocuments($_GET['rand'])['d_contract']);
 echo $dogDate->format('d.m.Y');
 
-echo '<button type="button" class="btn btn-worning btn-xs" data-toggle="modal" data-target="#myModald'.$row['rand'].'dog" style="float: right;  line-height: 10px; font-size: 14px;">Изменить</button>
+echo '<button type="button" class="btn btn-worning btn-xs komnete-date-edit" title="Изменить дату" aria-label="Изменить дату" data-toggle="modal" data-target="#myModald'.$row['rand'].'dog" style="float: right;  line-height: 10px; font-size: 14px;"><span class="glyphicon glyphicon-pencil" aria-hidden="true"></span></button>
 
 <!-- Modal -->
 <div class="modal fade" id="myModald'.$row['rand'].'dog" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
@@ -1164,9 +1162,7 @@ echo'</td></tr>';
                echo $updDate->format('d.m.Y');
 
                echo '
-<button type="button" class="btn btn-worning btn-xs" data-toggle="modal" data-target="#myModald'.$row['rand'].'upd" style="float: right;  line-height: 10px; font-size: 14px;">
-Изменить
-</button>
+<button type="button" class="btn btn-worning btn-xs komnete-date-edit" title="Изменить дату" aria-label="Изменить дату" data-toggle="modal" data-target="#myModald'.$row['rand'].'upd" style="float: right;  line-height: 10px; font-size: 14px;"><span class="glyphicon glyphicon-pencil" aria-hidden="true"></span></button>
 
 <!-- Modal -->
 <div class="modal fade" id="myModald'.$row['rand'].'upd" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
@@ -1320,7 +1316,7 @@ echo '<td style="font-size: 14px;">';
 $aktDate = new DateTime(getDateDocuments($_GET['rand'])['d_act']);
 echo $aktDate->format('d.m.Y');
 
-echo '<button type="button" class="btn btn-worning btn-xs" data-toggle="modal" data-target="#myModald'.$row['rand'].'akt" style="float: right;  line-height: 10px; font-size: 14px;">Изменить</button>
+echo '<button type="button" class="btn btn-worning btn-xs komnete-date-edit" title="Изменить дату" aria-label="Изменить дату" data-toggle="modal" data-target="#myModald'.$row['rand'].'akt" style="float: right;  line-height: 10px; font-size: 14px;"><span class="glyphicon glyphicon-pencil" aria-hidden="true"></span></button>
 
 <!-- Modal -->
 <div class="modal fade" id="myModald'.$row['rand'].'akt" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
@@ -1521,7 +1517,7 @@ echo '<td style="font-size: 14px;">';
 $specificationDate = new DateTime(getDateDocuments($_GET['rand'])['d_specification']);
 echo $specificationDate->format('d.m.Y');
 
-echo '<button type="button" class="btn btn-worning btn-xs" data-toggle="modal" data-target="#myModald'.$row['rand'].'specification" style="float: right;  line-height: 10px; font-size: 14px;">Изменить</button>
+echo '<button type="button" class="btn btn-worning btn-xs komnete-date-edit" title="Изменить дату" aria-label="Изменить дату" data-toggle="modal" data-target="#myModald'.$row['rand'].'specification" style="float: right;  line-height: 10px; font-size: 14px;"><span class="glyphicon glyphicon-pencil" aria-hidden="true"></span></button>
 
 <!-- Modal -->
 <div class="modal fade" id="myModald'.$row['rand'].'specification" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
@@ -1647,7 +1643,7 @@ echo '<td style="font-size: 14px;">';
 $tnDate = new DateTime(getDateDocuments($_GET['rand'])['d_tn']);
 echo $tnDate->format('d.m.Y');
 
-echo '<button type="button" class="btn btn-worning btn-xs" data-toggle="modal" data-target="#myModald'.$row['rand'].'tn" style="float: right;  line-height: 10px; font-size: 14px;">Изменить</button>
+echo '<button type="button" class="btn btn-worning btn-xs komnete-date-edit" title="Изменить дату" aria-label="Изменить дату" data-toggle="modal" data-target="#myModald'.$row['rand'].'tn" style="float: right;  line-height: 10px; font-size: 14px;"><span class="glyphicon glyphicon-pencil" aria-hidden="true"></span></button>
 
 <!-- Modal -->
 <div class="modal fade" id="myModald'.$row['rand'].'tn" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
@@ -1857,7 +1853,7 @@ echo '</td>';
 echo '<td style="font-size: 14px;">';
 $dogTksDate = new DateTime(getDateDocuments($_GET['rand'])['d_contract']);
 echo $dogTksDate->format('d.m.Y');
-        echo '<button type="button" class="btn btn-worning btn-xs" data-toggle="modal" data-target="#myModald'.$row['rand'].'dog" style="float: right;  line-height: 10px; font-size: 14px;">Изменить</button>
+        echo '<button type="button" class="btn btn-worning btn-xs komnete-date-edit" title="Изменить дату" aria-label="Изменить дату" data-toggle="modal" data-target="#myModald'.$row['rand'].'dog" style="float: right;  line-height: 10px; font-size: 14px;"><span class="glyphicon glyphicon-pencil" aria-hidden="true"></span></button>
 
 <!-- Modal -->
 <div class="modal fade" id="myModald'.$row['rand'].'dogTks" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">

@@ -50,411 +50,164 @@ if(isset($_POST['submit'])) {
 	}
 }
 ?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="ru" lang="ru">
+<?php
+// Общий вывод списков сохраняет прежние действия привязки.
+function organization_links_escape($value) {
+    return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
+}
+function organization_links_page_url($key, $page) {
+    $params = array();
+    foreach (array('id', 'svyaz', 'q', 'naim', 'inn', 'kpp', 'ogrn', 'email', 'page', 'pagee') as $name) {
+        if (isset($_GET[$name]) && is_scalar($_GET[$name])) $params[$name] = (string)$_GET[$name];
+    }
+    $params[$key] = $page;
+    return 'svyaz.php?'.http_build_query($params, '', '&');
+}
+function organization_links_pagination($key, $page, $pages) {
+    if ($pages <= 1) return;
+    echo '<nav class="links-pagination" aria-label="Страницы организаций">';
+    $numbers = array_unique(array_merge(array(1), range(max(1, $page - 2), min($pages, $page + 2)), array($pages)));
+    $previous = 0;
+    foreach ($numbers as $number) {
+        if ($previous && $number > $previous + 1) echo '<span class="links-ellipsis">…</span>';
+        if ($number == $page) echo '<span class="links-page-current" aria-current="page">'.$number.'</span>';
+        else echo '<a href="'.organization_links_escape(organization_links_page_url($key, $number)).'">'.$number.'</a>';
+        $previous = $number;
+    }
+    if ($page < $pages) echo '<a href="'.organization_links_escape(organization_links_page_url($key, $page + 1)).'">Следующая</a>';
+    echo '</nav>';
+}
+function organization_links_table($result, $group) {
+    if (!$result || !mysql_num_rows($result)) {
+        echo '<p class="links-empty">Организации не найдены.</p>';
+        return;
+    }
+    echo '<div class="links-table-scroll" tabindex="0" role="region" aria-label="Список организаций"><table class="links-table"><thead><tr><th>Организация</th><th>ИНН / КПП</th><th>ОГРН</th><th><span class="sr-only">Действие</span></th></tr></thead><tbody>';
+    while ($row = mysql_fetch_assoc($result)) {
+        $id = (int)$row['id'];
+        echo '<tr><td><a class="links-company" href="kartklient.php?id='.$id.'">'.organization_links_escape($row['naim']).'</a></td><td><span class="links-tax">'.organization_links_escape($row['inn']).'</span><small>'.organization_links_escape($row['kpp']).'</small></td><td class="links-ogrn">'.organization_links_escape($row['ogrn']).'</td><td class="links-action-cell">';
+        if ((string)$row['rand'] === $group) {
+            echo '<span class="links-badge">Основная</span>';
+        } else {
+            $linked = (string)$row['svyaz'] === $group;
+            $label = $linked ? 'Отвязать' : ($row['svyaz'] != 0 ? 'Перевязать' : 'Привязать');
+            $url = 'svyazonoff.php?'.http_build_query(array('id'=>$id, 'svyaz'=>$group, 'go'=>$linked ? 0 : 1), '', '&');
+            echo '<a class="links-action'.($linked ? ' links-action-remove' : '').'" href="'.organization_links_escape($url).'">'.$label.'</a>';
+        }
+        echo '</td></tr>';
+    }
+    echo '</tbody></table></div>';
+}
+$clientId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+$group = isset($_GET['svyaz']) && is_scalar($_GET['svyaz']) ? (string)$_GET['svyaz'] : '';
+if (!preg_match('/^[0-9]+$/D', $group)) { http_response_code(400); exit('Не указана группа организаций. Откройте страницу из карточки клиента.'); }
+$groupSql = mysql_real_escape_string($group);
+if (!isset($_GET['fragment'])) {
+$clientResult = mysql_query("SELECT naim, inn FROM ogrn WHERE id=$clientId LIMIT 1");
+$client = $clientResult ? mysql_fetch_assoc($clientResult) : false;
+}
+$filters = array();
+foreach (array('naim', 'inn', 'kpp', 'ogrn', 'email') as $name) {
+    $filters[$name] = isset($_GET[$name]) && is_scalar($_GET[$name]) ? (string)$_GET[$name] : '';
+}
+$searchText = isset($_GET['q']) && is_scalar($_GET['q']) ? trim((string)$_GET['q']) : '';
+$legacySearch = !isset($_GET['q']) && isset($_GET['inn']);
+$searching = $searchText !== '' || $legacySearch;
+// Старые ссылки с отдельными фильтрами продолжают работать.
+$searchInput = isset($_GET['q']) ? $searchText : trim(implode(' ', array_filter($filters, 'strlen')));
+$perPage = 35;
+if (!isset($_GET['fragment'])) {
+$linkedCountResult = mysql_query("SELECT COUNT(*) FROM ogrn WHERE svyaz='$groupSql'");
+$linkedCountRow = mysql_fetch_row($linkedCountResult);
+$linkedCount = (int)$linkedCountRow[0];
+$linkedPages = max(1, (int)ceil($linkedCount / $perPage));
+$linkedPage = max(1, min($linkedPages, isset($_GET['pagee']) ? (int)$_GET['pagee'] : 1));
+$linkedStart = ($linkedPage - 1) * $perPage;
+$linkedResult = mysql_query("SELECT * FROM ogrn WHERE svyaz='$groupSql' ORDER BY id DESC LIMIT $linkedStart, $perPage");
+}
+$pages = 1;
+$page = 1;
+$start = 0;
+if (!$searching) {
+$totalResult = mysql_query('SELECT COUNT(*) FROM ogrn');
+$totalRow = mysql_fetch_row($totalResult);
+$pages = max(1, (int)ceil($totalRow[0] / $perPage));
+$page = max(1, min($pages, isset($_GET['page']) ? (int)$_GET['page'] : 1));
+$start = ($page - 1) * $perPage;
+}
+if ($searchText !== '') {
+    $searchSql = mysql_real_escape_string(str_replace(array('\\', '%', '_'), array('\\\\', '\\%', '\\_'), $searchText));
+    $listResult = mysql_query("SELECT * FROM ogrn WHERE naim LIKE '%$searchSql%' OR inn LIKE '%$searchSql%' OR kpp LIKE '%$searchSql%' OR ogrn LIKE '%$searchSql%' ORDER BY id DESC LIMIT 40");
+} elseif ($legacySearch) {
+    $sqlFilters = array_map('mysql_real_escape_string', $filters);
+    // Условия и ограничение поиска оставлены прежними.
+    $listResult = mysql_query("SELECT * FROM ogrn WHERE CONCAT(naim,' ',inn) LIKE '%{$sqlFilters['inn']}%' AND naim LIKE '%{$sqlFilters['naim']}%' AND kpp LIKE '%{$sqlFilters['kpp']}%' AND ogrn LIKE '%{$sqlFilters['ogrn']}%' AND email LIKE '%{$sqlFilters['email']}%' LIMIT 40");
+} else {
+    $listResult = mysql_query("SELECT * FROM ogrn ORDER BY id DESC LIMIT $start, $perPage");
+}
+ob_start();
+?>
+        <div class="links-list-heading"><?php echo $searching ? 'Результаты поиска' : 'Организации'; ?><span><?php echo $searching ? 'Показано до 40 организаций' : 'Страница '.$page.' из '.$pages; ?></span></div>
+        <?php organization_links_table($listResult, $group); ?>
+        <?php if (!$searching) organization_links_pagination('page', $page, $pages); ?>
+        <?php if ($searching && $listResult && !mysql_num_rows($listResult) && preg_match('/^[0-9]{10}([0-9]{2})?$/D', $searchText)): ?>
+        <p class="links-create"><a href="<?php echo organization_links_escape(VOOVI_MAIN_URL.'/newogrn.php?'.http_build_query(array('id'=>186, 'inn'=>$searchText, 'kpp'=>''), '', '&')); ?>">Создать организацию по ИНН <?php echo organization_links_escape($searchText); ?></a></p>
+        <?php endif; ?>
+<?php
+$resultsHtml = ob_get_clean();
+if (isset($_GET['fragment'])) {
+    header('Content-Type: application/json; charset=utf-8');
+    if (!$listResult) {
+        http_response_code(500);
+        echo json_encode(array('error'=>'Не удалось выполнить поиск. Попробуйте ещё раз.'));
+    } else {
+        echo json_encode(array('html'=>$resultsHtml));
+    }
+    exit;
+}
+?>
+<!DOCTYPE html>
+<html lang="ru">
 <head>
-	<title></title>
-	<meta http-equiv="content-type" content="text/html" charset="utf-8" />
-	<meta http-equiv="Content-Style-Type" content="text/css" />
+    <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Связанные организации — Voovi</title>
     <link href="css/bootstrap.min.css" rel="stylesheet">
 </head>
-<body>
-<?php
-# шапка
-include 'header.php';  
-?>
-<div class="container" style="margin-top: 60px;">
-<div class="row">
-
-<div class="col-md-6">
-
-<div class="bs-example">
-   
-<h3 style="border-bottom: 1px #333 solid;">Выберите организацию для привязки</h3>
-
-
-
-
-<form action="" method="GET" name="form">
-<input type="text" name="id"  value="<?php echo $_GET['id']; ?>" style="display: none;" />
-<input type="text" name="svyaz"  value="<?php echo $_GET['svyaz']; ?>" style="display: none;" />
-Название: <input type="text" name="naim"  value="<?php echo $_GET['naim']; ?>" />  ИНН: <input type="text" name="inn"  value="<?php echo $_GET['inn']; ?>"  /> КПП: <input type="text" name="kpp"  value="<?php echo $_GET['kpp']; ?>"  /> ОГРН: <input type="text" name="ogrn" value="<?php echo $_GET['ogrn']; ?>"   />
-<input type="submit" value="Поиск"><br><br>
-</form>
-
-
-<table class="table tablehover">
-
-<?php
-
-$search_slovo = $_GET['naim'];
-$search_slovo1 = $_GET['inn'];
-$search_slovo2 = $_GET['kpp'];
-$search_slovo4 = $_GET['ogrn'];
-$search_slovo3 = $_GET['email'];
-
-
-
-if ((isset($search_slovo1))) {
-		echo'<thead>
-        <tr>
-		<th>id</th>
-		<th style="width: 350px;">Название</th>
-		  <th style="width: 100px;">ИНН</th>
-          <th style="width: 100px;">КПП</th>
-          <th style="width: 100px;">ОГРН</th>
-          <th style="width: 100px;"></th>
-        </tr>
-    </thead>';
-$search_name= mysql_query("SELECT * FROM `ogrn` WHERE CONCAT(naim,' ',inn) LIKE '%$search_slovo1%' AND `naim` LIKE '%$search_slovo%'  AND `kpp` LIKE '%$search_slovo2%' AND `ogrn` LIKE '%$search_slovo4%' AND `email` LIKE '%$search_slovo3%' LIMIT 40");
-if (mysql_num_rows($search_name) != 0) {
-while ($row = mysql_fetch_assoc($search_name)) {
-
-
-
-					
-						
-								echo '<tr  id="open'.$row['id'].'"  style="font-size: 12px;"><td style="width: 50px; text-align: center;"><strong>';
-								echo $row['id'];
-								echo '</strong></td>';
-								echo '<td  style="width: 350px;">';
-								echo $row['naim'];
-								echo '<script>
-$("#open'.$row['id'].'").live("dblclick", function() {
-window.location.href="./kartklient.php?id='.$row['id'].'";
-});
-</script></td>';
-								echo '<td style="width: 100px;">';
-								echo $row['inn'];
-								echo '</td>';
-								echo '<td style="width: 100px;">';
-								echo $row['kpp'];
-								echo '</td>';
-								echo '<td>';
-								echo $row['ogrn'];
-								echo '</td>';
-								echo '<td  style="width: 1px;">';
-								if($_GET['svyaz'] == $row['rand']){
-								echo '<center>Основной</center>';
-								}else{
-								if($row['svyaz'] != $_GET['svyaz']){
-								if($row['svyaz'] != 0){
-								echo '<a  title="Перевязать" href="./svyazonoff.php?id='.$row['id'].'&svyaz='.$_GET['svyaz'].'&go=1"><span class="glyphicon glyphicon-random" aria-hidden="true"></span> Перевязать</a>';
-								}else{
-								echo '<a  title="Привязать" href="./svyazonoff.php?id='.$row['id'].'&svyaz='.$_GET['svyaz'].'&go=1"><span class="glyphicon glyphicon-random" aria-hidden="true"></span> Привязать</a>';
-								}}else{
-								echo '<a  title="Отвязать" href="./svyazonoff.php?id='.$row['id'].'&svyaz='.$_GET['svyaz'].'&go=0"><span class="glyphicon glyphicon-random" aria-hidden="true"></span> Отвезать</a>';
-								}
-								}
-								echo '</td>';
-								echo '</tr>';
-						
-				
-				
-
-
-
-
-
-
-
-
-
-
-
-
-}
-} else {
-echo " Ничего не найдено<br>";
-if(isset($_GET['inn'])) {
-	echo "<a href='".VOOVI_MAIN_URL."/newogrn.php?id=186&inn=".$_GET['inn']."&kpp='>Создать организацию по ИНН: ".$_GET['inn']."</a>";
-}
-}
-} 
-?>
-</table>
-
-
-<br><br>
-
-<?
-						$num = 35; 
-						$page = $_GET['page'];
-						$result00 = mysql_query("SELECT COUNT(*) FROM ogrn");
-						$temp = mysql_fetch_array($result00);
-						$posts = $temp[0];
-						$total = (($posts - 1) / $num) + 1;
-						$total =  intval($total);
-						$page = intval($page);
-						if(empty($page) or $page < 0) $page = 1;
-						if($page > $total) $page = $total;
-						$start = $page * $num - $num;	
-
-// Проверяем нужны ли стрелки назад
-if ($page != 1) $pervpage = '<a href=?page=1>Первая</a> | <a href=?page='. ($page - 1) .'&id='.$_GET['id'].'&svyaz='.$_GET['svyaz'].'>Предыдущая</a> | ';
-// Проверяем нужны ли стрелки вперед
-if ($page != $total) $nextpage = ' | <a href=?page='. ($page + 1) .'&id='.$_GET['id'].'&svyaz='.$_GET['svyaz'].'>Следующая</a> | <a href=?page=' .$total.'&'.$_GET['id'].'&'.$_GET['svyaz']. '>Последняя</a>';
-
-// Находим две ближайшие станицы с обоих краев, если они есть
-if($page - 5 > 0) $page5left = ' <a href=?page='. ($page - 5) .'&id='.$_GET['id'].'&svyaz='.$_GET['svyaz'].'>'. ($page - 5) .'</a> | ';
-if($page - 4 > 0) $page4left = ' <a href=?page='. ($page - 4) .'&id='.$_GET['id'].'&svyaz='.$_GET['svyaz'].'>'. ($page - 4) .'</a> | ';
-if($page - 3 > 0) $page3left = ' <a href=?page='. ($page - 3) .'&id='.$_GET['id'].'&svyaz='.$_GET['svyaz'].'>'. ($page - 3) .'</a> | ';
-if($page - 2 > 0) $page2left = ' <a href=?page='. ($page - 2) .'&id='.$_GET['id'].'&svyaz='.$_GET['svyaz'].'>'. ($page - 2) .'</a> | ';
-if($page - 1 > 0) $page1left = '<a href=?page='. ($page - 1) .'&id='.$_GET['id'].'&svyaz='.$_GET['svyaz'].'>'. ($page - 1) .'</a> | ';
-
-if($page + 5 <= $total) $page5right = ' | <a href=?page='. ($page + 5) .'&id='.$_GET['id'].'&svyaz='.$_GET['svyaz'].'>'. ($page + 5) .'</a>';
-if($page + 4 <= $total) $page4right = ' | <a href=?page='. ($page + 4) .'&id='.$_GET['id'].'&svyaz='.$_GET['svyaz'].'>'. ($page + 4) .'</a>';
-if($page + 3 <= $total) $page3right = ' | <a href=?page='. ($page + 3) .'&id='.$_GET['id'].'&svyaz='.$_GET['svyaz'].'>'. ($page + 3) .'</a>';
-if($page + 2 <= $total) $page2right = ' | <a href=?page='. ($page + 2) .'&id='.$_GET['id'].'&svyaz='.$_GET['svyaz'].'>'. ($page + 2) .'</a>';
-if($page + 1 <= $total) $page1right = ' | <a href=?page='. ($page + 1) .'&id='.$_GET['id'].'&svyaz='.$_GET['svyaz'].'>'. ($page + 1) .'</a>';
-
-// Вывод меню если страниц больше одной
-
-if ($total > 1)
-{
-Error_Reporting(E_ALL & ~E_NOTICE);
-echo "<div class=\"pstrnav\">";
-echo $pervpage.$page5left.$page4left.$page3left.$page2left.$page1left.'<b>'.$page.'</b>'.$page1right.$page2right.$page3right.$page4right.$page5right.$nextpage;
-echo "</div>";
-}
-?>
-
-
-
-
-
-	<table class="table tablehover">
-	<thead>
-        <tr>
-		<th>id</th>
-		<th>Название</th>
-		  <th>ИНН</th>
-          <th>КПП</th>
-		  <th>ОГРН</th>
-		  <th style="width: 100px;"></th>
-        </tr>
-    </thead>
-					<?php
-					
-							
-					
-						$query = mysql_query("SELECT * from ogrn ORDER BY id DESC LIMIT $start, $num");	
-							while($row = mysql_fetch_array($query)) {
-								echo '<tr  id="open'.$row['id'].'"  style="font-size: 12px;"><td style="width: 50px; text-align: center;"><strong>';
-								echo $row['id'];
-								echo '</strong></td>';
-								echo '<td style="">';
-								echo $row['naim'];
-								echo '<script>
-$("#open'.$row['id'].'").live("dblclick", function() {
-window.location.href="./kartklient.php?id='.$row['id'].'";
-});
-</script></td>';
-								echo '<td style="width: 100px;">';
-								echo $row['inn'];
-								echo '</td>';
-								echo '<td style="width: 100px;">';
-								echo $row['kpp'];
-								echo '</td>';
-								echo '<td style="width: 100px;">';
-								echo $row['ogrn'];
-								echo '</td>';
-								echo '<td  style="width: 1px;">';
-								
-								if($_GET['svyaz'] == $row['rand']){
-								echo '<center>Основной</center>';
-								}else{
-								if($row['svyaz'] != $_GET['svyaz']){
-								if($row['svyaz'] != 0){
-								echo '<a  title="Перевязать" href="./svyazonoff.php?id='.$row['id'].'&svyaz='.$_GET['svyaz'].'&go=1"><span class="glyphicon glyphicon-random" aria-hidden="true"></span> Перевязать</a>';
-								}else{
-								echo '<a  title="Привязать" href="./svyazonoff.php?id='.$row['id'].'&svyaz='.$_GET['svyaz'].'&go=1"><span class="glyphicon glyphicon-random" aria-hidden="true"></span> Привязать</a>';
-								}}else{
-								echo '<a  title="Отвязать" href="./svyazonoff.php?id='.$row['id'].'&svyaz='.$_GET['svyaz'].'&go=0"><span class="glyphicon glyphicon-random" aria-hidden="true"></span> Отвезать</a>';
-								}
-								}
-								
-								echo '</td>';
-								echo '</tr>';
-						} 
-					?>
-				</table>
-				
-				
-<?
-
-
-// Вывод меню если страниц больше одной
-
-if ($total > 1)
-{
-Error_Reporting(E_ALL & ~E_NOTICE);
-echo "<div class=\"pstrnav\">";
-echo $pervpage.$page5left.$page4left.$page3left.$page2left.$page1left.'<b>'.$page.'</b>'.$page1right.$page2right.$page3right.$page4right.$page5right.$nextpage;
-echo "</div>";
-}
-?>
-<br>
-</div>
-</div>
-
-<div class="col-md-6">
-
-<div class="bs-example">
-   
-<h3 style="border-bottom: 1px #333 solid;">Cвязанные организации</h3>
-
-
-
-
-
-
-
-
-
-
-
-
-
-<?
-
-						$num = 35; 
-						$pagee = $_GET['pagee'];
-						$result00 = mysql_query("SELECT COUNT(*) FROM ogrn WHERE svyaz = $_GET[svyaz]");
-						$temp = mysql_fetch_array($result00);
-						$posts = $temp[0];
-						$total = (($posts - 1) / $num) + 1;
-						$total =  intval($total);
-						$pagee = intval($pagee);
-						if(empty($pagee) or $pagee < 0) $pagee = 1;
-						if($pagee > $total) $pagee = $total;
-						$start = $pagee * $num - $num;	
-
-// Проверяем нужны ли стрелки назад
-if ($pagee != 1) $pervpagee = '<a href=?pagee=1>Первая</a> | <a href=?pagee='. ($pagee - 1) .'&'.$_GET['id'].'&'.$_GET['svyaz'].'>Предыдущая</a> | ';
-// Проверяем нужны ли стрелки вперед
-if ($pagee != $total) $nextpagee = ' | <a href=?pagee='. ($pagee + 1) .'&'.$_GET['id'].'&'.$_GET['svyaz'].'>Следующая</a> | <a href=?pagee=' .$total.'&'.$_GET['id'].'&'.$_GET['svyaz']. '>Последняя</a>';
-
-// Находим две ближайшие станицы с обоих краев, если они есть
-if($pagee - 5 > 0) $pagee5left = ' <a href=?pagee='. ($pagee - 5) .'&'.$_GET['id'].'&'.$_GET['svyaz'].'>'. ($pagee - 5) .'</a> | ';
-if($pagee - 4 > 0) $pagee4left = ' <a href=?pagee='. ($pagee - 4) .'&'.$_GET['id'].'&'.$_GET['svyaz'].'>'. ($pagee - 4) .'</a> | ';
-if($pagee - 3 > 0) $pagee3left = ' <a href=?pagee='. ($pagee - 3) .'&'.$_GET['id'].'&'.$_GET['svyaz'].'>'. ($pagee - 3) .'</a> | ';
-if($pagee - 2 > 0) $pagee2left = ' <a href=?pagee='. ($pagee - 2) .'&'.$_GET['id'].'&'.$_GET['svyaz'].'>'. ($pagee - 2) .'</a> | ';
-if($pagee - 1 > 0) $pagee1left = '<a href=?pagee='. ($pagee - 1) .'&'.$_GET['id'].'&'.$_GET['svyaz'].'>'. ($pagee - 1) .'</a> | ';
-
-if($pagee + 5 <= $total) $pagee5right = ' | <a href=?pagee='. ($pagee + 5) .'&'.$_GET['id'].'&'.$_GET['svyaz'].'>'. ($pagee + 5) .'</a>';
-if($pagee + 4 <= $total) $pagee4right = ' | <a href=?pagee='. ($pagee + 4) .'&'.$_GET['id'].'&'.$_GET['svyaz'].'>'. ($pagee + 4) .'</a>';
-if($pagee + 3 <= $total) $pagee3right = ' | <a href=?pagee='. ($pagee + 3) .'&'.$_GET['id'].'&'.$_GET['svyaz'].'>'. ($pagee + 3) .'</a>';
-if($pagee + 2 <= $total) $pagee2right = ' | <a href=?pagee='. ($pagee + 2) .'&'.$_GET['id'].'&'.$_GET['svyaz'].'>'. ($pagee + 2) .'</a>';
-if($pagee + 1 <= $total) $pagee1right = ' | <a href=?pagee='. ($pagee + 1) .'&'.$_GET['id'].'&'.$_GET['svyaz'].'>'. ($pagee + 1) .'</a>';
-
-// Вывод меню если страниц больше одной
-
-if ($total > 1)
-{
-Error_Reporting(E_ALL & ~E_NOTICE);
-echo "<div class=\"pstrnav\">";
-echo $pervpagee.$pagee5left.$pagee4left.$pagee3left.$pagee2left.$pagee1left.'<b>'.$pagee.'</b>'.$pagee1right.$pagee2right.$pagee3right.$pagee4right.$pagee5right.$nextpagee;
-echo "</div>";
-}
-?>
-
-
-
-
-
-	<table class="table tablehover">
-	<thead>
-        <tr>
-		<th>id</th>
-		<th>Название</th>
-		  <th>ИНН</th>
-          <th>КПП</th>
-		  <th>ОГРН</th><th style="width: 100px;"></th>
-        </tr>
-    </thead>
-					<?php
-					
-							
-					
-						$query = mysql_query("SELECT * from ogrn WHERE svyaz = $_GET[svyaz] ORDER BY id DESC LIMIT $start, $num");	
-							while($row = mysql_fetch_array($query)) {
-								echo '<tr  id="open'.$row['id'].'"  style="font-size: 12px;"><td style="width: 50px; text-align: center;"><strong>';
-								echo $row['id'];
-								echo '</strong></td>';
-								echo '<td style="">';
-								echo $row['naim'];
-								echo '<script>
-$("#open'.$row['id'].'").live("dblclick", function() {
-window.location.href="./kartklient.php?id='.$row['id'].'";
-});
-</script></td>';
-								echo '<td style="width: 100px;">';
-								echo $row['inn'];
-								echo '</td>';
-								echo '<td style="width: 100px;">';
-								echo $row['kpp'];
-								echo '</td>';
-								echo '<td style="width: 100px;">';
-								echo $row['ogrn'];
-								echo '</td>';
-								
-								echo '<td  style="width: 1px;">';
-								if($_GET['svyaz'] == $row['rand']){
-								echo '<center>Основной</center>';
-								}else{
-								if($row['svyaz'] != $_GET['svyaz']){
-								if($row['svyaz'] != 0){
-								echo '<a  title="Перевязать" href="./svyazonoff.php?id='.$row['id'].'&svyaz='.$_GET['svyaz'].'&go=1"><span class="glyphicon glyphicon-random" aria-hidden="true"></span> Перевязать</a>';
-								}else{
-								echo '<a  title="Привязать" href="./svyazonoff.php?id='.$row['id'].'&svyaz='.$_GET['svyaz'].'&go=1"><span class="glyphicon glyphicon-random" aria-hidden="true"></span> Привязать</a>';
-								}}else{
-								echo '<a  title="Отвязать" href="./svyazonoff.php?id='.$row['id'].'&svyaz='.$_GET['svyaz'].'&go=0"><span class="glyphicon glyphicon-random" aria-hidden="true"></span> Отвезать</a>';
-								}
-								}
-								echo '</td>';
-								
-								echo '</tr>';
-						} 
-					?>
-				</table>
-				
-				
-<?
-
-
-// Вывод меню если страниц больше одной
-
-if ($total > 1)
-{
-Error_Reporting(E_ALL & ~E_NOTICE);
-echo "<div class=\"pstrnav\">";
-echo $pervpagee.$pagee5left.$pagee4left.$pagee3left.$pagee2left.$pagee1left.'<b>'.$pagee.'</b>'.$pagee1right.$pagee2right.$pagee3right.$pagee4right.$pagee5right.$nextpagee;
-echo "</div>";
-}
-?>
-<br>
-</div>
-</div>
-
-
-</div><?php
-# левая колонка сайта
-include 'footer.php';  
-?><br>
-<br>
-</div>
-
-
-
-
-
-
-
-			
-			
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
-    <script src="js/bootstrap.min.js"></script>
+<body class="organization-links-page">
+<?php include 'header.php'; ?>
+<link href="css/organization-links.css?v=2" rel="stylesheet">
+<main class="links-layout">
+    <header class="links-header">
+        <a class="links-back" href="kartklient.php?id=<?php echo $clientId; ?>"><span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span> Карточка клиента</a>
+        <h1>Связанные организации</h1>
+        <?php if ($client): ?><p><?php echo organization_links_escape($client['naim']); ?> <span class="links-client-inn">ИНН <?php echo organization_links_escape($client['inn']); ?></span></p><?php endif; ?>
+    </header>
+    <section class="links-section" aria-labelledby="linked-heading">
+        <div class="links-section-heading"><h2 id="linked-heading">Текущие связи</h2><span class="links-count"><?php echo $linkedCount; ?></span></div>
+        <?php if ($linkedCount): ?>
+            <?php organization_links_table($linkedResult, $group); organization_links_pagination('pagee', $linkedPage, $linkedPages); ?>
+        <?php else: ?>
+            <p class="links-empty">Пока нет связанных организаций. Найдите нужную организацию ниже и нажмите «Привязать».</p>
+        <?php endif; ?>
+    </section>
+    <section class="links-section links-search-section" aria-label="Поиск организаций">
+        <form class="links-search" action="svyaz.php" method="get" role="search">
+            <input type="hidden" name="id" value="<?php echo $clientId; ?>">
+            <input type="hidden" name="svyaz" value="<?php echo organization_links_escape($group); ?>">
+            <label class="links-unified-search" for="links-query">
+                <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
+                <span class="sr-only">Название, ИНН, КПП или ОГРН</span>
+                <input id="links-query" name="q" type="search" autocomplete="off" placeholder="Название, ИНН, КПП или ОГРН" value="<?php echo organization_links_escape($searchInput); ?>" aria-controls="links-results">
+            </label>
+            <span id="links-search-status" class="links-search-status" role="status" aria-live="polite"></span>
+        </form>
+        <div id="links-results"><?php echo $resultsHtml; ?></div>
+    </section>
+</main>
+<?php include 'footer.php'; ?>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+<script src="js/bootstrap.min.js"></script>
+<script src="js/organization-links-search.js?v=1"></script>
 </body>
 </html>

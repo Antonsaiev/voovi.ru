@@ -77,6 +77,10 @@ $kli = "SELECT * FROM ogrn WHERE id =".$_GET['kli'];
 $kliresult = mysql_query($kli);
 $klient = mysql_fetch_array($kliresult);
 $komneteRandSql = mysql_real_escape_string(isset($_GET['rand']) ? $_GET['rand'] : '');
+// Опись нужна только для группы маркировки; учитываем все продукты счёта.
+$komneteMarkingResult = mysql_query("SELECT 1 FROM schet s INNER JOIN produkti p ON p.id = s.produkt " .
+    "WHERE s.del = '0' AND s.rand = '".$komneteRandSql."' AND p.parent = 22 LIMIT 1");
+$komneteHasMarking = $komneteMarkingResult && mysql_fetch_row($komneteMarkingResult);
 $komneteRequestedProductId = isset($_GET['produkt']) ? intval($_GET['produkt']) : 0;
 $komneteCurrentProductId = isset($schet['produkt']) ? intval($schet['produkt']) : 0;
 $komneteProductId = $komneteCurrentProductId;
@@ -1763,6 +1767,7 @@ if ($komneteInvoiceQuery) {
         }
     }
 </style>
+<link rel="stylesheet" href="css/invoice-detail.css?v=8">
 </head>
 <body class="komnete-modern">
 
@@ -2111,6 +2116,7 @@ if ($komneteInvoiceQuery) {
     <?php } ?>
     <?php include 'docpage.php'; ?>
 
+    <?php if ($komneteHasMarking) { ?>
     <div class="col-md-12 komnete-marking-strip">
         <div id="konttakt" style="
             background: #1590d2;
@@ -2134,6 +2140,8 @@ if ($komneteInvoiceQuery) {
         </div>
     </div>
 
+    <?php } ?>
+
     <div class="col-md-12">
         <div class="col-md-12" style="
     border: 2px solid #8BC08B;
@@ -2141,14 +2149,14 @@ if ($komneteInvoiceQuery) {
 ">
         </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-3 komnete-sidebar">
         <div class="komnete-sidebar-contact">
             <div class="komnete-sidebar-contact-title">Контактное лицо:</div>
             <div class="komnete-sidebar-contact-body">
                 <?php include 'addkontakt.php'; ?>
             </div>
         </div>
-        <div style="
+        <div class="komnete-legacy-pointer" style="
   -moz-transform: rotate(45deg);/* Firefox */
   -o-transform: rotate(45deg);/* Opera */
   -webkit-transform: rotate(45deg);/* Safari y Chrome */
@@ -2181,6 +2189,9 @@ if ($komneteInvoiceQuery) {
             $kto = $ktopgenerac['f_name'];
             echo mb_substr($kto,0,1,'UTF-8'),'. ';
             echo $ktopgenerac['l_name'];
+            if (isset($userdata['adm']) && (string)$userdata['adm'] === '1') {
+                echo ' <button type="button" class="komnete-manager-edit" data-toggle="modal" data-target="#invoice-manager-modal" title="Сменить менеджера" aria-label="Сменить менеджера"><span class="glyphicon glyphicon-pencil" aria-hidden="true"></span></button>';
+            }
             ?>
         </p>
         <?php
@@ -2231,23 +2242,30 @@ if ($komneteInvoiceQuery) {
             </script>
         </p>
 
+        <?php
+        require_once __DIR__.'/invoice_renewal.php';
+        $renewalGenerationQuery=mysql_query("SELECT 1 FROM schet WHERE rand='".$komneteRandSql."' AND del='0' AND gen='1' AND kvo>0 LIMIT 1");
+        $renewalType=voovi_invoice_renewal_type($schet,$renewalGenerationQuery && mysql_fetch_row($renewalGenerationQuery));
+        ?>
+        <fieldset class="komnete-renewal-group">
+            <legend>Продление</legend>
         <p style="font-size: 14px;"><b>	Тип продления:</b>
             <select id="tipprod" class=" htext-add">
-                <option></option>
+                <option value="">Не выбран</option>
                 <option <?php
-                if($schet['tipprod'] == "Сертификат"){
+                if($renewalType == "Сертификат"){
                     echo "selected";
                 }?> >Сертификат</option>
                 <option <?php
-                if($schet['tipprod'] == "Поставка"){
+                if($renewalType == "Поставка"){
                     echo "selected";
                 }?> >Поставка</option>
                 <option <?php
-                if($schet['tipprod'] == "Сер/Пос"){
+                if($renewalType == "Сер/Пос"){
                     echo "selected";
                 }?> >Сер/Пос</option>
                 <option <?php
-                if($schet['tipprod'] == "Нет"){
+                if($renewalType == "Нет"){
                     echo "selected";
                 }?> >Нет</option>
             </select>
@@ -2261,37 +2279,13 @@ if ($komneteInvoiceQuery) {
                         success: function(msg){
                         }
                     });
-                    if(tipprod == "Нет"){
-                        document.getElementById("dataprodp").style.display="none";
-                        document.getElementById("dataprods").style.display="none";
-                    }
-                    if(tipprod == "Сертификат"){
-                        document.getElementById("dataprods").style.display="block";
-                        document.getElementById("dataprodp").style.display="none";
-                    }
-                    if(tipprod == "Поставка"){
-                        document.getElementById("dataprods").style.display="none";
-                        document.getElementById("dataprodp").style.display="block";
-                    }
-                    if(tipprod == ""){
-                        document.getElementById("dataprods").style.display="none";
-                        document.getElementById("dataprodp").style.display="none";
-                    }
-                    if(tipprod == "Сер/Пос"){
-                        document.getElementById("dataprods").style.display="block";
-                        document.getElementById("dataprodp").style.display="block";
-                    }
+                    vooviUpdateRenewalFields();
                 });
             </script>
         </p>
         <p id="dataprods" style="font-size: 14px;"<?php
-        if($schet['tipprod'] == "Нет"){
-            echo "style='display:none;'";
-        }if($schet['tipprod'] == ""){
-            echo "style='display:none;'";
-        }if($schet['tipprod'] == "Поставка"){
-            echo "style='display:none;'";
-        }?>><b>	Дата сертификата:</b>
+            if (!in_array($renewalType, array('Сертификат','Сер/Пос'), true)) echo ' hidden';
+        ?>><b>	Дата сертификата:</b>
             <input id="dataproda" type="date" class=" htext-add" value="<?php echo $schet['dataprod'];?>">
 
             <script>
@@ -2299,7 +2293,7 @@ if ($komneteInvoiceQuery) {
                     $.ajax({
                         type: "GET",
                         url: "pusya.php",
-                        data: "tel="+document.getElementById("dataproda").value+"&tip=dataprod&rand=<?php echo $_GET['rand']; ?>",
+                        data: "tel="+document.getElementById("dataproda").value+"&tip=dataprod&rand=<?php echo $_GET['rand']; ?>&renewal_type="+encodeURIComponent(document.getElementById("tipprod").value),
                         success: function(msg){
                         }
                     });
@@ -2307,13 +2301,8 @@ if ($komneteInvoiceQuery) {
             </script>
         </p>
         <p id="dataprodp" style="font-size: 14px;"<?php
-        if($schet['tipprod'] == "Нет"){
-            echo "style='display:none;'";
-        }if($schet['tipprod'] == ""){
-            echo "style='display:none;'";
-        }if($schet['tipprod'] == "Сертификат"){
-            echo "style='display:none;'";
-        }?>><b>	Дата поставки:</b>
+            if (!in_array($renewalType, array('Поставка','Сер/Пос'), true)) echo ' hidden';
+        ?>><b>	Дата поставки:</b>
             <input id="datasert" type="date" class=" htext-add" value="<?php echo $schet['datasert'];?>">
 
             <script>
@@ -2321,13 +2310,22 @@ if ($komneteInvoiceQuery) {
                     $.ajax({
                         type: "GET",
                         url: "pusya.php",
-                        data: "tel="+document.getElementById("datasert").value+"&tip=datasert&rand=<?php echo $_GET['rand']; ?>",
+                        data: "tel="+document.getElementById("datasert").value+"&tip=datasert&rand=<?php echo $_GET['rand']; ?>&renewal_type="+encodeURIComponent(document.getElementById("tipprod").value),
                         success: function(msg){
                         }
                     });
                 });
             </script>
         </p>
+        </fieldset>
+        <script>
+            function vooviUpdateRenewalFields() {
+                var type = document.getElementById('tipprod').value;
+                document.getElementById('dataprods').hidden = type !== 'Сертификат' && type !== 'Сер/Пос';
+                document.getElementById('dataprodp').hidden = type !== 'Поставка' && type !== 'Сер/Пос';
+            }
+            vooviUpdateRenewalFields();
+        </script>
         <?php
         if (in_array($savoir1['parent'], ['24'])) {
         // Этот код выполнится, если значение найдено в массиве
@@ -2949,158 +2947,18 @@ $(function(){
             </div>
 
             <div class="col-md-9 komnete-extra-column">
-                <?php
-                $qdsafsd = mysql_query("SELECT SUM(kvo) FROM schet WHERE del = '0' AND gen = '1' AND rand ='".$_GET['rand']."'  GROUP BY rand");
-                $pedfsbfdb = mysql_result($qdsafsd, 0);
-                if ($pedfsbfdb >= 1){
-                    echo '<div id="vladelec" style="    background: #1590d2;
-    padding: 2px 10px;
-    color: #fff;
-    font-size: 18px;
-    border: 1px solid #1590d2;">Электронная цифровая подпись (ЭЦП):</div>';
-                    echo '<div     style="    width: 100%;
-    font-size: 12px;
-    background: #fff;
-    border: 1px solid #eee;
-    padding: 10px;
-    margin-bottom: 15px;">';
-                    echo '<p><b>Генераций</b> '.$pedfsbfdb.'</p>';
-                    echo '<p><b>Статус ЭЦП:</b> ';
-
-                    echo '
-<select type="text" name="users"  onchange="prodlenacp(this.value)" style="border: none;background: none;">
-<option style="background: #ccc;">';
-                    if(!empty($schet['prodlen_acp'])){
-                        echo $schet['prodlen_acp'];
-                    }echo'</option>
-<option>Новый</option>
-<option>Продление</option>
-<option>Cмена владельца</option>
-<option>Изменение реквизитов</option>
-<option></option>
-</select>
-<script>
-		function prodlenacp(str) {
-			$.ajax({
-				type: "GET",
-				url: "pusya.php",
-				data: "vlad="+str+"&tip=prodlenacp&rand='.$_GET['rand'].'",
-				success: function(msg){
-				}
-			});
-		}
-	</script>
-</p>
-
-<p><b>Срок действия ЭЦП с<i style="
-    color: rgba(255, 255, 255, 0);
-">ъ</i> : </b> 
- <input type="date" name="startacp" value="'.$schet['start_acp'].'" onchange="startacp(this.value)" style="
-    border: none;
-    background: #fff; 
-">
-<script>
-		function startacp(str) {
-			$.ajax({
-				type: "GET",
-				url: "pusya.php",
-				data: "vlad="+str+"&tip=startacp&rand='.$_GET['rand'].'",
-				success: function(msg){
-				}
-			});
-		}
-	</script>
-</p>
-
-<p><b>Срок действия ЭЦП до : </b> 
- <input type="date" name="endacp" value="'.$schet['end_acp'].'" onchange="endacp(this.value)" style="
-    border: none;
-    background: #fff;
-">
-<script>
-		function endacp(str) {
-			$.ajax({
-				type: "GET",
-				url: "pusya.php",
-				data: "vlad="+str+"&tip=endacp&rand='.$_GET['rand'].'",
-				success: function(msg){
-				}
-			});
-		}
-	</script>
-</p>';
-                    echo '</div>';
-                }
-                ?>
-
-                <!------------------------------------------------- ---------------------------------------------------->
-                <br />
-                <div id="vladelec" style="background: #1590d2;padding: 2px 10px;color: #fff;font-size: 18px;border: 1px solid #1590d2;">Дополнительная информация</div>
+                <div id="vladelec" style="background: #1590d2;padding: 2px 10px;color: #fff;font-size: 18px;border: 1px solid #1590d2;">Электронная цифровая подпись (ЭЦП):</div>
                 <div class="komnete-extra-panel" style="    background: #fff;
     padding: 5px;
     font-size: 18px;
     border: 1px solid #1590d2;">
 
-                    <!------------------------------------------------- ---------------------------------------------------->
-                    <!-- Single button -->
-                    <!--<div class="btn-group">
-                      <button type="button" class="btn btn-info btn-xs dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        Добавить поле <span class="caret"></span>
-                      </button>
-                      <ul class="dropdown-menu">
-                        <li><a id="stroka">Строка</a></li>
-                        <li><a id="yesno">Да/Нет</a></li>
-                        <li><a id="date">Дата</a></li>
-                      </ul>
-                    </div>	<!-- Single button
-                    <div class="btn-group">
-                      <button type="button" class="btn btn-info btn-xs dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        Показать поле <span class="caret"></span>
-                      </button>
-                      <ul class="dropdown-menu">
-                        <li><a id="vladsertiff">Владелец сертификата</a></li>
-                        <li><a id="ffacktadres">Фактический адресс</a></li>
-                      </ul>
-                    </div>
-                    <script>
-                        $(function() {
-                            $("#stroka").click(function(){
-
-                            });
-                        });
-                    </script>!-->
-                    <!------------------------------------------------- ---------------------------------------------------->
-                    <!--<div id="addline" style="margin-bottom:5px;">
-                        <div class="form-group" style="display: list-item;">
-                            <label class="col-sm-3 control-label"><input class="form-control htext-add" id="name" type="text" placeholder="Название поле даты *" aria-describedby="basic-addon1"></label>
-                            <div class="col-sm-9" id="fio">
-                                <input class="form-control col-90 htext-add" id="name" type="date" placeholder="Текст ..." aria-describedby="basic-addon1">
-                                <span class="glyphicon glyphicon-remove" style="position: absolute;right: 3px;top: 5px;font-size: 15px;color: #666; cursor:pointer;"></span>
-                            </div>
-                        </div>
-                        <div class="form-group" style="display: list-item;">
-                            <label class="col-sm-3 control-label"><input class="form-control htext-add" id="name" type="text" placeholder="Название поле текста *" aria-describedby="basic-addon1"></label>
-                            <div class="col-sm-9" id="fio">
-                                <input class="form-control col-90 htext-add" id="name" type="text" placeholder="Текст ..." aria-describedby="basic-addon1">
-                                <span class="glyphicon glyphicon-remove" style="position: absolute;right: 3px;top: 5px;font-size: 15px;color: #666; cursor:pointer;"></span>
-                            </div>
-                        </div>
-                        <div class="form-group" style="display: list-item;">
-                            <label class="col-sm-3 control-label"></label>
-                            <div class="col-sm-9" id="fio">
-                                <input class="" id="name" type="checkbox" placeholder="Текст ..." aria-describedby="basic-addon1" style="float: left;margin-top: 6px;">
-                                <input class="form-control htext-add" id="name" type="text" placeholder="Название поле выбора*" aria-describedby="basic-addon1" style="float: left;margin-left: 10px;width: inherit;">
-                                <span class="glyphicon glyphicon-remove" style="position: absolute;right: 3px;top: 5px;font-size: 15px;color: #666; cursor:pointer;"></span>
-                            </div>
-                        </div>
-                    </div>!-->
-                    <!------------------------------------------------- ---------------------------------------------------->
                     <div class="form-group komnete-extra-row">
                         <label class="col-sm-3 control-label">Владелец сертификата:</label>
                         <div class="col-sm-9 komnete-extra-field">
                             <?php
                             $currentVladelec = intval($schet['vladelec']);
-                            echo '<select id="vladele" name="vladele" class="form-control" onchange="vlaDelec(this.value)">';
+                            echo '<select id="vladele" name="vladele" class="form-control">';
                             echo '<option value="0"'.($currentVladelec === 0 ? ' selected' : '').'></option>';
                             $query2 = mysql_query("SELECT * from klient_ogrn WHERE idkli = '".$_GET['kli']."' ORDER BY id DESC");
                             while($row2 = mysql_fetch_array($query2)) {
@@ -3114,17 +2972,7 @@ $(function(){
                             }
                             echo '</select>';
                             ?>
-                            <script>
-                                function vlaDelec(str) {
-                                    $.ajax({
-                                        type: "GET",
-                                        url: "pusya.php",
-                                        data: "vlad="+encodeURIComponent(str)+"&tip=vladelec&rand=<?php echo $_GET['rand']; ?>",
-                                        success: function(msg){
-                                        }
-                                    });
-                                }
-                            </script>
+                            <span id="invoice-owner-status" class="komnete-autosave-status" role="status" aria-live="polite"></span>
                         </div>
                     </div>
 
@@ -3134,48 +2982,9 @@ $(function(){
                     <div class="form-group komnete-extra-row">
                         <label class="col-sm-3 control-label">Фактический адрес:</label>
                         <div class="col-sm-9 komnete-extra-field">
-                            <?php $hasFadress = trim($schet['fadress']) !== ''; ?>
-                            <div id="fadressView" style="<?php if(!$hasFadress){ echo 'display:none;'; } ?>">
-                                <p id="fadressinfo" class="komnete-readonly-value"><?php echo htmlspecialchars($schet['fadress'], ENT_QUOTES, 'UTF-8'); ?></p>
-                                <button type="button" class="komnete-extra-edit" onclick="fadressEdit()">Изменить</button>
-                            </div>
-                            <div id="fadressEditor" style="<?php if($hasFadress){ echo 'display:none;'; } ?>">
-                                <input id="fadres" class="form-control" type="text" name="fadres" value="<?php echo htmlspecialchars($schet['fadress'], ENT_QUOTES, 'UTF-8'); ?>">
-                                <div class="komnete-extra-actions">
-                                    <button type="button" class="komnete-extra-save" onclick="faDressSave()">Сохранить</button>
-                                    <button type="button" class="komnete-extra-cancel" onclick="fadressCancel()" style="<?php if(!$hasFadress){ echo 'display:none;'; } ?>">Отмена</button>
-                                </div>
-                            </div>
-                            <script>
-                                var vooviFadressOriginal = <?php echo json_encode($schet['fadress']); ?>;
-                                function fadressEdit(){
-                                    document.getElementById("fadressView").style.display="none";
-                                    document.getElementById("fadressEditor").style.display="block";
-                                    document.getElementById("fadres").focus();
-                                }
-                                function fadressCancel(){
-                                    document.getElementById("fadres").value = vooviFadressOriginal;
-                                    document.getElementById("fadressEditor").style.display="none";
-                                    document.getElementById("fadressView").style.display=vooviFadressOriginal ? "block" : "none";
-                                }
-                                function faDressSave() {
-                                    var str = document.getElementById("fadres").value;
-                                    $.ajax({
-                                        type: "GET",
-                                        url: "pusya.php",
-                                        data: "vlad="+encodeURIComponent(str)+"&tip=fadress&rand=<?php echo $_GET['rand']; ?>",
-                                        success: function(msg){
-                                            vooviFadressOriginal = msg;
-                                            $("#fadressinfo").text(msg);
-                                            if($.trim(msg).length){
-                                                document.getElementById("fadressEditor").style.display="none";
-                                                document.getElementById("fadressView").style.display="block";
-                                                $(".komnete-extra-cancel").show();
-                                            }
-                                        }
-                                    });
-                                }
-                            </script>
+                            <textarea id="fadres" class="form-control" name="fadres" rows="2" maxlength="1366" aria-label="Фактический адрес"><?php echo htmlspecialchars($schet['fadress'], ENT_QUOTES, 'UTF-8'); ?></textarea>
+                            <span id="invoice-address-status" class="komnete-autosave-status" role="status" aria-live="polite"></span>
+
                         </div>
                     </div>
                     <!------------------------------------------------- ---------------------------------------------------->
@@ -5153,5 +4962,20 @@ $(function(){
             display.value=gh;
         }
     </script>
+<?php
+$invoiceFieldInitial = array('owner'=>array(), 'address'=>array());
+$invoiceFieldRows = mysql_query("SELECT DISTINCT vladelec,fadress FROM schet WHERE del='0' AND rand='".$komneteRandSql."'");
+while ($invoiceFieldRows && ($invoiceFieldRow=mysql_fetch_assoc($invoiceFieldRows))) {
+    $invoiceFieldInitial['owner'][]=(string)$invoiceFieldRow['vladelec'];
+    $invoiceFieldInitial['address'][]=(string)$invoiceFieldRow['fadress'];
+}
+foreach ($invoiceFieldInitial as $field=>$values) $invoiceFieldInitial[$field]=array_values(array_unique($values));
+?>
+<script type="application/json" id="invoice-fields-config"><?php echo json_encode(array(
+    'rand'=>(string)$schet['rand'], 'user'=>(string)$userdata['users_id'],
+    'token'=>voovi_schet_form_token('invoice-fields:'.$schet['rand'],$userdata), 'initial'=>$invoiceFieldInitial
+),JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT); ?></script>
+<script src="js/invoice-fields-autosave.js?v=1"></script>
+<?php include __DIR__.'/invoice_manager_modal.php'; ?>
 </body>
 </html>

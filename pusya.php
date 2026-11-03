@@ -164,9 +164,18 @@ $koment = "UPDATE schet SET `issetprod`='0' WHERE rand='".$_GET['rand']."'";
 mysql_query($koment) or die(mysql_error($link));
 }
 
+// В новой карточке дата сохраняется вместе с выбранным типом; старые формы не меняются.
+$renewalTypeSql = '';
+if (in_array(isset($_GET['tip']) ? $_GET['tip'] : '', array('dataprod','datasert'), true) && isset($_GET['renewal_type'])) {
+    if (!is_string($_GET['renewal_type']) || !in_array($_GET['renewal_type'], array('','Нет','Сертификат','Поставка','Сер/Пос'), true)) {
+        http_response_code(400); exit('Некорректный тип продления');
+    }
+    $renewalTypeSql = ", `tipprod`='".mysql_real_escape_string($_GET['renewal_type'])."'";
+}
+
 if($_GET['tip'] == 'dataprod'){
 
-$koment = "UPDATE schet SET `dataprod`='".$_GET['tel']."' WHERE rand='".$_GET['rand']."'";
+$koment = "UPDATE schet SET `dataprod`='".$_GET['tel']."'".$renewalTypeSql." WHERE rand='".$_GET['rand']."'";
 mysql_query($koment) or die(mysql_error($link));
     $pav = "SELECT * FROM schet WHERE del = '0' AND rand = $_GET[rand]";
     $pavresult = mysql_query($pav);
@@ -186,7 +195,7 @@ mysql_query($koment) or die(mysql_error($link));
 }
 if($_GET['tip'] == 'datasert'){
 
-$koment = "UPDATE schet SET `datasert`='".$_GET['tel']."' WHERE rand='".$_GET['rand']."'";
+$koment = "UPDATE schet SET `datasert`='".$_GET['tel']."'".$renewalTypeSql." WHERE rand='".$_GET['rand']."'";
 mysql_query($koment) or die(mysql_error($link));
     $pav = "SELECT * FROM schet WHERE del = '0' AND rand = $_GET[rand]";
     $pavresult = mysql_query($pav);

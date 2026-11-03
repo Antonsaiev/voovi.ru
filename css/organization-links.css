@@ -1,0 +1,63 @@
+/* Страница связей: та же спокойная палитра, что и у карточки счёта. */
+body.organization-links-page {
+    background: #f4f6fa; color: #344d60;
+    overflow-x: hidden;
+    font-family: "Segoe UI", Verdana, sans-serif; font-size: 15px; line-height: 1.5;
+}
+.organization-links-page .links-layout { max-width: 1480px; margin: 76px auto 0; padding: 0 28px 100px; }
+.organization-links-page .links-header { background: #e1eaf4; border: 1px solid #dce4ec; border-radius: 10px; padding: 20px 24px; margin-bottom: 22px; }
+.organization-links-page .links-back { color: #3d6d62; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 7px; }
+.organization-links-page .links-header h1 { color: #344d60; font-size: 26px; font-weight: 700; margin: 14px 0 8px; line-height: 1.25; }
+.organization-links-page .links-header p { margin: 0; overflow-wrap: anywhere; font-size: 16px; }
+.organization-links-page .links-client-inn { color: #596d7b; display: inline-block; margin-left: 20px; font-size: 14px; }
+.organization-links-page .links-section { min-width: 0; background: #fff; border: 1px solid #dce4ec; border-radius: 10px; margin-bottom: 20px; overflow: hidden; }
+.organization-links-page .links-section-heading { padding: 18px 24px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #e6ebf0; }
+.organization-links-page .links-section h2 { margin: 0; color: #344d60; font-size: 18px; font-weight: 700; line-height: 1.4; }
+.organization-links-page .links-count { padding: 2px 9px; background: #eaf2f7; color: #536d80; border-radius: 6px; font-size: 13px; }
+.organization-links-page .links-empty { color: #596d7b; margin: 0; padding: 24px; max-width: 80ch; }
+.organization-links-page .links-search { padding: 22px 24px; margin: 0; }
+.organization-links-page .links-unified-search { display: flex; align-items: center; gap: 12px; margin: 0; padding: 0 14px; border: 1px solid #ccd9e5; border-radius: 7px; color: #71808d; font-weight: 400; background: #fff; }
+.organization-links-page .links-unified-search:focus-within { border-color: #668baf; box-shadow: 0 0 0 3px #e8eff6; }
+.organization-links-page .links-unified-search input { flex: 1; min-width: 0; width: 100%; height: 46px; border: 0; border-radius: 7px; color: #344d60; background: transparent; padding: 10px 0; font-size: 15px; outline: none; box-shadow: none; }
+.organization-links-page .links-unified-search input::placeholder { color: #71808d; opacity: 1; }
+.organization-links-page .links-layout .links-unified-search input:focus-visible { outline: none; }
+.organization-links-page .links-search-status { display: block; color: #596d7b; font-size: 13px; }
+.organization-links-page .links-search-status:not(:empty) { margin-top: 8px; }
+.organization-links-page #links-results[aria-busy="true"] { opacity: .6; pointer-events: none; }
+.organization-links-page .links-action { border: 1px solid #b8d7cb; border-radius: 6px; background: #dceee5; color: #3d6d62; font-weight: 600; text-decoration: none; }
+.organization-links-page .links-action:hover { color: #2d584d; background: #cee5d9; }
+.organization-links-page .links-list-heading { padding: 12px 24px; border-top: 1px solid #e6ebf0; display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px; color: #344d60; font-weight: 600; }
+.organization-links-page .links-list-heading span { font-size: 12px; font-weight: 400; color: #596d7b; }
+.organization-links-page .links-table-scroll { overflow-x: auto; max-width: 100%; }
+.organization-links-page .links-table { width: 100%; min-width: 700px; border-collapse: collapse; margin: 0; background: #fff; }
+.organization-links-page .links-table th { padding: 11px 24px; text-align: left; background: #f1f5f8; color: #596d7b; font-size: 12px; font-weight: 600; border-bottom: 1px solid #dce4ec; }
+.organization-links-page .links-table td { padding: 14px 24px; border-bottom: 1px solid #e6ebf0; vertical-align: middle; font-size: 14px; }
+.organization-links-page .links-table tr:last-child td { border-bottom: 0; }
+.organization-links-page .links-table tbody tr:hover { background: #f8fafc; }
+.organization-links-page .links-table td:first-child { width: 48%; min-width: 230px; overflow-wrap: anywhere; }
+.organization-links-page .links-company { color: #344d60; font-weight: 600; }
+.organization-links-page .links-company:hover { color: #3d6d62; }
+.organization-links-page .links-tax, .organization-links-page .links-ogrn { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.organization-links-page .links-table small { display: block; color: #71808d; font-size: 12px; margin-top: 3px; }
+.organization-links-page .links-action-cell { text-align: right; width: 1%; white-space: nowrap; }
+.organization-links-page .links-action { display: inline-block; padding: 6px 12px; font-size: 13px; }
+.organization-links-page .links-action-remove { color: #865665; background: #f7edf0; border-color: #e5cbd4; }
+.organization-links-page .links-action-remove:hover { color: #754350; background: #f0dfe5; }
+.organization-links-page .links-badge { display: inline-block; background: #edf2f7; color: #596d7b; padding: 5px 10px; border-radius: 6px; font-size: 12px; }
+.organization-links-page .links-pagination { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 16px 24px; border-top: 1px solid #e6ebf0; }
+.organization-links-page .links-pagination a, .organization-links-page .links-page-current { min-width: 32px; padding: 5px 10px; text-align: center; border: 1px solid #dce4ec; border-radius: 5px; color: #536d80; font-size: 13px; }
+.organization-links-page .links-pagination a:hover { background: #f1f5f8; text-decoration: none; }
+.organization-links-page .links-page-current { background: #e1eaf4; color: #344d60; font-weight: 600; }
+.organization-links-page .links-ellipsis { color: #71808d; }
+.organization-links-page .links-create { padding: 0 24px 20px; margin: 0; }
+.organization-links-page .links-layout a:focus-visible, .organization-links-page .links-layout button:focus-visible, .organization-links-page .links-layout input:focus-visible, .organization-links-page .links-table-scroll:focus-visible { outline: 2px solid #668baf; outline-offset: 3px; }
+@media (max-width: 600px) {
+    .organization-links-page .links-layout { padding: 0 12px 100px; margin-top: 70px; }
+    .organization-links-page .links-header { padding: 18px; }
+    .organization-links-page .links-header h1 { font-size: 23px; }
+    .organization-links-page .links-client-inn { display: block; margin: 5px 0 0; }
+    .organization-links-page .links-section-heading, .organization-links-page .links-list-heading { padding: 16px; }
+    .organization-links-page .links-search { padding: 16px; }
+    .organization-links-page .links-empty, .organization-links-page .links-pagination { padding: 16px; }
+    .organization-links-page .links-table td, .organization-links-page .links-table th { padding-left: 16px; padding-right: 16px; }
+}

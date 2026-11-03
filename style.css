@@ -2629,6 +2629,8 @@
 }
 .kartklient-actions{
 	position:sticky;
+	/* Выпадающие списки панели должны быть поверх следующих карточек. */
+	z-index:10;
 	top:70px;
 	align-self:start;
 	display:flex;
