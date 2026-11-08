@@ -13,8 +13,22 @@
                 if (previous) previous.abort();
                 $target.data('companyInvoiceDetailRequest', xhr);
                 var success = options.success;
+                function hideDetailSpinner() {
+                    if (xhr !== $target.data('companyInvoiceDetailRequest')) return;
+                    if (root.vooviHideSpinner) root.vooviHideSpinner();
+                    else $('#modal-shadowkube, #kube').hide();
+                }
                 options.success = function () {
-                    if (version === $target.data('companyInvoiceGeneration') && typeof success === 'function') success.apply(this, arguments);
+                    try {
+                        if (version === $target.data('companyInvoiceGeneration') && typeof success === 'function') success.apply(this, arguments);
+                    } finally {
+                        hideDetailSpinner();
+                    }
+                };
+                var complete = options.complete;
+                options.complete = function () {
+                    hideDetailSpinner();
+                    if (typeof complete === 'function') complete.apply(this, arguments);
                 };
             });
         }

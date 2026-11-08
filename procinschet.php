@@ -39,7 +39,7 @@ if ($defaultOrgId > 0) {
     $selectedOrgId = $defaultOrgId;
 }
 ?>
-<?php include_once 'voovi_spinner.php'; ?>
+<!-- Индикатор принадлежит основной странице (header.php), а не AJAX-фрагменту. -->
 <div class="by amt" style="
  width: 100%;
         margin-top: 35px;

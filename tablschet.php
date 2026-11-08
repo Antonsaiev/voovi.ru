@@ -15,7 +15,7 @@ if ($ogrn !== '0') {
 session_write_close();
 
 ?>
-<?php include_once 'voovi_spinner.php'; ?>
+<!-- Индикатор принадлежит основной странице (header.php), а не AJAX-фрагменту. -->
 
 <div class="by amt" style="
  width: 100%;
