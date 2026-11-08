@@ -84,6 +84,7 @@ $showDocSettings = false;
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = isset($_POST['action']) ? $_POST['action'] : '';
 
+    try {
     if ($action === 'create_tarif' || $action === 'update_tarif') {
         $data = new_tarif_collect_form_data($productId);
 
@@ -100,9 +101,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $message = 'Новый тариф добавлен.';
             } else {
                 $parentId = isset($_POST['tarif_parent_id']) ? (int)$_POST['tarif_parent_id'] : 0;
-                voovi_tarif_create_version($parentId, $data);
+                $saved = voovi_tarif_create_version($parentId, $data);
+                if ($saved['changed']) {
                 mysql_query("INSERT INTO aktivn (data, deistvie, users) VALUES ('" . date("d.m.Y; H:i:s") . "', 'Тариф изменен', '" . $userdata['users_id'] . "')") or die(mysql_error($link));
-                $message = 'Тариф обновлен: старая версия отправлена в архив, новая версия создана.';
+                }
+                $message = $saved['changed'] ? 'Тариф обновлен: старая версия отправлена в архив, новая версия создана.' : 'Изменений нет. Новая версия не создавалась.';
             }
         }
     } elseif ($action === 'archive_tarif') {
@@ -117,6 +120,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             mysql_query("INSERT INTO doki (name, tip) VALUES ('" . mysql_real_escape_string($docName) . "', '" . $docTip . "')") or die(mysql_error($link));
             $message = 'Тип документа добавлен.';
         }
+    }
+    } catch (Exception $error) {
+        $message = $error->getMessage();
+        $messageType = 'danger';
     }
 }
 

@@ -35,7 +35,7 @@ if (!function_exists('voovi_tarif_escape')) {
 
         $result = mysql_query($sql);
         if (!$result) {
-            die(mysql_error($link));
+            throw new RuntimeException("Не удалось сохранить тариф: ошибка базы данных.");
         }
 
         return $result;
@@ -82,10 +82,10 @@ if (!function_exists('voovi_tarif_escape')) {
 
         $name = isset($data['name']) ? $data['name'] : (isset($parent['name']) ? $parent['name'] : (isset($baseVersion['name']) ? $baseVersion['name'] : ''));
         $value = isset($data['value']) ? $data['value'] : (isset($data['comment']) ? $data['comment'] : (isset($baseVersion['value']) ? $baseVersion['value'] : ''));
-        $productId = isset($data['product_id']) ? $data['product_id'] : (isset($data['parent']) ? $data['parent'] : (isset($parent['product_id']) ? $parent['product_id'] : (isset($baseVersion['parent']) ? $baseVersion['parent'] : '')));
+        $productId = isset($data['product_id']) ? $data['product_id'] : (isset($data['parent']) ? $data['parent'] : (isset($baseVersion['parent']) ? $baseVersion['parent'] : (isset($parent['product_id']) ? $parent['product_id'] : '')));
         $price = isset($data['price']) ? $data['price'] : (isset($baseVersion['price']) ? $baseVersion['price'] : '');
-        $groupTarif = isset($data['group_tarif']) ? $data['group_tarif'] : (isset($parent['group_tarif']) ? $parent['group_tarif'] : (isset($baseVersion['group_tarif']) ? $baseVersion['group_tarif'] : null));
-        $productModel = isset($data['product_model']) ? $data['product_model'] : (isset($parent['product_model']) ? $parent['product_model'] : (isset($baseVersion['product_model']) ? $baseVersion['product_model'] : null));
+        $groupTarif = array_key_exists('group_tarif', $data) ? $data['group_tarif'] : (array_key_exists('group_tarif', $baseVersion) ? $baseVersion['group_tarif'] : (isset($parent['group_tarif']) ? $parent['group_tarif'] : null));
+        $productModel = array_key_exists('product_model', $data) ? $data['product_model'] : (array_key_exists('product_model', $baseVersion) ? $baseVersion['product_model'] : (isset($parent['product_model']) ? $parent['product_model'] : null));
         $gen = isset($data['gen']) ? (int)$data['gen'] : (isset($baseVersion['gen']) ? (int)$baseVersion['gen'] : 0);
 
         return array(
@@ -171,7 +171,7 @@ if (!function_exists('voovi_tarif_escape')) {
     function voovi_tarif_parent_update_sql($parentId, $data, $parent, $baseVersion)
     {
         $normalized = voovi_tarif_normalize_data($data, $baseVersion, $parent);
-        $comment = isset($data['comment']) ? $data['comment'] : (isset($parent['comment']) ? $parent['comment'] : $normalized['value']);
+        $comment = array_key_exists('comment', $data) ? $data['comment'] : $normalized['value'];
 
         return "UPDATE tarif_parent SET
             name = " . voovi_tarif_sql_text($normalized['name']) . ",
@@ -183,75 +183,116 @@ if (!function_exists('voovi_tarif_escape')) {
         WHERE id = " . (int)$parentId;
     }
 
+    function voovi_tarif_transaction($operation)
+    {
+        // Fail before any write if the explicit schema upgrade has not run.
+        $result = voovi_tarif_query("SELECT TABLE_NAME, ENGINE FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME IN ('tarif','tarif_parent')");
+        $count = 0;
+        while ($row = mysql_fetch_assoc($result)) {
+            if (strtolower($row['ENGINE']) !== 'innodb') {
+                throw new RuntimeException('Сохранение тарифов требует InnoDB. Выполните обновление схемы.');
+            }
+            $count++;
+        }
+        if ($count !== 2) { throw new RuntimeException('Не найдены таблицы тарифов.'); }
+        voovi_tarif_query('START TRANSACTION');
+        try {
+            $value = call_user_func($operation);
+            voovi_tarif_query('COMMIT');
+            return $value;
+        } catch (Exception $error) {
+            mysql_query('ROLLBACK');
+            throw $error;
+        }
+    }
+
+    function voovi_tarif_locked_parent($parentId)
+    {
+        $result = voovi_tarif_query('SELECT * FROM tarif_parent WHERE id='.(int)$parentId.' FOR UPDATE');
+        $parent = mysql_fetch_assoc($result);
+        if (!$parent || !(int)$parent['active']) { throw new RuntimeException('Тариф не найден или архивирован.'); }
+        return $parent;
+    }
+
+    function voovi_tarif_same_data($normalized, $current)
+    {
+        foreach ($normalized as $key => $value) {
+            if ($key === 'del') { continue; }
+            $old = isset($current[$key]) ? $current[$key] : null;
+            if ($key === 'group_tarif' || $key === 'product_model') {
+                if (voovi_tarif_nullable_int($value) !== voovi_tarif_nullable_int($old)) { return false; }
+            } elseif ($key === 'price' && is_numeric($value) && is_numeric($old)) {
+                if ((string)(0 + $value) !== (string)(0 + $old)) { return false; }
+            } elseif ((string)$value !== (string)$old) { return false; }
+        }
+        return true;
+    }
+
     function voovi_tarif_create($data)
     {
-        voovi_tarif_query("LOCK TABLES tarif WRITE, tarif_parent WRITE");
+        return voovi_tarif_transaction(function () use ($data) {
 
-        $parentId = 0;
-        $tarifId = 0;
+            $parentId = 0;
+            $tarifId = 0;
 
-        $normalized = voovi_tarif_normalize_data($data, array(), array());
-        $comment = isset($data['comment']) ? $data['comment'] : $normalized['value'];
+            $normalized = voovi_tarif_normalize_data($data, array(), array());
+            $comment = isset($data['comment']) ? $data['comment'] : $normalized['value'];
 
-        voovi_tarif_query("INSERT INTO tarif_parent (
-            name,
-            group_tarif,
-            product_model,
-            product_id,
-            comment,
-            active
-        ) VALUES (
-            " . voovi_tarif_sql_text($normalized['name']) . ",
-            " . ($normalized['group_tarif'] === null ? 'NULL' : (int)$normalized['group_tarif']) . ",
-            " . ($normalized['product_model'] === null ? 'NULL' : (int)$normalized['product_model']) . ",
-            " . voovi_tarif_sql_nullable_int($normalized['parent']) . ",
-            " . voovi_tarif_sql_text($comment) . ",
-            1
-        )");
-        $parentId = mysql_insert_id();
-        $tarifId = voovi_tarif_insert_version($parentId, $data, array(), array());
+            voovi_tarif_query("INSERT INTO tarif_parent (
+                name,
+                group_tarif,
+                product_model,
+                product_id,
+                comment,
+                active
+            ) VALUES (
+                " . voovi_tarif_sql_text($normalized['name']) . ",
+                " . ($normalized['group_tarif'] === null ? 'NULL' : (int)$normalized['group_tarif']) . ",
+                " . ($normalized['product_model'] === null ? 'NULL' : (int)$normalized['product_model']) . ",
+                " . voovi_tarif_sql_nullable_int($normalized['parent']) . ",
+                " . voovi_tarif_sql_text($comment) . ",
+                1
+            )");
+            $parentId = mysql_insert_id();
+            $tarifId = voovi_tarif_insert_version($parentId, $data, array(), array());
 
-        voovi_tarif_query("UNLOCK TABLES");
 
-        return array('parent_id' => $parentId, 'tarif_id' => $tarifId);
+            return array('parent_id' => $parentId, 'tarif_id' => $tarifId, 'changed' => true);
+        });
     }
 
     function voovi_tarif_create_version($parentId, $data)
     {
         $parentId = (int)$parentId;
-
-        voovi_tarif_query("LOCK TABLES tarif WRITE, tarif_parent WRITE");
-
-        $parent = voovi_tarif_get_parent($parentId);
-        if (!$parent) {
-            voovi_tarif_query("UNLOCK TABLES");
-            die('tarif_parent not found');
-        }
-
-        $current = voovi_tarif_get_current_version($parentId);
-
-        // A tariff name is immutable after creation.
-        $data['name'] = $parent['name'] !== '' ? $parent['name'] : (isset($current['name']) ? $current['name'] : '');
-
-        voovi_tarif_query(voovi_tarif_parent_update_sql($parentId, $data, $parent, $current));
-        voovi_tarif_query("UPDATE tarif SET del = '1' WHERE sync_id = " . $parentId . " AND del = '0'");
-
-        $parent = voovi_tarif_get_parent($parentId);
-        $tarifId = voovi_tarif_insert_version($parentId, $data, $current, $parent);
-
-        voovi_tarif_query("UNLOCK TABLES");
-
-        return array('parent_id' => $parentId, 'tarif_id' => $tarifId);
+        return voovi_tarif_transaction(function () use ($parentId, $data) {
+            $parent = voovi_tarif_locked_parent($parentId);
+            $current = voovi_tarif_get_current_version($parentId);
+            if (!$current || (string)$current['del'] !== '0') {
+                throw new RuntimeException('У тарифа нет активной версии.');
+            }
+            $data['name'] = $current['name'];
+            $normalized = voovi_tarif_normalize_data($data, $current, $parent);
+            $same = voovi_tarif_same_data($normalized, $current);
+            // An unchanged save can repair old parent/version drift without
+            // creating a duplicate version or rewriting historical tariff rows.
+            voovi_tarif_query(voovi_tarif_parent_update_sql($parentId, $normalized, $parent, $current));
+            if ($same) {
+                return array('parent_id' => $parentId, 'tarif_id' => (int)$current['id'], 'changed' => false);
+            }
+            $tarifId = voovi_tarif_insert_version($parentId, $normalized, $current, $parent);
+            voovi_tarif_query("UPDATE tarif SET del='1' WHERE sync_id=".$parentId." AND del='0' AND id<>".(int)$tarifId);
+            return array('parent_id' => $parentId, 'tarif_id' => $tarifId, 'changed' => true);
+        });
     }
 
     function voovi_tarif_archive_parent($parentId)
     {
         $parentId = (int)$parentId;
-
-        voovi_tarif_query("LOCK TABLES tarif WRITE, tarif_parent WRITE");
-        voovi_tarif_query("UPDATE tarif_parent SET active = 0, updated_at = NOW() WHERE id = " . $parentId);
-        voovi_tarif_query("UPDATE tarif SET del = '1' WHERE sync_id = " . $parentId . " AND del = '0'");
-        voovi_tarif_query("UNLOCK TABLES");
+        return voovi_tarif_transaction(function () use ($parentId) {
+            voovi_tarif_locked_parent($parentId);
+            voovi_tarif_query('UPDATE tarif_parent SET active=0, updated_at=NOW() WHERE id='.$parentId);
+            voovi_tarif_query("UPDATE tarif SET del='1' WHERE sync_id=".$parentId." AND del='0'");
+        });
     }
 
     function voovi_tarif_archive_by_tarif_id($tarifId)
@@ -293,9 +334,9 @@ if (!function_exists('voovi_tarif_escape')) {
         return "SELECT
             tp.id AS tarif_parent_id,
             tp.name AS parent_name,
-            tp.comment,
-            tp.group_tarif AS parent_group_tarif,
-            tp.product_model AS parent_product_model,
+            t.value AS comment,
+            t.group_tarif AS parent_group_tarif,
+            t.product_model AS parent_product_model,
             tp.product_id,
             tp.active,
             t.id AS tarif_id,
@@ -311,8 +352,8 @@ if (!function_exists('voovi_tarif_escape')) {
             pt.name AS type_name
         FROM tarif_parent tp
         LEFT JOIN tarif t ON t.sync_id = tp.id AND t.del = '0'
-        LEFT JOIN group_tarif gt ON gt.id_group = tp.group_tarif
-        LEFT JOIN product_model pm ON pm.id = tp.product_model
+        LEFT JOIN group_tarif gt ON gt.id_group = t.group_tarif
+        LEFT JOIN product_model pm ON pm.id = t.product_model
         LEFT JOIN product_type pt ON pt.id = pm.product_type
         WHERE tp.active = 1
           AND (tp.product_id = " . $productId . " OR (tp.product_id IS NULL AND t.parent = " . voovi_tarif_sql_text($productId) . "))
