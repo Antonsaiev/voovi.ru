@@ -558,7 +558,11 @@
   }); });
   run(async function () {
     var data = await api('state');
-    if (data.payer_missing) {
+    if (data.payer_repair_required) {
+      message('Уточняем привязку клиента к Контуру…', 'wait');
+      data = await api('subscriber', {repair_only: true});
+      if (data.payer_repair_required) throw new Error('Привязка клиента изменилась. Обновите страницу.');
+    } else if (data.payer_missing) {
       message('Подготавливаем клиента в Контуре…', 'wait');
       data = await api('subscriber', {});
     }

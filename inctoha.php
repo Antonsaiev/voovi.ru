@@ -46,16 +46,29 @@ if(substr_count($userdata['dotdel'], $row['otdel']) == 1){
     }else{
 
     }
-    if(!empty($row['nomerschetks'])){
+    $renderClientInvoices = !empty($render_kartklient_schet_table);
+    $konturBill = $renderClientInvoices && isset($kartKonturBills[$row['rand']])
+        ? $kartKonturBills[$row['rand']] : null;
+    $konturNumber = trim((string)$row['nomerschetks']);
+    $konturUrl = $konturBill
+        ? 'https://billy-partners.kontur.ru/billinfo/'.rawurlencode($konturBill['BillId'])
+        : trim((string)$row['url']);
+    if ($konturBill && ($konturNumber === '' || $konturNumber === '0')) {
+        $konturNumber = trim((string)$konturBill['Number']);
+    }
+    if($konturNumber !== '' && $konturNumber !== '0'){
         //echo $row['nomerschetks'];
         $nomerschetks = array("№", " ", "С", "ч", "е", "т");
-        $nomerschetksText = str_replace($nomerschetks, "", $row['nomerschetks']);
-        $schetExternalUrl = isset($row['url']) ? trim((string)$row['url']) : '';
-        if (!empty($render_kartklient_schet_table) && $schetExternalUrl !== '' && $schetExternalUrl !== '0') {
-            echo '<a target="_blank" href="'.htmlspecialchars($schetExternalUrl, ENT_QUOTES, 'UTF-8').'">'.htmlspecialchars($nomerschetksText, ENT_QUOTES, 'UTF-8').'</a>';
+        $nomerschetksText = str_replace($nomerschetks, "", $konturNumber);
+        if ($renderClientInvoices && $konturUrl !== '' && $konturUrl !== '0') {
+            echo '<a target="_blank" rel="noopener" href="'.htmlspecialchars($konturUrl, ENT_QUOTES, 'UTF-8').'">'.htmlspecialchars($nomerschetksText, ENT_QUOTES, 'UTF-8').'</a>';
         } else {
             echo $nomerschetksText;
         }
+    } elseif ($konturBill) {
+        echo '<a target="_blank" rel="noopener" title="Номер счёта ожидается" href="'.htmlspecialchars($konturUrl, ENT_QUOTES, 'UTF-8').'">Открыть в Биллинге</a>';
+    } elseif ($renderClientInvoices && ($konturUrl === '' || $konturUrl === '0')) {
+        echo '<span title="Счёт не привязан к Контуру">&mdash;</span>';
     }else{
         echo '&mdash;';
     }
@@ -623,17 +636,25 @@ $(document).ready(function(){
     echo '</td>';*/
 
 //-------------------------------------------------------------------------------------------------------//
+    $konturAmount = trim((string)$row['priceks']);
+    if ($konturBill && ($konturAmount === '' || (float)$konturAmount === 0.0)) {
+        $konturAmount = $konturBill['Amount'];
+    }
+    $konturAmountPending = $konturBill && $konturAmount === null;
+    $konturAmountMissing = $renderClientInvoices && !$konturBill && $konturAmount === '';
     echo '<td style="width: 8px; text-align: center; font-size: 14px;"';
     if ($row['oplachenks'] == 1) {
         echo ' class="highlight_success"';
-    }else if($row['priceks'] == 0){
-        echo ' class="highlight_success"';
-    }else{
-        echo ' class="alert alert-danger"';
+    } elseif (!$konturAmountPending && !$konturAmountMissing) {
+        echo $konturAmount == 0 ? ' class="highlight_success"' : ' class="alert alert-danger"';
     }
     echo'>';
-    if($row['priceks'] > 0){
-        echo number_format($row['priceks'], 0, ' ', ','),"р.";
+    if ($konturAmountPending) {
+        echo '<span class="kart-kontur-spinner" tabindex="0" role="img" aria-label="Ожидаем сумму от Контура" title="Ожидаем сумму от Контура"></span>';
+    } elseif ($konturAmountMissing) {
+        echo '&mdash;';
+    } elseif ($konturAmount > 0) {
+        echo number_format($konturAmount, 0, ' ', ','),"р.";
     }else{
         echo number_format(0, 0, ' ', ','),"р.";
     }

@@ -1,4 +1,19 @@
-
+<style>
+.kart-kontur-spinner {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border: 2px solid #cbd8d6;
+    border-top-color: #397b70;
+    border-radius: 50%;
+    vertical-align: middle;
+    animation: kart-kontur-spin .8s linear infinite;
+}
+@keyframes kart-kontur-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+    .kart-kontur-spinner { animation: none; }
+}
+</style>
 <form class="form" action="<?php $_SERVER['PHP_SELF']?>" method="post" style="
     background: #FFFFFF;
     padding: 10px;

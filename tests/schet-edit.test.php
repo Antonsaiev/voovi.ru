@@ -245,12 +245,15 @@ foreach (array('god','filial','otdel','nomer','ogrn') as $field) {
 }
 $numbers = array(); $rands = array();
 foreach (array(array('',''), array('s-fixture','https://billy-partners.kontur.ru/billinfo/shared-bill'),
-    array('INV-2026/42','https://supplier.example/invoices/42')) as $external) {
+    array('INV-2026/42','https://supplier.example/invoices/42')) as $index=>$external) {
     $beforeId = (int)identity_test_scalar('SELECT MAX(id) FROM schet');
+    $isRenewal = $index === 1;
+    $previousNumber = $index > 0 ? $numbers[0] : '';
     $create = array('get'=>array('id'=>'1','parent'=>'1','tip'=>'1','ogrn'=>'1'),
         'post'=>array('submitsch'=>'1','creation_token'=>voovi_schet_form_token('myogrn.php:1:1',$actionUser),
             '55'=>'1','56'=>'1','input55'=>'2','input56'=>'3','aallsumm'=>'99999','skidka'=>'10',
-            'nomerschetks'=>$external[0],'url'=>$external[1],'priceks'=>'1500','nsold'=>'',
+            'nomerschetks'=>$external[0],'url'=>$external[1],'priceks'=>'1500',
+            'schet_mode'=>$isRenewal ? '2' : '1','nsold'=>$previousNumber,
             'dog'=>'1','agent'=>'0','tel'=>'fixture','goroddd'=>'0','kvogorod'=>'1','kol_opis'=>'0','sos_opis'=>'0'));
     $output = $runEdit($create);
     identity_test_require(strpos($output,'schetSaveError') === false && strpos($output,'window.location.href') !== false,
@@ -261,6 +264,9 @@ foreach (array(array('',''), array('s-fixture','https://billy-partners.kontur.ru
     identity_test_require($first['ns'] !== '' && $first['ns'] === $second['ns'] && $first['rand'] === $second['rand'],
         'PHP-счёт не получил один сохранённый номер и rand');
     foreach (array($first,$second) as $row) {
+        identity_test_require($row['prodlen'] === ($isRenewal ? '1' : '0') &&
+            $row['shetold'] === ($isRenewal ? $previousNumber : ''),
+            'Режим счёта, предыдущий счёт и признак продления расходятся');
         identity_test_require($row['nomerschetks'] === $external[0] && $row['url'] === $external[1] &&
             $row['price'] === '720.00' && $row['priceks'] === '1500' && $row['kto'] === '3',
             'PHP-счёт изменил внешние реквизиты, сумму или автора');

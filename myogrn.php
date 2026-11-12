@@ -928,7 +928,10 @@ if(isset($_POST['submitsch'])){
     $validatedTariffs = voovi_validate_schet_tariffs($_GET['parent'], '', $_POST);
     $_POST['aallsumm'] = voovi_invoice_form_total($validatedTariffs, $_POST);
     $rowazaza = $validatedTariffs[0];
-    $previousSchetRand = voovi_schet_previous_rand(isset($_POST['nsold']) ? $_POST['nsold'] : '');
+    $isNewSchet = isset($_POST['schet_mode']) && $_POST['schet_mode'] === '1';
+    $_POST['nsold'] = !$isNewSchet && isset($_POST['nsold']) ? $_POST['nsold'] : '';
+    $previousSchetRand = voovi_schet_previous_rand($_POST['nsold']);
+    $serviceType = $previousSchetRand !== null ? '1' : '0';
 
 	//if($_GET['parent']==319&&$_POST['kol_opis']==""||$_GET['parent']==400&&$_POST['kol_opis']=="" ||$_GET['parent']==391&&$_POST['kol_opis']==""&&$_GET['parent']==319)
     if (in_array($_GET['parent'], [319, 400, 391, 426, 428, 427]) && $_POST['kol_opis'] == "")
@@ -1527,7 +1530,7 @@ if(isset($_POST['submitsch'])){
 			'".$_POST["input".$rowazaza['id']]."',
 			'".$rowazaza['id']."',
 			'$_POST[goroddd]',
-			'0',
+			'".$serviceType."',
 			'$_POST[skidka]',
 			'$_POST[priceks]',
 			'".$_GET['ogrn']."',
@@ -1717,7 +1720,7 @@ if(isset($_POST['submitsch'])){
 		'".$rowazaza['id']."',
 		'$_POST[kvogorod]',
 		'$_POST[goroddd]',
-		'0',
+		'".$serviceType."',
 		'$_POST[skidka]',
 		'$_POST[aallsumm]',
 		'$_POST[priceks]',
@@ -1876,7 +1879,7 @@ if(isset($_POST['submitsch'])){
 		'".$rowazaza['id']."',
 		'$_POST[kvogorod]',
 		'$_POST[goroddd]',
-		'0',
+		'".$serviceType."',
 		'$_POST[skidka]',
 		'$_POST[aallsumm]',
 		'$_POST[priceks]',
@@ -2062,7 +2065,7 @@ if (count($newschetOldSchetOptions) > 0) {
 <div class="newschet-mode-row">
 <span class="newschet-mode-label" id="newschet-mode-label">Режим счёта</span>
 <?php $newschetInitialMode = count($newschetOldSchetOptions) > 0 ? '2' : '1'; ?>
-<input type="hidden" id="idprodkschet" value="<?php echo $newschetInitialMode; ?>">
+<input type="hidden" id="idprodkschet" name="schet_mode" value="<?php echo $newschetInitialMode; ?>">
 <div class="newschet-mode-switch" role="group" aria-labelledby="newschet-mode-label">
     <button type="button" class="newschet-mode-button" data-mode="1" aria-pressed="<?php echo $newschetInitialMode === '1' ? 'true' : 'false'; ?>">Новый</button>
     <button type="button" class="newschet-mode-button" data-mode="2" aria-pressed="<?php echo $newschetInitialMode === '2' ? 'true' : 'false'; ?>">Продление</button>

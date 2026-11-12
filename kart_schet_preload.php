@@ -15,11 +15,13 @@ if (!function_exists('kart_schet_sql_in')) {
 
 if (!function_exists('kart_schet_preload')) {
     function kart_schet_preload($rows, $userdata) {
+        global $kartKonturBills;
         global $kartSchetProductMap, $kartSchetUserMap, $kartSchetAgentMap;
         global $kartSchetCommentCounts, $kartSchetLatestComments, $kartSchetLatestStatuses, $kartSchetStatusMap;
         global $kartSchetTurboSum, $kartSchetGenSum, $kartSchetKvobopSum, $kartSchetFavoriteMap, $kartSchetDocumentDataMap;
         global $kartSchetPrichotkMap, $kartSchetExecutors, $kartSchetUserAccess;
 
+        $kartKonturBills = array();
         $kartSchetProductMap = array();
         $kartSchetUserMap = array();
         $kartSchetAgentMap = array();
@@ -78,6 +80,15 @@ if (!function_exists('kart_schet_preload')) {
 
         $randIn = kart_schet_sql_in($rands);
         if ($randIn !== '') {
+            $kartKonturQuery = mysql_query("SELECT l.schet_rand, b.BillId, b.Number, b.Amount
+                FROM bills_voovi_links l JOIN bills b ON b.BillId = l.BillId
+                WHERE b.status = 'created' AND l.schet_rand IN (".$randIn.")");
+            if ($kartKonturQuery) {
+                while ($kartKonturBill = mysql_fetch_assoc($kartKonturQuery)) {
+                    $kartKonturBills[$kartKonturBill['schet_rand']] = $kartKonturBill;
+                }
+            }
+
             $query = mysql_query("SELECT rand, SUM(CASE WHEN turbo = '1' THEN turbo ELSE 0 END) AS turbo_sum, SUM(CASE WHEN gen = '1' THEN kvo ELSE 0 END) AS gen_sum FROM schet WHERE del = '0' AND rand IN (".$randIn.") GROUP BY rand");
             while ($item = mysql_fetch_assoc($query)) {
                 $kartSchetTurboSum[$item['rand']] = (int)$item['turbo_sum'];
