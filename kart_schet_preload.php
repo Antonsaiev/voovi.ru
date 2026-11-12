@@ -18,7 +18,7 @@ if (!function_exists('kart_schet_preload')) {
         global $kartKonturBills;
         global $kartSchetProductMap, $kartSchetUserMap, $kartSchetAgentMap;
         global $kartSchetCommentCounts, $kartSchetLatestComments, $kartSchetLatestStatuses, $kartSchetStatusMap;
-        global $kartSchetTurboSum, $kartSchetGenSum, $kartSchetKvobopSum, $kartSchetFavoriteMap, $kartSchetDocumentDataMap;
+        global $kartSchetTurboSum, $kartSchetGenSum, $kartSchetKvobopSum, $kartSchetDocumentDataMap;
         global $kartSchetPrichotkMap, $kartSchetExecutors, $kartSchetUserAccess;
 
         $kartKonturBills = array();
@@ -32,7 +32,6 @@ if (!function_exists('kart_schet_preload')) {
         $kartSchetTurboSum = array();
         $kartSchetGenSum = array();
         $kartSchetKvobopSum = array();
-        $kartSchetFavoriteMap = array();
         $kartSchetDocumentDataMap = array();
         $kartSchetPrichotkMap = array();
         $kartSchetExecutors = array();
@@ -133,11 +132,6 @@ if (!function_exists('kart_schet_preload')) {
             $query = mysql_query("SELECT schet, SUM(summa) AS summa FROM kvobop WHERE schet IN (".$randIn.") GROUP BY schet");
             while ($item = mysql_fetch_assoc($query)) {
                 $kartSchetKvobopSum[$item['schet']] = (float)$item['summa'];
-            }
-
-            $query = mysql_query("SELECT schet FROM schetizbran WHERE kto = '".(int)$userdata['users_id']."' AND schet IN (".$randIn.")");
-            while ($item = mysql_fetch_assoc($query)) {
-                $kartSchetFavoriteMap[$item['schet']] = true;
             }
 
             $query = mysql_query("SELECT * FROM document_data WHERE rand IN (".$randIn.")");

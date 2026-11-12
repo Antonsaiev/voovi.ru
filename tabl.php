@@ -83,11 +83,9 @@
 <th style="width: 180px; text-align: center;">Название</th>
 <th style="width: 5%; text-align: center;">Продукт</th>
 <th >Комментарии</th>
-<th style="width: 1px;"><span class="glyphicon glyphicon-star"></span></th>
-<th style="width: 1px;"><span class="glyphicon glyphicon-ruble" aria-hidden="true"></span></th>
 <!--<th style="width: 1px;"><span class="glyphicon glyphicon-open-file" aria-hidden="true"></span></th>!-->
 <th style="width: 8px; text-align: center;">Контур</th>
-<th style="width: 8px; text-align: center;">S</th>
+<th style="width: 8px; text-align: center;">Савоир</th>
 <th style="width: 80px; text-align: center;">Услуга</th>
 <th style="width: 80px; text-align: center;">Выставил</th>
 <th style="width: 80px; text-align: center;">Агент</th>
@@ -188,6 +186,8 @@ $otgr_number_start = $iz; // продолжаем нумерацию с этог
 </table>
 </div>
 </form>
+
+<?php require_once __DIR__.'/savoir_payments_dialog.php'; ?>
 
 </div>
 </div>

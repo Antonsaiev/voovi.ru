@@ -2,6 +2,7 @@
 
 if(substr_count($userdata['dotdel'], $row['otdel']) == 1){
 
+    include __DIR__.'/savoir_payment_status.php';
     echo '<tr for="raz'.$row['rand'].'"';
     if ($row['akt'] == 1){
         echo 'class="alert alert-success" role="alert"';
@@ -12,7 +13,7 @@ if(substr_count($userdata['dotdel'], $row['otdel']) == 1){
         echo 'class="alert alert-cher" role="alert"';
     }
 
-    if ($row['oplachenks'] == 1 || $row['oplachen'] == 1){
+    if ($row['oplachenks'] == 1 && $isSavoirPaid){
         echo 'class="alert alert-warning" role="alert"';
     }if ($row['otl3'] != 0){
         echo 'class="alert alert-info" role="alert"';
@@ -499,93 +500,6 @@ $(document).ready(function(){
     }
 
     echo '</td>';
-    echo '<td>';
-    if (isset($kartSchetFavoriteMap)) {
-        $class = isset($kartSchetFavoriteMap[$row['rand']]) ? 1 : 0;
-    } else {
-        $result = mysql_query("SELECT count(*) FROM schetizbran WHERE kto = '".$userdata['users_id']."' AND schet =".$row['rand']);
-        $class = mysql_result($result, 0);
-    }
-    if($class == 0){
-        echo '<a title="В избранные" href="./schetizbran.php?tip=1&id='.$row['rand'].'"><span class="glyphicon glyphicon-star"></span></a>';
-    }else{
-        echo '<a title="Из избранные" href="./schetizbran.php?tip=2&users='.$userdata['users_id'].'&id='.$row['rand'].'"><span class="glyphicon glyphicon-star-empty" aria-hidden="true"></span></a>';
-    }
-    echo '</td>';
-    if ($row['nomerdog']=="В КС"){
-        echo '<td style="text-align: center; font-size: 14px; padding: 0;">';
-        echo '</td>';
-    }else{
-        if (isset($kartSchetKvobopSum[$row['rand']])) {
-            $person426 = $kartSchetKvobopSum[$row['rand']];
-        } else {
-            $rpod2345 = "SELECT * FROM kvobop WHERE schet = '".$row['rand']."'";
-            $result57657 = mysql_query($rpod2345);
-            $row134 = mysql_fetch_array($result57657);
-            $query544 = mysql_query("SELECT SUM(summa) FROM kvobop WHERE schet =".$row134['schet']);
-            $person426 = mysql_result($query544, 0);
-        }
-        if ($person426 <= $row['price'] && $person426 != 0) {
-            if($row['cher']=='0') {
-                echo '<td style="text-align: center;font-size: 14px;padding: 0;background:green;text-align:center;color:#fff;">';
-            }
-            else
-            {echo '<td style="text-align: center;font-size: 14px;padding: 0;">';}
-        }else{
-            echo '<td style="text-align: center;font-size: 14px;padding: 0;">';
-        }
-        if ($person426 != $row['price'] && $person426 > 0 && $person426 < $row['price'] && $person426 != 0) {
-            echo '<a style="font-size: 14px;" id="rable'.$row['rand'].'" onclick="ruble'.$row['rand'].'()"><span class="glyphicon glyphicon-ruble"></span></a>';
-        }
-        if ($person426 >= $row['price'] && $person426 != $row['price']) {
-            echo '<a onclick="open'.$row['rand'].'()"><span class="glyphicon glyphicon-eye-open"></span></a>';
-        }
-        if ($person426 <= $row['price'] && $person426 != 0) {
-            echo '<a onclick="open'.$row['rand'].'()"><span class="glyphicon glyphicon-eye-open"></span></a>';
-        }else{
-            echo '';
-//echo '<a id="rable'.$row['rand'].'" onclick="ruble'.$row['rand'].'()"><span class="glyphicon glyphicon-ruble"></span></a>';
-        }
-        echo '<script type="text/javascript">
-function ruble'.$row['rand'].'()
-{
-    var rublec = document.getElementById("rublei'.$row['rand'].'");
-    var rubled = document.createElement("iframe");
-    var rublet = document.createTextNode("11111");
-    rublec.appendChild(rubled);
-    rubled.appendChild(rublet);
-	rubled.src = "/divoplata.php?id=1&rand='.$row['rand'].'";
-	rubled.width = "900px";
-	rubled.height = document.documentElement.clientHeight - 100;
-	rubled.className = "iframestyle";
-	document.getElementById("rublei'.$row['rand'].'").className = "contai";
-}
-function open'.$row['rand'].'()
-{
-    var rublec = document.getElementById("rublei'.$row['rand'].'");
-    var rubled = document.createElement("iframe");
-    var rublet = document.createTextNode("11111");
-    rubled.appendChild(rublet);
-    rublec.appendChild(rubled);
-	rubled.src = "/divoplata.php?id=0&rand='.$row['rand'].'";
-	rubled.width = "900px";
-	rubled.height = document.documentElement.clientHeight - 100;
-	rubled.className = "iframestyle";
-	document.getElementById("rublei'.$row['rand'].'").className = "contai";
-}
-$(document).ready(function(){
-    $("#rublei'.$row['rand'].'").click(function(){
-        $("#rublei'.$row['rand'].'").empty();
-		document.getElementById("rublei'.$row['rand'].'").className = "";
-		
-    }); 
-});
-</script>
-<div id="rublei'.$row['rand'].'"></div>';
-
-        echo '</td>';
-
-    }
     /*if (strlen($row['inn']) == 12){
     $tipf = 1;
     } else {
@@ -661,41 +575,7 @@ $(document).ready(function(){
 
     echo '</td>';
 
-    echo '<td style="width: 8px; text-align: center; font-size: 14px;"';
-
-    if (isset($kartSchetKvobopSum[$row['rand']])) {
-        $person426 = $kartSchetKvobopSum[$row['rand']];
-    } else {
-        $rpod2345 = "SELECT * FROM kvobop WHERE schet = '".$row['rand']."'";
-        $result57657 = mysql_query($rpod2345);
-        $row134 = mysql_fetch_array($result57657);
-
-        $query544 = mysql_query("SELECT SUM(summa) FROM kvobop WHERE schet =".$row134['schet']);
-        $person426 = mysql_result($query544, 0);
-    }
-
-
-    if ($person426 <= $row['price'] && $person426 != 0&&$row['cher']=='0') {
-        echo ' class="highlight_success"';
-    }else if($row['price'] == 0&&$row['cher']=='0') {
-        echo ' class="highlight_success"';
-    }else{
-        echo ' class="alert alert-danger"';
-    }
-    if($row['ust_sert'] == 0) {
-        echo ' class="highlight_success"';
-    }else{
-        echo ' class="alert alert-danger" style"background:lightseagreen"';
-    }
-
-
-
-
-
-
-    echo'>';
-    echo number_format($row['price'], 0, ' ', ','),"р.";
-    echo '</td>';
+    include __DIR__.'/savoir_payment_cell.php';
 //-------------------------------------------------------------------------------------------------------//
 
     echo '<td id="proddlen'.$row['rand'].'" style="text-align: center; font-size: 14px;">';

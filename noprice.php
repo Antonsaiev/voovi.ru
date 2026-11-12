@@ -401,7 +401,7 @@ echo "</div>";
 <th style="width: 90px; text-align: center;">Продукт</th>
 <th >Комментарии</th>
 <!--<th style="width: 200px;">Контакты</th>-->
-<th style="width: 1px;"><span class="glyphicon glyphicon-ruble" aria-hidden="true"></span></th>
+<th style="width: 8px; text-align: center;">Савоир</th>
 <th style="width: 1px;"><span class="glyphicon glyphicon-open-file" aria-hidden="true"></span></th>
 <th style="width: 1px;"><span class="glyphicon glyphicon-cog" aria-hidden="true"></span></th>
 <th style="width: 60px; text-align: center;">Услуга</th>
@@ -415,12 +415,13 @@ echo "</div>";
 $query = mysql_query("SELECT DISTINCT nomerschet,ogrn,prodlen,generac,name,lico,rand,otdel,filial,god,nomerdog,data,produkt,price,kto,inn,kpp,idkli,otk,koment,oplachen,oplachenks,doljen,gotov,akt,url,groupi,gr FROM schet WHERE del = '0' AND doljen = '1' ORDER BY id DESC LIMIT $start, $num ");
 
 while($row = mysql_fetch_array($query)) {
+include __DIR__.'/savoir_payment_status.php';
 echo '<tr for="raz'.$row['rand'].'" ';
 if ($row['akt'] == 1){
 echo 'class="alert alert-success" role="alert"';
 } if ($row['otk'] == 1){
 echo 'class="alert alert-gavno" role="alert"';
-} if ($row['oplachenks'] == 1 || $row['oplachen'] == 1){
+} if ($row['oplachenks'] == 1 && $isSavoirPaid){
 echo 'class="alert alert-warning" role="alert"';
 }
 
@@ -579,70 +580,7 @@ echo '<script>
 $("#konttakt'.$row['rand'].'").live("dblclick", function() {document.getElementById("kontakti'.$row['rand'].'").style.display="block";});function konTakti'.$row['rand'].'(str) {if (str=="0") {$.ajax({type: "GET",url: "pusya.php",data: "lico="+str+"&rand='.$row['rand'].'",success: function(msg){document.getElementById("kontakti'.$row['rand'].'").style.display="none";setTimeout(function() {$("#konactinfo'.$row['rand'].'").load(" #konactinfo'.$row['rand'].'");}, 1000);}});} else {$.ajax({type: "GET",url: "pusya.php",data: "lico="+str+"&rand='.$row['rand'].'",success: function(msg){document.getElementById("kontakti'.$row['rand'].'").style.display="none";setTimeout(function() {$("#konactinfo'.$row['rand'].'").load(" #konactinfo'.$row['rand'].'");}, 1000);}});}}
 </script>';
 echo '</td>';*/
-if ($row['nomerdog']=="В КС"){
-echo '<td style="text-align: center;font-size: 12px;padding: 0;">';
-echo '</td>';
-}else{
-$rpod2345 = "SELECT * FROM kvobop WHERE schet = '".$row['rand']."'";
-$result57657 = mysql_query($rpod2345);
-$row134 = mysql_fetch_array($result57657);
-$query544 = mysql_query("SELECT SUM(summa) FROM kvobop WHERE schet =".$row134['schet']);
-$person426 = mysql_result($query544, 0);
-if ($person426 <= $row['price'] && $person426 != 0) { 
-echo '<td style="text-align: center;font-size: 12px;padding: 0;background:green;text-align:center;color:#fff;">';
-}else{
-echo '<td style="text-align: center;font-size: 12px;padding: 0;">';
-}
-if ($person426 != $row['price'] && $person426 > 0 && $person426 < $row['price'] && $person426 != 0) {
-echo '<a id="rable'.$row['rand'].'" onclick="ruble'.$row['rand'].'()"><span class="glyphicon glyphicon-ruble"></span></a>';
-}
-if ($person426 >= $row['price'] && $person426 != $row['price']) {
-echo '<a onclick="open'.$row['rand'].'()"><span class="glyphicon glyphicon-eye-open"></span></a>';
-}
-if ($person426 <= $row['price'] && $person426 != 0) { 
-echo '<a onclick="open'.$row['rand'].'()"><span class="glyphicon glyphicon-eye-open"></span></a>';
-}else{
-echo '<a id="rable'.$row['rand'].'" onclick="ruble'.$row['rand'].'()"><span class="glyphicon glyphicon-ruble"></span></a>';
-}
-echo '<script type="text/javascript">
-function ruble'.$row['rand'].'()
-{
-    var rublec = document.getElementById("rublei'.$row['rand'].'");
-    var rubled = document.createElement("iframe");
-    var rublet = document.createTextNode("11111");
-    rubled.appendChild(rublet);
-    rublec.appendChild(rubled);
-	rubled.src = "/divoplata.php?id=1&rand='.$row['rand'].'";
-	rubled.width = "900px";
-	rubled.height = document.documentElement.clientHeight - 100;
-	rubled.className = "iframestyle";
-	document.getElementById("rublei'.$row['rand'].'").className = "contai";
-}
-function open'.$row['rand'].'()
-{
-    var rublec = document.getElementById("rublei'.$row['rand'].'");
-    var rubled = document.createElement("iframe");
-    var rublet = document.createTextNode("11111");
-    rubled.appendChild(rublet);
-    rublec.appendChild(rubled);
-	rubled.src = "/divoplata.php?id=0&rand='.$row['rand'].'";
-	rubled.width = "900px";
-	rubled.height = document.documentElement.clientHeight - 100;
-	rubled.className = "iframestyle";
-	document.getElementById("rublei'.$row['rand'].'").className = "contai";
-}
-$(document).ready(function(){
-    $("#rublei'.$row['rand'].'").click(function(){
-        $("#rublei'.$row['rand'].'").empty();
-		document.getElementById("rublei'.$row['rand'].'").className = "";
-		
-    }); 
-});
-</script>
-<div id="rublei'.$row['rand'].'"></div>';
-
-echo '</td>';
-}
+include __DIR__.'/savoir_payment_cell.php';
 if (strlen($row['inn']) == 12){
 $tipf = 1;
 } else {
@@ -823,6 +761,7 @@ echo '</td></tr>';
 ?>
 </tbody>
 </table>
+<?php require_once __DIR__.'/savoir_payments_dialog.php'; ?>
 
 
 </form>

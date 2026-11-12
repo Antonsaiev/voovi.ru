@@ -790,11 +790,9 @@ if($tohaSearchValue !== ""){
 <th style="width: 180px; text-align: center;">Название</th>
 <th style="width: 90px; text-align: center;">Продукт</th>
 <th >Комментарии</th>
-<th style="width: 1px;"><span class="glyphicon glyphicon-star"></span></th>
-<th style="width: 1px;"><span class="glyphicon glyphicon-ruble" aria-hidden="true"></span></th>
 <!--<th style="width: 1px;"><span class="glyphicon glyphicon-open-file" aria-hidden="true"></span></th>!-->
 <th style="width: 8px; text-align: center;">Контур</span></th>
-<th style="width: 8px; text-align: center;">S</th>
+<th style="width: 8px; text-align: center;">Савоир</th>
 <th style="width: 80px; text-align: center;">Услуга</th>
 <th style="width: 80px; text-align: center;">Выставил</th>
 <th style="width: 80px; text-align: center;">Агент</th>
@@ -839,6 +837,7 @@ while($row = mysql_fetch_array($query)) {
 ?>
 </tbody>
 </table>
+<?php require_once __DIR__.'/savoir_payments_dialog.php'; ?>
 </div>
 </form>
 <div class="modal-shadow"></div>
