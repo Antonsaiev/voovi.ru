@@ -20,4 +20,5 @@
 .kontur-card-note{display:block;color:#6a7c84;font-size:12px;margin:5px 0 0;font-weight:400}
 .kontur-card-error{color:#963f2b}
 .kontur-card-billing{display:inline-block;white-space:nowrap;font-size:12px}
+.kontur-document-actions{cursor:default}
 @media(max-width:540px){.kontur-card{margin:12px 0;padding:12px}.kontur-card-table th,.kontur-card-table td{padding:8px}.kontur-card-table th:first-child,.kontur-card-table td:first-child{min-width:160px}}

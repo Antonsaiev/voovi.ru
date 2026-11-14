@@ -31,6 +31,17 @@ function voovi_decimal_canonical($value)
     return ($negative && $number !== '0' ? '-' : '').$number;
 }
 
+function voovi_invoice_discount_for_storage($value)
+{
+    $discount = voovi_decimal_canonical($value);
+    $point = strpos($discount, '.');
+    if ($point !== false && strlen($discount) - $point - 1 > 18) {
+        $rounded = voovi_money_sql('CAST(ROUND('.$discount.',18) AS DECIMAL(21,18))');
+        return voovi_decimal_canonical($rounded[0]);
+    }
+    return $discount;
+}
+
 function voovi_money_round($value)
 {
     $result = voovi_money_sql('CAST(ROUND('.voovi_decimal($value).',2) AS DECIMAL(20,2))');

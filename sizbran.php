@@ -249,28 +249,41 @@ if(isset($_POST['otk'])){
 	}
 }
 
+?>
+<div id="sizbran-toolbar-space"></div>
+<style>
+#sizbran-toolbar-space ~ form[name="form"] {
+    position: relative !important;
+    top: auto !important;
+    right: auto !important;
+    margin: 0 0 8px auto;
+    width: fit-content;
+    max-width: 100%;
+}
+#sizbran-toolbar-space ~ form[name="form"] input[type="text"] {
+    width: min(200px, 55vw) !important;
+}
+#sizbran-toolbar-space ~ form[name="form"] br { display: none; }
+</style>
+<?php
 include 'serchtoha.php'; 
 ?>
 <script>
-  var h_hght = 40; // высота шапки 
-  var h_mrg = 40; // отступ когда шапка уже не видна
-  $(function(){
-   $(window).scroll(function(){
-  var top = $(this).scrollTop();
-  var elem = $('#top_nav');
-  if (top+h_mrg < h_hght) {
-   elem.css('top', (h_hght-top));
-  } else {
-   elem.css('top', h_mrg);
-  }
-});
-  });
-  
-  
   var count = 0;
 $(function() {
     count = $('input[type=checkbox]:checked').length;
     displayCount();
+    var toolbar = document.getElementById('top_nav');
+    var spacer = document.getElementById('sizbran-toolbar-space');
+    function reserveToolbarSpace() {
+        spacer.style.height = Math.max(0, toolbar.getBoundingClientRect().bottom -
+            spacer.getBoundingClientRect().top - window.scrollY + 8) + 'px';
+    }
+    reserveToolbarSpace();
+    window.addEventListener('resize', reserveToolbarSpace);
+    if (window.ResizeObserver) {
+        new ResizeObserver(reserveToolbarSpace).observe(toolbar);
+    }
 
     $('input[type=checkbox]').bind('click' , function(e, a) {   
          if (this.checked) {
@@ -320,8 +333,6 @@ echo '
 <?php if($userdata['otvetstven']==1){echo '<input onclick=\'return confirm("Для удаления счета нажмите OK!");\' class="btn btn-primary btn-xs" type="submit" name="deletemarked" value="Удалить" style="margin-bottom: 5px;" />';}?>
 <p id="countdisplay" style="color:#fff; display:none;">Выбранно: <b style="font-size:15px;" id="count"></b></p>
 </div>
-<br>
-<br>
 <div id="status"></div>
 <?php 
 $num = 99900;

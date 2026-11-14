@@ -361,6 +361,9 @@ $komneteSchetTotal = isset($komneteInvoiceTotal) ? $komneteInvoiceTotal : 0;
 echo '<tr id="'.$invoiceDetailsId.'" class="komnete-invoice-detail-row is-collapsed"><td colspan="12" class="komnete-invoice-detail-cell">';
 echo '<div class="komnete-invoice-details">';
 echo '<div class="komnete-invoice-details-head"><span>Состав счета</span><span class="komnete-invoice-total">Итого: '.komnete_money($komneteSchetTotal).'</span></div>';
+if (!empty($komneteInvoiceAmountError)) {
+    echo '<p class="komnete-invoice-empty">Не удалось сверить суммы позиций с итогом счёта.</p>';
+}
 if (count($komneteSchetItems) > 0) {
     echo '<div class="komnete-invoice-table-wrap"><table class="table komnete-invoice-table">';
     echo '<thead><tr>';
@@ -376,7 +379,7 @@ if (count($komneteSchetItems) > 0) {
         echo '<td class="komnete-invoice-qty">'.($komneteSchetItem['quantity'] > 0 ? komnete_clean_number($komneteSchetItem['quantity']) : '—').'</td>';
         echo '<td class="komnete-invoice-money">'.($komneteSchetItem['unit_price'] > 0 ? komnete_money($komneteSchetItem['unit_price']) : '—').'</td>';
         echo '<td class="komnete-invoice-money">'.($komneteSchetItem['discount'] > 0 ? komnete_clean_number($komneteSchetItem['discount']).'%' : '—').'</td>';
-        echo '<td class="komnete-invoice-money">'.($komneteSchetItem['total'] > 0 ? komnete_money($komneteSchetItem['total']) : '—').'</td>';
+        echo '<td class="komnete-invoice-money">'.($komneteSchetItem['total'] !== null ? komnete_money($komneteSchetItem['total']) : '—').'</td>';
         echo '</tr>';
     }
     echo '</tbody></table></div>';

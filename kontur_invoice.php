@@ -10,12 +10,23 @@ if (empty($_SESSION['kontur_csrf'])) {
 $csrf = $_SESSION['kontur_csrf'];
 session_write_close();
 $back = '/kartklient.php?'.http_build_query(array('id' => $invoice['idkli']));
+$invoiceCard = '/komnete.php?'.http_build_query(array(
+    'rand' => $invoice['rand'],
+    'kli' => $invoice['idkli'],
+    'produkt' => $invoice['produkt'],
+));
 ?>
 <!doctype html>
 <html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Счёт Контура · Voovi</title><link rel="stylesheet" href="/css/kontur-invoice.css?v=16"></head>
+<title>Счёт Контура · Voovi</title><link rel="stylesheet" href="/css/kontur-invoice.css?v=18"><link rel="stylesheet" href="/css/kontur-documents.css?v=3"></head>
 <body><main id="kontur-app" data-inn="<?php echo kontur_h($invoice['inn']); ?>" data-rand="<?php echo kontur_h($rand); ?>" data-csrf="<?php echo kontur_h($csrf); ?>">
-<header><a href="<?php echo kontur_h($back); ?>">← Карточка клиента</a><span class="brand">VOOVI <small> / Контур</small></span></header>
+<header>
+    <nav class="kontur-header-links" aria-label="Навигация Voovi">
+        <a href="<?php echo kontur_h($back); ?>">← Карточка клиента</a>
+        <a href="<?php echo kontur_h($invoiceCard); ?>">Карточка счёта</a>
+    </nav>
+    <span class="brand">VOOVI <small> / Контур</small></span>
+</header>
 <div class="title"><p class="eyebrow">СЧЁТ КОНТУРА</p><h1>Счёт Контура</h1><p><?php echo kontur_h($invoice['name']); ?> · ИНН <?php echo kontur_h($invoice['inn']); ?></p><p class="muted">Счёт Voovi № <?php echo kontur_h($invoice['ns']); ?></p></div>
 <div id="message" role="status" aria-live="polite"></div>
 <section id="result" class="card" hidden></section>
@@ -50,9 +61,8 @@ $back = '/kartklient.php?'.http_build_query(array('id' => $invoice['idkli']));
 </div></div>
 <div id="empty-composition" class="empty-composition"><p>Добавьте тариф через поиск</p><p class="hint">Его доступные параметры и дополнения появятся в составе счёта.</p></div>
 <div id="positions"></div>
-<button id="add-position" class="secondary" type="button" disabled hidden>+ Добавить ещё тариф</button>
 <div class="invoice-footer"><div id="quote" aria-live="polite"><p class="muted">Стоимость рассчитается автоматически после выбора тарифа и его параметров.</p></div>
 <div class="issue-area">
 <button id="issue" type="button" disabled>Выставить счёт Контур</button>
 </div></div></section>
-</main><script src="/js/kontur-form-core.js?v=14" defer></script><script src="/js/kontur-invoice.js?v=29" defer></script></body></html>
+</main><script src="/js/kontur-form-core.js?v=14" defer></script><script src="/js/kontur-documents.js?v=5" defer></script><script src="/js/kontur-invoice.js?v=33" defer></script></body></html>

@@ -78,8 +78,6 @@
     $('manual-link').querySelectorAll('button,input').forEach(function(n){n.disabled=busy || calculating || !manualAllowed;});
     $('product-toggle').disabled = busy || locked || !payerId;
     $('tariff-toggle').disabled = busy || locked || !offers.length || !catalogReady || positions.length >= 30;
-    $('add-position').disabled = $('tariff-toggle').disabled;
-    $('add-position').hidden = positions.length === 0;
     $('empty-composition').hidden = positions.length > 0;
     $('position-count').textContent = positions.length + ' поз.';
     $('position-count').hidden = positions.length === 0;
@@ -420,7 +418,9 @@
       var active=$('tariff-option-'+activeTariff);active.scrollIntoView({block:'nearest'});$('tariff-search').setAttribute('aria-activedescendant',active.id);
     }
   });
-  document.addEventListener('click',function(e){if(!$('tariff-picker').contains(e.target))closeTariffs(false);});
+  document.addEventListener('click', function (e) {
+    if (!$('tariff-picker').contains(e.target)) closeTariffs(false);
+  });
   $('tariff-picker').addEventListener('focusout',function(e){if(!e.relatedTarget||!$('tariff-picker').contains(e.relatedTarget))closeTariffs(false);});
   function showInvoice(invoice) {
     if (!invoice) return;
@@ -449,9 +449,13 @@
       var fact = el('p', null, 'fact'); fact.appendChild(el('small', v[0])); fact.appendChild(el('strong', v[1])); facts.appendChild(fact);
     }); box.appendChild(facts);
     if (invoice.status === 'created' && !invoice.bill_number) box.appendChild(el('p', 'Номер счёта появится позже.', 'hint'));
+    var billing;
     if (invoice.billing_url && invoice.status!=='rejected') {
-      var billing = el('a','Открыть в Биллинге Контура','billing-link'); billing.href=invoice.billing_url;billing.target='_blank';billing.rel='noopener';box.appendChild(billing);
+      billing = el('a','Открыть в Биллинге Контура','billing-link'); billing.href=invoice.billing_url;billing.target='_blank';billing.rel='noopener';
     }
+    if (invoice.status === 'created' && invoice.bill_id && window.renderKonturDocuments) {
+      window.renderKonturDocuments(box, rand, csrf, billing);
+    } else if (billing) box.appendChild(billing);
     if (locked && invoice.current) {
       var current = invoice.current;
       var savedBox=el('div',null,'readonly-composition');box.appendChild(savedBox);savedBox.appendChild(el('h2', 'Состав счёта'));
@@ -495,7 +499,6 @@
     } catch (error) { $('account-status').textContent = error.message; throw error; }
   }
   $('product').addEventListener('change', function () { run(function(){return loadCatalog();}, true).then(function(){if(catalogReady && offers.length)openTariffs();}); });
-  $('add-position').addEventListener('click', openTariffs);
   var invoiceSearchRevision=0, invoiceSearchTimer;
   function attachInvoice(data) {
     if(busy || calculating || !manualAllowed)return;

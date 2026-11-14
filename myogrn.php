@@ -926,6 +926,7 @@ $personre = mysql_fetch_array($resultre);
 try {
 if(isset($_POST['submitsch'])){
     $validatedTariffs = voovi_validate_schet_tariffs($_GET['parent'], '', $_POST);
+    $_POST['skidka'] = voovi_invoice_discount_for_storage(isset($_POST['skidka']) ? $_POST['skidka'] : '0');
     $_POST['aallsumm'] = voovi_invoice_form_total($validatedTariffs, $_POST);
     $rowazaza = $validatedTariffs[0];
     $isNewSchet = isset($_POST['schet_mode']) && $_POST['schet_mode'] === '1';
@@ -1946,6 +1947,7 @@ if(isset($_POST['submitsch'])){
 if(isset($_POST['submitsave'])){
 
     $validatedTariffs = voovi_validate_schet_tariffs($_GET['parent'], $pestar['rand'], $_POST);
+    $_POST['skidka'] = voovi_invoice_discount_for_storage(isset($_POST['skidka']) ? $_POST['skidka'] : '0');
     $_POST['aallsumm'] = voovi_invoice_form_total($validatedTariffs, $_POST);
     $previousSchetRand = voovi_schet_previous_rand(isset($_POST['nsold']) ? $_POST['nsold'] : '');
     $shetrand = $pestar['rand'];

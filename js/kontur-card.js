@@ -1,4 +1,4 @@
-/* Просмотр сохранённого счёта внутри карточки Voovi, без запросов в Контур. */
+/* Просмотр сохранённого счёта и актуального статуса его документов. */
 (function () {
   'use strict';
   var card=document.getElementById('kontur-invoice-card');
@@ -20,8 +20,11 @@
     content.textContent='';
     var headerLabel=document.getElementById('kontur-header-label');
     if (headerLabel) headerLabel.textContent='Контур';
-    var statuses={created:'Счёт создан',pending:'Ожидаем данные счёта',draft:'Черновик',sending:'Создаём счёт…',unknown:'Создание счёта не подтверждено',rejected:'Не удалось выставить счёт'};
-    card.querySelector('.kontur-card-status').textContent=(statuses[invoice.status] || 'Счёт Контура')+(invoice.bill_number?' · № '+invoice.bill_number:'');
+    var statuses={pending:'Ожидаем данные счёта',draft:'Черновик',sending:'Создаём счёт…',unknown:'Создание счёта не подтверждено',rejected:'Не удалось выставить счёт'};
+    var statusLabel=invoice.status==='created'?'':(statuses[invoice.status] || 'Счёт Контура');
+    var status=card.querySelector('.kontur-card-status');
+    status.textContent=statusLabel+(invoice.bill_number?(statusLabel?' · ':'')+'№ '+invoice.bill_number:'');
+    status.hidden=!status.textContent;
     var expandable=['created','sending','unknown'].indexOf(invoice.status)!==-1;
     card.hidden=!expandable;
     var add=document.getElementById('kontur-invoice-add');
@@ -74,10 +77,18 @@
       wrapper.appendChild(table);content.appendChild(wrapper);
     } else content.appendChild(el('p','Состав этого счёта не сохранён в Voovi.','kontur-card-note'));
     var link=card.querySelector('.kontur-card-billing');
+    if (link) link.remove();
     if (validUrl) {
-      if (!link) { link=el('a','Открыть в Биллинге Контура','kontur-card-billing');card.querySelector('summary').appendChild(link); }
+      link=el('a','Открыть в Биллинге Контура','kontur-card-billing');
       link.href=invoice.billing_url;link.target='_blank';link.rel='noopener';
-    } else if (link) link.remove();
+    } else link=null;
+    var summary=card.querySelector('summary');
+    var target=summary.querySelector('.kontur-document-actions');
+    if (target) target.remove();
+    if (invoice.status === 'created' && invoice.bill_id && window.renderKonturDocuments) {
+      target=summary.appendChild(el('span', null, 'kontur-document-actions'));
+      window.renderKonturDocuments(target, card.dataset.rand, card.dataset.csrf, link);
+    } else if (link) summary.appendChild(link);
   }
   async function load(lookup) {
     if (loading) return;

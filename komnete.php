@@ -1,6 +1,7 @@
 <?php
 # подключаем конфиг
 include 'conf.php';
+require_once __DIR__.'/invoice_money.php';
 # проверка авторизации
 if (isset($_COOKIE['id']) and isset($_COOKIE['hash']))
 {
@@ -18,6 +19,12 @@ else
     setcookie('errors', '2', time() + 60*24*30*12, '/');
     header('Location: index.php'); exit();
 }
+session_start();
+if (empty($_SESSION['kontur_csrf'])) {
+    $_SESSION['kontur_csrf'] = bin2hex(openssl_random_pseudo_bytes(32));
+}
+$konturDocumentsCsrf = $_SESSION['kontur_csrf'];
+session_write_close();
 include 'invoice_action.php';
 $pav = "SELECT * FROM schet WHERE del = '0' AND rand = $_GET[rand]";
 $pavresult = mysql_query($pav);
@@ -66,7 +73,7 @@ dataprod,
 tipprod,
 datasert,
 datacar,
-groupi,agent,kol_opis,sos_opis
+groupi,agent,kol_opis,sos_opis,goroddd,kvogorod
 FROM schet WHERE del = '0' AND rand ='".$_GET['rand']."' ORDER BY id DESC";
 $schetresult = mysql_query($sch);
 $schet = mysql_fetch_array($schetresult);
@@ -128,7 +135,14 @@ if (!function_exists('komnete_money')) {
 }
 
 $komneteInvoiceItems = array();
-$komneteInvoiceTotal = 0;
+$komneteInvoiceTotal = $schet['price'];
+$komneteInvoiceAmountError = false;
+try {
+    $komneteAmounts = voovi_invoice_document_amounts($schet['rand'], $schet, 0);
+} catch (RuntimeException $error) {
+    $komneteAmounts = array('items' => array());
+    $komneteInvoiceAmountError = true;
+}
 $komneteInvoiceQuantity = 0;
 $komneteInvoiceQuery = mysql_query("SELECT * FROM schet WHERE del = '0' AND rand = '".mysql_real_escape_string(isset($_GET['rand']) ? $_GET['rand'] : '')."' ORDER BY id ASC");
 if ($komneteInvoiceQuery) {
@@ -160,27 +174,28 @@ if ($komneteInvoiceQuery) {
 
         $komneteQuantity = isset($komneteInvoiceRow['kvo']) ? (float)str_replace(',', '.', $komneteInvoiceRow['kvo']) : 0;
         $komneteDiscount = isset($komneteInvoiceRow['skidka']) ? (float)str_replace(',', '.', $komneteInvoiceRow['skidka']) : 0;
-        $komneteFallbackTotal = isset($komneteInvoiceRow['price']) ? (float)str_replace(',', '.', $komneteInvoiceRow['price']) : 0;
-        $komneteLineTotal = 0;
-
-        if ($komneteQuantity > 0 && $komneteUnitPrice > 0) {
-            $komneteDiscountedPrice = $komneteUnitPrice - (($komneteUnitPrice / 100) * $komneteDiscount);
-            $komneteLineTotal = round($komneteDiscountedPrice * $komneteQuantity, 2);
-        } elseif ($komneteFallbackTotal > 0) {
-            $komneteLineTotal = $komneteFallbackTotal;
-        }
-
+        $komneteLineAmount = isset($komneteAmounts['items'][$komneteInvoiceRow['id']])
+            ? $komneteAmounts['items'][$komneteInvoiceRow['id']] : null;
         $komneteInvoiceItems[] = array(
             'code' => $komneteItemCode,
             'name' => $komneteItemName,
             'quantity' => $komneteQuantity,
             'unit_price' => $komneteUnitPrice,
             'discount' => $komneteDiscount,
-            'total' => $komneteLineTotal
+            'total' => $komneteLineAmount ? $komneteLineAmount['gross'] : null
         );
         $komneteInvoiceQuantity += $komneteQuantity;
-        $komneteInvoiceTotal += $komneteLineTotal;
     }
+}
+if (isset($komneteAmounts['items']['travel'])) {
+    $komneteTravel = $komneteAmounts['items']['travel'];
+    $komneteInvoiceItems[] = array(
+        'name' => 'Выезд специалиста',
+        'quantity' => $komneteTravel['quantity'],
+        'unit_price' => $schet['goroddd'],
+        'discount' => $schet['skidka'],
+        'total' => $komneteTravel['gross']
+    );
 }
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
@@ -189,7 +204,8 @@ if ($komneteInvoiceQuery) {
     <title></title>
     <meta http-equiv="content-type" content="text/html" charset="utf-8" />
     <link href="css/bootstrap.min.css" rel="stylesheet">
-    <link href="css/kontur-card.css?v=4" rel="stylesheet">
+    <link rel="stylesheet" href="/css/kontur-documents.css?v=3">
+    <link href="css/kontur-card.css?v=5" rel="stylesheet">
 
     <!--<link rel="stylesheet" type="text/css" href="css/normalize.css" />
     <link rel="stylesheet" type="text/css" href="css/demo.css" />
@@ -1767,7 +1783,7 @@ if ($komneteInvoiceQuery) {
         }
     }
 </style>
-<link rel="stylesheet" href="css/invoice-detail.css?v=8">
+<link rel="stylesheet" href="css/invoice-detail.css?v=9">
 </head>
 <body class="komnete-modern">
 
@@ -1819,6 +1835,9 @@ if ($komneteInvoiceQuery) {
 ">
 
     <div class="komnete-topline" style="margin-bottom: 3px;height: 35px;font-size: 19px;background: #26BB84;white-space: nowrap;overflow: hidden;color: #fff;">
+        <?php if (!empty($klient['id'])) { ?>
+            <a class="komnete-client-link" href="/kartklient.php?id=<?php echo (int)$klient['id']; ?>" target="_top">← Карточка клиента</a>
+        <?php } ?>
         <div> <?php
             $string = $klient['naim'];
             //$string = strip_tags($string);
@@ -2102,12 +2121,13 @@ if ($komneteInvoiceQuery) {
     $konturLookup = $konturCard || (trim((string)$pavoir['nomerschetks']) !== '' && (string)$pavoir['nomerschetks'] !== '0');
     ?>
     <?php if ($konturLookup) { ?>
-    <details id="kontur-invoice-card" class="kontur-card" data-rand="<?php echo htmlspecialchars($schet['rand'], ENT_QUOTES, 'UTF-8'); ?>" hidden data-lookup="1">
+    <details id="kontur-invoice-card" class="kontur-card" data-rand="<?php echo htmlspecialchars($schet['rand'], ENT_QUOTES, 'UTF-8'); ?>" hidden data-lookup="1" data-csrf="<?php echo htmlspecialchars($konturDocumentsCsrf, ENT_QUOTES, 'UTF-8'); ?>">
         <summary class="kontur-card-summary"><span class="kontur-card-label">Состав счёта Контура</span><span class="kontur-card-status"></span></summary>
         <div class="kontur-card-content" aria-live="polite"></div>
     </details>
     <script src="js/kontur-form-core.js?v=14" defer></script>
-    <script src="js/kontur-card.js?v=9" defer></script>
+    <script src="js/kontur-documents.js?v=5" defer></script>
+    <script src="js/kontur-card.js?v=13" defer></script>
     <?php } ?>
     <div id="kontur-invoice-add" class="kontur-card">
         <a class="btn btn-success" href="kontur_invoice.php?rand=<?php echo rawurlencode($schet['rand']); ?>" target="_blank" rel="noopener">Добавить счёт Контура</a>

@@ -9,6 +9,10 @@ function money_test_equal($actual, $expected, $message)
 }
 
 money_test_equal(voovi_money_round('0,005'), '0.01', 'HALF_UP');
+$discount = voovi_invoice_discount_for_storage('75,8620689655172413793103448276');
+money_test_equal($discount, '75.862068965517241379', 'Точность скидки для кассы');
+money_test_equal(voovi_invoice_form_total(array(array('id'=>1,'price'=>'2900')),
+    array('input1'=>'1','skidka'=>$discount)), '700.00', 'Итог после округления скидки');
 money_test_equal(voovi_money_round(' 1 234,565 '), '1234.57', 'Нормализация');
 money_test_equal(array(voovi_decimal('.5'),voovi_decimal('1.'),voovi_decimal('+1')),array('0.5','1','1'),'Прежние форматы дробного количества');
 money_test_equal(voovi_invoice_form_total(array(array('id'=>1,'price'=>'120')),

@@ -6,7 +6,7 @@ session_start();
 $rand = isset($_GET['rand']) ? $_GET['rand'] : '';
 list($user, $invoice) = kontur_context($rand);
 $action = isset($_GET['action']) ? $_GET['action'] : 'state';
-$methods = array('state' => 'GET', 'status' => 'GET', 'catalog' => 'GET', 'availability' => 'GET', 'account' => 'POST', 'subscriber' => 'POST', 'calculate' => 'POST', 'issue' => 'POST', 'search' => 'GET', 'attach' => 'POST');
+$methods = array('state' => 'GET', 'status' => 'GET', 'catalog' => 'GET', 'availability' => 'GET', 'account' => 'POST', 'subscriber' => 'POST', 'calculate' => 'POST', 'issue' => 'POST', 'search' => 'GET', 'attach' => 'POST', 'documents' => 'GET', 'document-pdf' => 'POST', 'document-send' => 'POST');
 if (!is_string($action) || !isset($methods[$action]) || $_SERVER['REQUEST_METHOD'] !== $methods[$action]) {
     kontur_fail('Неверное действие или метод', 405);
 }
@@ -40,6 +40,12 @@ $ctx = stream_context_create(array('http' => array(
 )));
 $result = @file_get_contents($url, false, $ctx);
 if ($result === false) {
+    if ($action === 'document-send') {
+        kontur_fail('Результат отправки уточняется. Обновите статус перед повтором.', 502);
+    }
+    if ($action === 'document-pdf') {
+        kontur_fail('Не удалось получить PDF из Биллинга. Попробуйте чуть позже.', 502);
+    }
     if ($action === 'account') {
         kontur_fail('Результат подготовки лицевого счёта пока не подтверждён. Обновите проверку позже; повторная регистрация автоматически не отправляется.', 502);
     }
@@ -47,6 +53,12 @@ if ($result === false) {
 }
 $status = 502;
 if (isset($http_response_header[0]) && preg_match('/\s(\d{3})\s/', $http_response_header[0], $m)) { $status = intval($m[1]); }
+if ($action === 'document-pdf' && $status === 200 && substr($result, 0, 5) === '%PDF-') {
+    header('Content-Type: application/pdf');
+    header('Content-Disposition: attachment; filename="kontur-invoice.pdf"');
+    echo $result;
+    exit;
+}
 $decoded = json_decode($result, true);
 if (!is_array($decoded)) {
     $message = $action === 'issue'

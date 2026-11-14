@@ -1,0 +1,13 @@
+.kontur-documents{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap;vertical-align:middle}
+.kontur-documents-standalone{margin:16px 0}
+.kontur-documents .kontur-document-icon{position:relative;display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;width:34px;height:32px;margin:0;padding:0;border:1px solid #cdded7;border-radius:6px;background:#fff;color:#176b57;text-decoration:none;cursor:pointer}
+.kontur-document-icon svg{width:28px;height:28px}
+.kontur-document-icon img{width:24px;height:24px}
+.kontur-documents .kontur-document-icon:hover,.kontur-documents .kontur-document-icon:focus-visible{border-color:#438574}
+.kontur-document-icon[aria-disabled="true"]{cursor:default}
+.kontur-document-icon[aria-disabled="true"]:not(.kontur-document-sent) img{opacity:.5}
+.kontur-documents .kontur-document-sent{border-color:#83ba9b;background:#e7f6ed}
+.kontur-document-check{display:none}
+.kontur-document-sent .kontur-document-check{display:block;position:absolute;right:0;bottom:0;width:13px;height:13px;border-radius:50%;background:#187348;color:white;font:bold 10px/13px Arial,sans-serif;text-align:center}
+.kontur-document-icon::after{content:attr(data-tooltip);display:none;position:absolute;z-index:10;top:calc(100% + 6px);left:50%;transform:translateX(-50%);width:max-content;max-width:min(180px,45vw);padding:5px 8px;border-radius:4px;background:#26313d;color:white;font:12px/1.35 Arial,sans-serif;text-align:center;white-space:normal;pointer-events:none}
+.kontur-document-icon:hover::after,.kontur-document-icon:focus-visible::after{display:block}

@@ -551,7 +551,7 @@ $(document).ready(function(){
 
 //-------------------------------------------------------------------------------------------------------//
     $konturAmount = trim((string)$row['priceks']);
-    if ($konturBill && ($konturAmount === '' || (float)$konturAmount === 0.0)) {
+    if ($konturBill && $konturAmount === '') {
         $konturAmount = $konturBill['Amount'];
     }
     $konturAmountPending = $konturBill && $konturAmount === null;
